@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>WebHASP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Setup overlay - shown when no token is stored -->
+  <div id="setup-overlay">
+    <div id="setup-box">
+      <div id="setup-logo">WebHASP</div>
+      <p>Enter your Home Assistant details to get started.</p>
+      <label>Home Assistant URL
+        <input type="text" id="setup-url" placeholder="http://homeassistant.local:8123" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </label>
+      <label>Long-Lived Access Token
+        <textarea id="setup-token" placeholder="Paste your token here..." rows="4"></textarea>
+      </label>
+      <button id="setup-save">Connect</button>
+      <p id="setup-error"></p>
+    </div>
+  </div>
+
+  <!-- Main dashboard canvas wrapper - scales to fill screen -->
+  <div id="canvas-wrapper">
+    <div id="canvas">
+      <!-- Widgets are injected here by app.js -->
+    </div>
+  </div>
+
+  <!-- Connection status indicator -->
+  <div id="conn-status" class="conn-disconnected" title="Connection status"></div>
+
+  <!-- Page navigation dots -->
+  <div id="page-nav"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
