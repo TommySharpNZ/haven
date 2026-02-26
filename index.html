@@ -6,12 +6,29 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>WebHASP</title>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- Version stamp - bump this to bust browser cache on all devices -->
+  <script>var WEBHASP_VERSION = '0.4.2';</script>
+
+  <!-- Assets loaded with version query string for cache busting -->
+  <script>
+    (function() {
+      var v = '?v=' + WEBHASP_VERSION;
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'style.css' + v;
+      document.head.appendChild(css);
+
+      // Font loaded via @font-face in style.css with font-display: block
+    })();
+  </script>
 </head>
 <body>
+  <!-- Hidden element to force FontAwesome to load immediately -->
+  <span class="fa-preload" aria-hidden="true"></span>
 
-  <!-- Setup overlay - shown when no token is stored -->
-  <div id="setup-overlay">
+  <!-- Setup overlay - shown when no credentials are stored -->
+  <div id="setup-overlay" class="hidden">
     <div id="setup-box">
       <div id="setup-logo">WebHASP</div>
       <p>Enter your Home Assistant details to get started.</p>
@@ -26,10 +43,10 @@
     </div>
   </div>
 
-  <!-- Main dashboard canvas wrapper - scales to fill screen -->
+  <!-- Main dashboard canvas -->
   <div id="canvas-wrapper">
     <div id="canvas">
-      <!-- Widgets are injected here by app.js -->
+      <!-- Widgets injected here by app.js -->
     </div>
   </div>
 
@@ -39,6 +56,13 @@
   <!-- Page navigation dots -->
   <div id="page-nav"></div>
 
-  <script src="app.js"></script>
+  <!-- App loaded last with version cache bust -->
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'app.js?v=' + WEBHASP_VERSION;
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>

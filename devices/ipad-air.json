@@ -1,0 +1,1559 @@
+{
+  "version": "1.0",
+  "_device_notes": "iPad Air 1st Gen (MD788X/B) - 9.7in Retina display, landscape orientation. Physical resolution 2048x1536 at 264ppi. CSS viewport in landscape is 1024x768 (device pixel ratio 2). Design at 1024x768.",
+  "ha": {
+    "_comment": "Optional - fill in to skip the setup screen on first load",
+    "url": "http://your-homeassistant-ip:8123",
+    "token": "your-long-lived-access-token-here"
+  },
+  "device": {
+    "name": "iPad Air",
+    "model": "MD788X/B",
+    "canvas": {
+      "width": 1024,
+      "height": 768
+    },
+    "orientation": "landscape",
+    "default_page": 1,
+    "return_to_default": 60
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Home",
+      "widgets": [
+        {
+          "id": "header_bg",
+          "type": "rectangle",
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "page_title",
+          "type": "label",
+          "x": 0,
+          "y": 12,
+          "w": 1024,
+          "h": 36,
+          "text": "Home",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "solar_box",
+          "type": "rectangle",
+          "x": 16,
+          "y": 72,
+          "w": 232,
+          "h": 160,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "solar_icon",
+          "type": "label",
+          "x": 16,
+          "y": 84,
+          "w": 60,
+          "h": 50,
+          "text": "[fa-sun-o]",
+          "font_size": 36,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.pv_power",
+          "states": {
+            "generating": {
+              "color": "#F9DA44"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "generating"
+          }
+        },
+        {
+          "id": "solar_title",
+          "type": "label",
+          "x": 76,
+          "y": 84,
+          "w": 160,
+          "h": 28,
+          "text": "Solar",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "solar_value",
+          "type": "label",
+          "x": 16,
+          "y": 134,
+          "w": 232,
+          "h": 56,
+          "text": "--",
+          "font_size": 42,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.pv_power",
+          "format": "power",
+          "states": {
+            "generating": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "generating"
+          }
+        },
+        {
+          "id": "import_box",
+          "type": "rectangle",
+          "x": 264,
+          "y": 72,
+          "w": 232,
+          "h": 160,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "import_icon",
+          "type": "label",
+          "x": 264,
+          "y": 84,
+          "w": 60,
+          "h": 50,
+          "text": "[fa-bolt]",
+          "font_size": 36,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_consumption",
+          "states": {
+            "importing": {
+              "color": "warning"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "importing"
+          }
+        },
+        {
+          "id": "import_title",
+          "type": "label",
+          "x": 324,
+          "y": 84,
+          "w": 160,
+          "h": 28,
+          "text": "Import",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "import_value",
+          "type": "label",
+          "x": 264,
+          "y": 134,
+          "w": 232,
+          "h": 56,
+          "text": "--",
+          "font_size": 42,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_consumption",
+          "format": "power",
+          "states": {
+            "importing": {
+              "color": "warning"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "importing"
+          }
+        },
+        {
+          "id": "battery_box",
+          "type": "rectangle",
+          "x": 512,
+          "y": 72,
+          "w": 232,
+          "h": 160,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "battery_icon",
+          "type": "label",
+          "x": 512,
+          "y": 84,
+          "w": 60,
+          "h": 50,
+          "text": "[fa-battery-full]",
+          "font_size": 36,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface"
+        },
+        {
+          "id": "battery_title",
+          "type": "label",
+          "x": 572,
+          "y": 84,
+          "w": 160,
+          "h": 28,
+          "text": "Battery",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "battery_value",
+          "type": "label",
+          "x": 512,
+          "y": 134,
+          "w": 232,
+          "h": 56,
+          "text": "--",
+          "font_size": 42,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.battery_state_of_charge",
+          "format": "percent"
+        },
+        {
+          "id": "export_box",
+          "type": "rectangle",
+          "x": 760,
+          "y": 72,
+          "w": 248,
+          "h": 160,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "export_icon",
+          "type": "label",
+          "x": 760,
+          "y": 84,
+          "w": 60,
+          "h": 50,
+          "text": "[fa-upload]",
+          "font_size": 36,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_feed_in",
+          "states": {
+            "exporting": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "exporting"
+          }
+        },
+        {
+          "id": "export_title",
+          "type": "label",
+          "x": 820,
+          "y": 84,
+          "w": 176,
+          "h": 28,
+          "text": "Export",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "export_value",
+          "type": "label",
+          "x": 760,
+          "y": 134,
+          "w": 248,
+          "h": 56,
+          "text": "--",
+          "font_size": 42,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_feed_in",
+          "format": "power",
+          "states": {
+            "exporting": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "exporting"
+          }
+        },
+        {
+          "id": "p1_label",
+          "type": "label",
+          "x": 16,
+          "y": 252,
+          "w": 120,
+          "h": 28,
+          "text": "Phase 1",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "p1_bar",
+          "type": "bar",
+          "x": 148,
+          "y": 252,
+          "w": 740,
+          "h": 28,
+          "entity": "sensor.load_l1",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ]
+        },
+        {
+          "id": "p1_value",
+          "type": "label",
+          "x": 900,
+          "y": 252,
+          "w": 108,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.load_l1",
+          "format": "power"
+        },
+        {
+          "id": "p2_label",
+          "type": "label",
+          "x": 16,
+          "y": 296,
+          "w": 120,
+          "h": 28,
+          "text": "Phase 2",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "p2_bar",
+          "type": "bar",
+          "x": 148,
+          "y": 296,
+          "w": 740,
+          "h": 28,
+          "entity": "sensor.load_l2",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ]
+        },
+        {
+          "id": "p2_value",
+          "type": "label",
+          "x": 900,
+          "y": 296,
+          "w": 108,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.load_l2",
+          "format": "power"
+        },
+        {
+          "id": "p3_label",
+          "type": "label",
+          "x": 16,
+          "y": 340,
+          "w": 120,
+          "h": 28,
+          "text": "Phase 3",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "p3_bar",
+          "type": "bar",
+          "x": 148,
+          "y": 340,
+          "w": 740,
+          "h": 28,
+          "entity": "sensor.load_l3",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ]
+        },
+        {
+          "id": "p3_value",
+          "type": "label",
+          "x": 900,
+          "y": 340,
+          "w": 108,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.load_l3",
+          "format": "power"
+        },
+        {
+          "id": "today_label",
+          "type": "label",
+          "x": 16,
+          "y": 408,
+          "w": 300,
+          "h": 28,
+          "text": "Today",
+          "font_size": 16,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "solar_today_box",
+          "type": "rectangle",
+          "x": 16,
+          "y": 440,
+          "w": 228,
+          "h": 72,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "solar_today_title",
+          "type": "label",
+          "x": 16,
+          "y": 448,
+          "w": 228,
+          "h": 22,
+          "text": "Solar",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "solar_today_value",
+          "type": "label",
+          "x": 16,
+          "y": 472,
+          "w": 228,
+          "h": 32,
+          "text": "--",
+          "font_size": 24,
+          "align": "center",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.pv_energy_today",
+          "format": "kwh"
+        },
+        {
+          "id": "import_today_box",
+          "type": "rectangle",
+          "x": 260,
+          "y": 440,
+          "w": 228,
+          "h": 72,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "import_today_title",
+          "type": "label",
+          "x": 260,
+          "y": 448,
+          "w": 228,
+          "h": 22,
+          "text": "Import",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "import_today_value",
+          "type": "label",
+          "x": 260,
+          "y": 472,
+          "w": 228,
+          "h": 32,
+          "text": "--",
+          "font_size": 24,
+          "align": "center",
+          "color": "warning",
+          "background": "surface",
+          "entity": "sensor.master_house_energy_imported_today",
+          "format": "kwh"
+        },
+        {
+          "id": "export_today_box",
+          "type": "rectangle",
+          "x": 504,
+          "y": 440,
+          "w": 228,
+          "h": 72,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "export_today_title",
+          "type": "label",
+          "x": 504,
+          "y": 448,
+          "w": 228,
+          "h": 22,
+          "text": "Export",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "export_today_value",
+          "type": "label",
+          "x": 504,
+          "y": 472,
+          "w": 228,
+          "h": 32,
+          "text": "--",
+          "font_size": 24,
+          "align": "center",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.master_house_energy_exported_today",
+          "format": "kwh"
+        },
+        {
+          "id": "battery_today_box",
+          "type": "rectangle",
+          "x": 748,
+          "y": 440,
+          "w": 260,
+          "h": 72,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "battery_today_title",
+          "type": "label",
+          "x": 748,
+          "y": 448,
+          "w": 260,
+          "h": 22,
+          "text": "Battery",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "battery_today_value",
+          "type": "label",
+          "x": 748,
+          "y": 472,
+          "w": 260,
+          "h": 32,
+          "text": "--",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.battery_discharge_today",
+          "format": "kwh"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Lights",
+      "widgets": [
+        {
+          "id": "header_bg",
+          "type": "rectangle",
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "page_title",
+          "type": "label",
+          "x": 0,
+          "y": 12,
+          "w": 1024,
+          "h": 36,
+          "text": "Lights & Switches",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "btn1_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 72,
+          "w": 220,
+          "h": 150,
+          "radius": 10,
+          "background": "surface2",
+          "entity": "light.kitchen",
+          "states": {
+            "on": {
+              "background": "#493416"
+            },
+            "off": {
+              "background": "surface2"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.kitchen"
+          }
+        },
+        {
+          "id": "btn1_icon",
+          "type": "label",
+          "x": 16,
+          "y": 88,
+          "w": 220,
+          "h": 70,
+          "text": "[fa-lightbulb-o]",
+          "font_size": 52,
+          "align": "center",
+          "background": "transparent",
+          "entity": "light.kitchen",
+          "states": {
+            "on": {
+              "color": "#e88c03"
+            },
+            "off": {
+              "color": "icon_inactive"
+            }
+          }
+        },
+        {
+          "id": "btn1_name",
+          "type": "label",
+          "x": 16,
+          "y": 168,
+          "w": 220,
+          "h": 28,
+          "text": "Kitchen",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "btn1_state",
+          "type": "label",
+          "x": 16,
+          "y": 196,
+          "w": 220,
+          "h": 22,
+          "text": "--",
+          "font_size": 14,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "light.kitchen"
+        },
+        {
+          "id": "btn2_bg",
+          "type": "rectangle",
+          "x": 252,
+          "y": 72,
+          "w": 220,
+          "h": 150,
+          "radius": 10,
+          "background": "surface2",
+          "entity": "light.lounge",
+          "states": {
+            "on": {
+              "background": "#493416"
+            },
+            "off": {
+              "background": "surface2"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.lounge"
+          }
+        },
+        {
+          "id": "btn2_icon",
+          "type": "label",
+          "x": 252,
+          "y": 88,
+          "w": 220,
+          "h": 70,
+          "text": "[fa-lightbulb-o]",
+          "font_size": 52,
+          "align": "center",
+          "background": "transparent",
+          "entity": "light.lounge",
+          "states": {
+            "on": {
+              "color": "#e88c03"
+            },
+            "off": {
+              "color": "icon_inactive"
+            }
+          }
+        },
+        {
+          "id": "btn2_name",
+          "type": "label",
+          "x": 252,
+          "y": 168,
+          "w": 220,
+          "h": 28,
+          "text": "Lounge",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "btn2_state",
+          "type": "label",
+          "x": 252,
+          "y": 196,
+          "w": 220,
+          "h": 22,
+          "text": "--",
+          "font_size": 14,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "light.lounge"
+        },
+        {
+          "id": "btn3_bg",
+          "type": "rectangle",
+          "x": 488,
+          "y": 72,
+          "w": 220,
+          "h": 150,
+          "radius": 10,
+          "background": "surface2",
+          "entity": "switch.outdoor_lights",
+          "states": {
+            "on": {
+              "background": "#493416"
+            },
+            "off": {
+              "background": "surface2"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.outdoor_lights"
+          }
+        },
+        {
+          "id": "btn3_icon",
+          "type": "label",
+          "x": 488,
+          "y": 88,
+          "w": 220,
+          "h": 70,
+          "text": "[fa-lightbulb-o]",
+          "font_size": 52,
+          "align": "center",
+          "background": "transparent",
+          "entity": "switch.outdoor_lights",
+          "states": {
+            "on": {
+              "color": "#e88c03"
+            },
+            "off": {
+              "color": "icon_inactive"
+            }
+          }
+        },
+        {
+          "id": "btn3_name",
+          "type": "label",
+          "x": 488,
+          "y": 168,
+          "w": 220,
+          "h": 28,
+          "text": "Outdoor",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "btn3_state",
+          "type": "label",
+          "x": 488,
+          "y": 196,
+          "w": 220,
+          "h": 22,
+          "text": "--",
+          "font_size": 14,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "switch.outdoor_lights"
+        },
+        {
+          "id": "btn4_bg",
+          "type": "rectangle",
+          "x": 724,
+          "y": 72,
+          "w": 284,
+          "h": 150,
+          "radius": 10,
+          "background": "surface2",
+          "entity": "switch.fan",
+          "states": {
+            "on": {
+              "background": "#0d3349"
+            },
+            "off": {
+              "background": "surface2"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.fan"
+          }
+        },
+        {
+          "id": "btn4_icon",
+          "type": "label",
+          "x": 724,
+          "y": 88,
+          "w": 284,
+          "h": 70,
+          "text": "[fa-cogs]",
+          "font_size": 52,
+          "align": "center",
+          "background": "transparent",
+          "entity": "switch.fan",
+          "states": {
+            "on": {
+              "color": "#1196ee"
+            },
+            "off": {
+              "color": "icon_inactive"
+            }
+          }
+        },
+        {
+          "id": "btn4_name",
+          "type": "label",
+          "x": 724,
+          "y": 168,
+          "w": 284,
+          "h": 28,
+          "text": "Fan",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "btn4_state",
+          "type": "label",
+          "x": 724,
+          "y": 196,
+          "w": 284,
+          "h": 22,
+          "text": "--",
+          "font_size": 14,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "switch.fan"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Climate",
+      "widgets": [
+        {
+          "id": "header_bg",
+          "type": "rectangle",
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "page_title",
+          "type": "label",
+          "x": 0,
+          "y": 12,
+          "w": 1024,
+          "h": 36,
+          "text": "Climate",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "temp_box",
+          "type": "rectangle",
+          "x": 16,
+          "y": 72,
+          "w": 300,
+          "h": 280,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "temp_title",
+          "type": "label",
+          "x": 16,
+          "y": 84,
+          "w": 300,
+          "h": 28,
+          "text": "Current",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "temp_value",
+          "type": "label",
+          "x": 16,
+          "y": 120,
+          "w": 300,
+          "h": 100,
+          "text": "--",
+          "font_size": 80,
+          "align": "center",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.indoor_temperature"
+        },
+        {
+          "id": "temp_unit",
+          "type": "label",
+          "x": 16,
+          "y": 222,
+          "w": 300,
+          "h": 36,
+          "text": "degrees C",
+          "font_size": 18,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "humidity_title",
+          "type": "label",
+          "x": 16,
+          "y": 268,
+          "w": 140,
+          "h": 28,
+          "text": "Humidity",
+          "font_size": 14,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "humidity_value",
+          "type": "label",
+          "x": 156,
+          "y": 268,
+          "w": 160,
+          "h": 28,
+          "text": "--",
+          "font_size": 20,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.indoor_humidity",
+          "format": "percent"
+        },
+        {
+          "id": "hvac_box",
+          "type": "rectangle",
+          "x": 332,
+          "y": 72,
+          "w": 676,
+          "h": 280,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "hvac_title",
+          "type": "label",
+          "x": 332,
+          "y": 84,
+          "w": 676,
+          "h": 28,
+          "text": "Air Conditioner",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hvac_temp_down",
+          "type": "rectangle",
+          "x": 348,
+          "y": 124,
+          "w": 100,
+          "h": 100,
+          "background": "surface2",
+          "radius": 50,
+          "action": {
+            "service": "climate.set_temperature",
+            "entity_id": "climate.ac_unit"
+          }
+        },
+        {
+          "id": "hvac_temp_down_icon",
+          "type": "label",
+          "x": 348,
+          "y": 148,
+          "w": 100,
+          "h": 56,
+          "text": "[fa-minus]",
+          "font_size": 40,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "hvac_setpoint",
+          "type": "label",
+          "x": 464,
+          "y": 130,
+          "w": 160,
+          "h": 90,
+          "text": "--",
+          "font_size": 64,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "climate.ac_unit"
+        },
+        {
+          "id": "hvac_temp_up",
+          "type": "rectangle",
+          "x": 640,
+          "y": 124,
+          "w": 100,
+          "h": 100,
+          "background": "surface2",
+          "radius": 50,
+          "action": {
+            "service": "climate.set_temperature",
+            "entity_id": "climate.ac_unit"
+          }
+        },
+        {
+          "id": "hvac_temp_up_icon",
+          "type": "label",
+          "x": 640,
+          "y": 148,
+          "w": 100,
+          "h": 56,
+          "text": "[fa-plus]",
+          "font_size": 40,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "hvac_cool_btn",
+          "type": "rectangle",
+          "x": 760,
+          "y": 116,
+          "w": 220,
+          "h": 56,
+          "background": "surface2",
+          "radius": 8,
+          "entity": "climate.ac_unit",
+          "states": {
+            "cool": {
+              "background": "#0d3349"
+            }
+          },
+          "action": {
+            "service": "climate.set_hvac_mode",
+            "entity_id": "climate.ac_unit"
+          }
+        },
+        {
+          "id": "hvac_cool_label",
+          "type": "label",
+          "x": 760,
+          "y": 116,
+          "w": 220,
+          "h": 56,
+          "text": "[fa-thermometer]  Cool",
+          "font_size": 18,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "climate.ac_unit",
+          "states": {
+            "cool": {
+              "color": "#1196ee"
+            }
+          }
+        },
+        {
+          "id": "hvac_heat_btn",
+          "type": "rectangle",
+          "x": 760,
+          "y": 184,
+          "w": 220,
+          "h": 56,
+          "background": "surface2",
+          "radius": 8,
+          "entity": "climate.ac_unit",
+          "states": {
+            "heat": {
+              "background": "#3d1a0a"
+            }
+          },
+          "action": {
+            "service": "climate.set_hvac_mode",
+            "entity_id": "climate.ac_unit"
+          }
+        },
+        {
+          "id": "hvac_heat_label",
+          "type": "label",
+          "x": 760,
+          "y": 184,
+          "w": 220,
+          "h": 56,
+          "text": "[fa-fire]  Heat",
+          "font_size": 18,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "climate.ac_unit",
+          "states": {
+            "heat": {
+              "color": "#e85d04"
+            }
+          }
+        },
+        {
+          "id": "hvac_off_btn",
+          "type": "rectangle",
+          "x": 760,
+          "y": 252,
+          "w": 220,
+          "h": 56,
+          "background": "surface2",
+          "radius": 8,
+          "entity": "climate.ac_unit",
+          "states": {
+            "off": {
+              "background": "#2a1a1a"
+            }
+          },
+          "action": {
+            "service": "climate.set_hvac_mode",
+            "entity_id": "climate.ac_unit"
+          }
+        },
+        {
+          "id": "hvac_off_label",
+          "type": "label",
+          "x": 760,
+          "y": 252,
+          "w": 220,
+          "h": 56,
+          "text": "[fa-power-off]  Off",
+          "font_size": 18,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "entity": "climate.ac_unit",
+          "states": {
+            "off": {
+              "color": "danger"
+            }
+          }
+        },
+        {
+          "id": "outdoor_box",
+          "type": "rectangle",
+          "x": 16,
+          "y": 368,
+          "w": 992,
+          "h": 80,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "outdoor_title",
+          "type": "label",
+          "x": 28,
+          "y": 380,
+          "w": 160,
+          "h": 28,
+          "text": "Outdoor",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "outdoor_temp",
+          "type": "label",
+          "x": 200,
+          "y": 376,
+          "w": 160,
+          "h": 36,
+          "text": "--",
+          "font_size": 26,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.outdoor_temperature"
+        },
+        {
+          "id": "outdoor_humid_title",
+          "type": "label",
+          "x": 400,
+          "y": 380,
+          "w": 160,
+          "h": 28,
+          "text": "Humidity",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "outdoor_humid",
+          "type": "label",
+          "x": 560,
+          "y": 376,
+          "w": 120,
+          "h": 36,
+          "text": "--",
+          "font_size": 26,
+          "align": "center",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.outdoor_humidity",
+          "format": "percent"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "label": "Cameras",
+      "widgets": [
+        {
+          "id": "header_bg",
+          "type": "rectangle",
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "page_title",
+          "type": "label",
+          "x": 0,
+          "y": 12,
+          "w": 1024,
+          "h": 36,
+          "text": "Cameras",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "hint",
+          "type": "label",
+          "x": 0,
+          "y": 56,
+          "w": 1024,
+          "h": 22,
+          "text": "Tap any camera to open fullscreen live stream",
+          "font_size": 13,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "background",
+          "letter_spacing": 1
+        },
+        {
+          "_note": "--- OPTION 1: HA entity, MJPEG preview (default, most efficient) ---",
+          "id": "cam_ha_mjpeg",
+          "type": "camera",
+          "x": 16,
+          "y": 84,
+          "w": 460,
+          "h": 300,
+          "radius": 10,
+          "label": "Front Door",
+          "preview": "mjpeg",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "cover"
+        },
+        {
+          "id": "cam_ha_mjpeg_lbl",
+          "type": "label",
+          "x": 16,
+          "y": 390,
+          "w": 460,
+          "h": 20,
+          "text": "[fa-camera]  HA entity  \u2022  preview: mjpeg  \u2022  tap for HLS stream",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "_note": "--- OPTION 2: HA entity, poster preview (60s snapshot + play button) ---",
+          "id": "cam_ha_poster",
+          "type": "camera",
+          "x": 548,
+          "y": 84,
+          "w": 460,
+          "h": 300,
+          "radius": 10,
+          "label": "Back Garden",
+          "preview": "poster",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 60000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_ha_poster_lbl",
+          "type": "label",
+          "x": 548,
+          "y": 390,
+          "w": 460,
+          "h": 20,
+          "text": "[fa-camera]  HA entity  \u2022  preview: poster  \u2022  refreshes every 60s",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "_note": "--- OPTION 3: Direct Reolink snapshot URL, polling every 5s ---",
+          "id": "cam_direct_snap",
+          "type": "camera",
+          "x": 16,
+          "y": 418,
+          "w": 460,
+          "h": 260,
+          "radius": 10,
+          "label": "Seccam 05 Direct",
+          "preview": "url",
+          "url": "https://192.168.11.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=webhasp&user=guest&password=IAmWatch1ng",
+          "refresh_interval": 5000,
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "cover"
+        },
+        {
+          "id": "cam_direct_snap_lbl",
+          "type": "label",
+          "x": 16,
+          "y": 684,
+          "w": 460,
+          "h": 20,
+          "text": "[fa-camera]  Direct Reolink URL  \u2022  preview: url  \u2022  5s poll  \u2022  tap for HA HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "_note": "--- OPTION 4: HA entity, snapshot preview, custom interval ---",
+          "id": "cam_ha_snap",
+          "type": "camera",
+          "x": 548,
+          "y": 418,
+          "w": 460,
+          "h": 260,
+          "radius": 10,
+          "label": "Side Gate",
+          "preview": "snapshot",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 5000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_ha_snap_lbl",
+          "type": "label",
+          "x": 548,
+          "y": 684,
+          "w": 460,
+          "h": 20,
+          "text": "[fa-camera]  HA entity  \u2022  preview: snapshot  \u2022  5s poll  \u2022  tap for HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        }
+      ]
+    }
+  ]
+}

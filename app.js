@@ -14,7 +14,9 @@
   var wsReconnectTimer = null;
   var wsSubscriptionId = null;
   var msgId = 1;
-  var entityCallbacks = {};   // entityId -> [callback, ...]
+  var entityCallbacks = {};        // entityId -> [callback, ...]
+  var pendingStreamRequests = {};  // msgId -> callback for camera/stream responses
+  var activePageTimers      = [];  // setInterval IDs to clear on page change
   var entityStates = {};      // entityId -> stateObject (cached)
   var returnTimer = null;
   var clockTimer = null;
@@ -23,15 +25,44 @@
 
   // ---- Init -------------------------------------------------
   function init() {
-    haUrl   = localStorage.getItem('webhash_url')   || '';
-    haToken = localStorage.getItem('webhash_token') || '';
+    haUrl   = localStorage.getItem('webhasp_url')   || '';
+    haToken = localStorage.getItem('webhasp_token') || '';
+
+    console.log('WebHASP init: url=' + haUrl + ' tokenLength=' + haToken.length);
 
     if (!haUrl || !haToken) {
-      showSetup();
+      // No localStorage credentials - try loading config file anyway
+      // in case it has ha.url and ha.token defined
+      console.log('WebHASP init: no localStorage credentials, checking device config');
+      loadConfigForCredentials();
       return;
     }
 
+    console.log('WebHASP init: credentials found, loading config');
     loadConfig();
+  }
+
+  // Load config purely to extract credentials if present
+  // Falls back to setup screen if config missing or has no credentials
+  function loadConfigForCredentials() {
+    var deviceParam = getUrlParam('device') || 'default';
+    var base        = window.location.pathname.replace(/\/[^\/]*$/, '/');
+    var configUrl   = base + 'devices/' + deviceParam + '.json?v=' + (window.WEBHASP_VERSION || Date.now());
+
+    fetchJson(configUrl, function(err, data) {
+      if (!err && data && data.ha && data.ha.url && data.ha.token) {
+        console.log('WebHASP init: credentials found in device config');
+        haUrl   = data.ha.url;
+        haToken = data.ha.token;
+        // Store in localStorage so subsequent loads are instant
+        localStorage.setItem('webhasp_url',   haUrl);
+        localStorage.setItem('webhasp_token', haToken);
+        loadConfig();
+      } else {
+        console.log('WebHASP init: no credentials in config, showing setup');
+        showSetup();
+      }
+    });
   }
 
   // ---- Setup overlay ----------------------------------------
@@ -55,33 +86,94 @@
       if (!url) { errorEl.textContent = 'Please enter your Home Assistant URL.'; return; }
       if (!token) { errorEl.textContent = 'Please enter your access token.'; return; }
 
-      localStorage.setItem('webhash_url', url);
-      localStorage.setItem('webhash_token', token);
-      haUrl   = url;
-      haToken = token;
+      localStorage.setItem('webhasp_url', url);
+      localStorage.setItem('webhasp_token', token);
 
-      overlay.classList.add('hidden');
-      loadConfig();
+      // Hard reload for cleanest possible startup with new credentials
+      window.location.reload();
     });
   }
 
   // ---- Config loading ---------------------------------------
   function loadConfig() {
-    var deviceParam = getUrlParam('device') || 'example';
-    var configUrl   = 'devices/' + deviceParam + '.json';
+    var deviceParam = getUrlParam('device');
+    var base        = window.location.pathname.replace(/\/[^\/]*$/, '/');
 
+    if (deviceParam) {
+      // Device explicitly specified in URL - load it directly
+      loadConfigFromUrl(base + 'devices/' + deviceParam + '.json?v=' + (window.WEBHASP_VERSION || Date.now()), deviceParam);
+    } else {
+      // No device specified - try default.json, fall back to landing page
+      console.log('WebHASP: no device specified, trying default.json');
+      fetchJson(base + 'devices/default.json?v=' + (window.WEBHASP_VERSION || Date.now()), function(err, data) {
+        if (!err && data) {
+          console.log('WebHASP: default.json found, loading');
+          applyConfig(data);
+        } else {
+          console.log('WebHASP: no default.json found, showing landing page');
+          showLandingPage(base);
+        }
+      });
+    }
+  }
+
+  function loadConfigFromUrl(configUrl, deviceParam) {
+    console.log('WebHASP loadConfig: fetching ' + configUrl);
     fetchJson(configUrl, function (err, data) {
       if (err) {
-        showFatalError('Could not load device config: ' + configUrl + '\n' + err);
+        showFatalError('Could not load device config: devices/' + deviceParam + '.json\n' + err);
         return;
       }
-      config = data;
-      setupCanvas();
-      setupPageNav();
-      renderPage(config.device.default_page || 1);
-      connectWebSocket();
-      startClock();
+      applyConfig(data);
     });
+  }
+
+  function applyConfig(data) {
+    console.log('WebHASP loadConfig: success, hiding setup overlay');
+    var overlay = document.getElementById('setup-overlay');
+    if (overlay) overlay.classList.add('hidden');
+    config = data;
+    setupCanvas();
+    setupPageNav();
+    renderPage(config.device.default_page || 1);
+    connectWebSocket();
+    startClock();
+  }
+
+  function showLandingPage(base) {
+    // Hide setup overlay if showing
+    var overlay = document.getElementById('setup-overlay');
+    if (overlay) overlay.classList.add('hidden');
+
+    // Hide canvas wrapper
+    var wrapper = document.getElementById('canvas-wrapper');
+    if (wrapper) wrapper.style.display = 'none';
+
+    // Build landing page
+    var landing = document.createElement('div');
+    landing.id = 'landing';
+    landing.innerHTML = [
+      '<div class="landing-inner">',
+      '  <div class="landing-logo">WebHASP</div>',
+      '  <div class="landing-tagline">Browser-based Home Assistant Dashboard</div>',
+      '  <div class="landing-divider"></div>',
+      '  <div class="landing-section">',
+      '    <div class="landing-label">No device specified</div>',
+      '    <div class="landing-hint">Access your dashboard using a <code>?device=</code> URL parameter:</div>',
+      '    <div class="landing-example">index.html?device=<em>your-device-name</em></div>',
+      '  </div>',
+      '  <div class="landing-section">',
+      '    <div class="landing-label">Device configs live here</div>',
+      '    <div class="landing-hint"><code>config/www/webhasp/devices/your-device-name.json</code></div>',
+      '  </div>',
+      '  <div class="landing-section">',
+      '    <div class="landing-label">Shortcut</div>',
+      '    <div class="landing-hint">Create a <code>devices/default.json</code> to load automatically when no device is specified.</div>',
+      '  </div>',
+      '</div>'
+    ].join('\n');
+
+    document.body.appendChild(landing);
   }
 
   function fetchJson(url, callback) {
@@ -120,21 +212,29 @@
   }
 
   function scaleCanvas() {
-    var canvas  = document.getElementById('canvas');
-    var cw      = config.device.canvas.width;
-    var ch      = config.device.canvas.height;
-    var scaleX  = window.innerWidth  / cw;
-    var scaleY  = window.innerHeight / ch;
-    var scale   = Math.min(scaleX, scaleY);
+    var canvas = document.getElementById('canvas');
+    var cw     = config.device.canvas.width;
+    var ch     = config.device.canvas.height;
 
-    // Center the scaled canvas
-    var scaledW = cw * scale;
-    var scaledH = ch * scale;
-    var offsetX = (window.innerWidth  - scaledW) / 2;
-    var offsetY = (window.innerHeight - scaledH) / 2;
+    var availW = window.innerWidth;
+    var availH = window.innerHeight;
 
-    canvas.style.webkitTransform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + scale + ')';
-    canvas.style.transform       = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + scale + ')';
+    // Scale to fit while preserving aspect ratio
+    var scale  = Math.min(availW / cw, availH / ch);
+
+    // Calculate centering offsets
+    var scaledW = Math.floor(cw * scale);
+    var scaledH = Math.floor(ch * scale);
+    var left    = Math.floor((availW - scaledW) / 2);
+    var top     = Math.floor((availH - scaledH) / 2);
+
+    canvas.style.position              = 'absolute';
+    canvas.style.left                  = left + 'px';
+    canvas.style.top                   = top  + 'px';
+    canvas.style.webkitTransformOrigin = '0 0';
+    canvas.style.transformOrigin       = '0 0';
+    canvas.style.webkitTransform       = 'scale(' + scale + ')';
+    canvas.style.transform             = 'scale(' + scale + ')';
   }
 
   // ---- Page rendering ---------------------------------------
@@ -145,7 +245,51 @@
     entityCallbacks = {};
 
     var canvas  = document.getElementById('canvas');
+    // Clear all snapshot timers and pending sign requests from previous page
+    for (var t = 0; t < activePageTimers.length; t++) {
+      clearInterval(activePageTimers[t].id);
+      if (activePageTimers[t].stop) activePageTimers[t].stop();
+      // Cancel any pending signed URL requests this timer may have in flight
+      if (activePageTimers[t].pendingIds) {
+        for (var p = 0; p < activePageTimers[t].pendingIds.length; p++) {
+          delete pendingStreamRequests[activePageTimers[t].pendingIds[p]];
+        }
+      }
+    }
+    activePageTimers = [];
     canvas.innerHTML = '';
+
+    // Page background image
+    var pageConfig = null;
+    for (var i = 0; i < config.pages.length; i++) {
+      if (config.pages[i].id === pageId) { pageConfig = config.pages[i]; break; }
+    }
+    if (pageConfig && pageConfig.background_image) {
+      var imgUrl = pageConfig.background_image;
+      // Relative paths resolved against webhasp root
+      if (imgUrl.indexOf('http') !== 0) {
+        var base = window.location.pathname.replace(/\/[^\/]*$/, '/');
+        imgUrl = base + imgUrl;
+      }
+      canvas.style.backgroundImage    = 'url(' + imgUrl + ')';
+      canvas.style.backgroundSize     = pageConfig.background_image_fit || 'cover';
+      canvas.style.backgroundPosition = 'center';
+      canvas.style.backgroundRepeat   = 'no-repeat';
+      // Optional dim layer via opacity on a pseudo-overlay div
+      var dimOpacity = pageConfig.background_image_opacity;
+      if (dimOpacity !== undefined && dimOpacity < 1) {
+        var dim = document.createElement('div');
+        dim.style.position   = 'absolute';
+        dim.style.top        = '0'; dim.style.left = '0';
+        dim.style.width      = '100%'; dim.style.height = '100%';
+        dim.style.background = '#000';
+        dim.style.opacity    = String(1 - dimOpacity);
+        dim.style.pointerEvents = 'none';
+        canvas.appendChild(dim);
+      }
+    } else {
+      canvas.style.backgroundImage = 'none';
+    }
 
     var pageConfig = null;
     for (var i = 0; i < config.pages.length; i++) {
@@ -193,6 +337,54 @@
         nav.appendChild(dot);
       })(config.pages[i]);
     }
+
+    setupSwipeNav();
+  }
+
+  // ---- Swipe gesture navigation ----------------------------
+  function setupSwipeNav() {
+    var canvas  = document.getElementById('canvas');
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchStartTime = 0;
+
+    // Any touch or click anywhere on the canvas resets the return timer
+    canvas.addEventListener('touchstart', function(e) {
+      resetReturnTimer();
+      touchStartX    = e.touches[0].clientX;
+      touchStartY    = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    }, { passive: true });
+
+    canvas.addEventListener('mousedown', function() {
+      resetReturnTimer();
+    });
+
+    canvas.addEventListener('touchend', function(e) {
+      var dx   = e.changedTouches[0].clientX - touchStartX;
+      var dy   = e.changedTouches[0].clientY - touchStartY;
+      var dt   = Date.now() - touchStartTime;
+      var adx  = Math.abs(dx);
+      var ady  = Math.abs(dy);
+
+      // Must be: horizontal, fast enough, long enough, not mostly vertical
+      if (dt > 500)  return;  // too slow - probably a press not a swipe
+      if (adx < 50)  return;  // too short
+      if (ady > adx) return;  // more vertical than horizontal - ignore
+
+      var pageIds = config.pages.map(function(p) { return p.id; });
+      var idx     = pageIds.indexOf(currentPage);
+
+      if (dx < 0 && idx < pageIds.length - 1) {
+        // Swipe left -> next page
+        navigateTo(pageIds[idx + 1]);
+        resetReturnTimer();
+      } else if (dx > 0 && idx > 0) {
+        // Swipe right -> previous page
+        navigateTo(pageIds[idx - 1]);
+        resetReturnTimer();
+      }
+    }, { passive: true });
   }
 
   function updatePageNav(pageId) {
@@ -252,29 +444,86 @@
     el.style.width  = w.w + 'px';
     el.style.height = w.h + 'px';
 
+    // Apply base opacity if specified
+    if (w.opacity !== undefined) {
+      el.style.opacity = w.opacity;
+    }
+
+    // Apply border if specified
+    if (w.border_width) {
+      el.style.borderWidth = w.border_width + 'px';
+      el.style.borderStyle = 'solid';
+      el.style.borderColor = resolveColor(w.border_color || 'surface2');
+      el.style.boxSizing   = 'border-box';
+    }
+
     switch (w.type) {
-      case 'label':  renderLabel(el, w);  break;
-      case 'rect':   renderRect(el, w);   break;
-      case 'bar':    renderBar(el, w);    break;
-      case 'button': renderButton(el, w); break;
-      case 'clock':  renderClock(el, w);  break;
+      case 'label':        renderLabel(el, w);       break;
+      case 'rect':         renderRectangle(el, w);   break;
+      case 'rectangle':    renderRectangle(el, w);   break;
+      case 'bar':          renderBar(el, w);          break;
+      case 'button':       renderButton(el, w);       break;
+      case 'clock':        renderClock(el, w);        break;
+      case 'image':        renderImage(el, w);        break;
+      case 'camera':       renderCamera(el, w);       break;
       default:
         el.style.background = 'rgba(255,0,0,0.3)';
         el.textContent = 'Unknown: ' + w.type;
     }
 
+    // Visibility condition - hide widget based on entity state
+    if (w.visible) {
+      applyVisibility(el, w);
+      if (w.visible.entity) {
+        registerEntityCallback(w.visible.entity, function(state) {
+          applyVisibility(el, w, state);
+        });
+      }
+    }
+
     canvas.appendChild(el);
+  }
+
+  function applyVisibility(el, w, state) {
+    var v = w.visible;
+    var entityState = state || entityStates[v.entity];
+    var val = entityState ? parseFloat(entityState.state) : null;
+    var strVal = entityState ? entityState.state : null;
+    var visible = true;
+
+    if (v.type === 'above')  visible = (val !== null && val > v.value);
+    if (v.type === 'below')  visible = (val !== null && val < v.value);
+    if (v.type === 'equals') visible = (strVal === String(v.value));
+    if (v.type === 'not_equals') visible = (strVal !== String(v.value));
+
+    el.style.display = visible ? '' : 'none';
   }
 
   // -- Label --
   function renderLabel(el, w) {
     el.className += ' widget-label align-' + (w.align || 'left');
-    el.style.color      = resolveColor(w.color      || 'text');
-    el.style.background = resolveColor(w.background || 'transparent');
-    el.style.fontSize   = (w.font_size || config.theme.font_size || 16) + 'px';
-    el.style.fontWeight = w.font_weight || '400';
-    el.style.padding    = '0 4px';
-    el.textContent = w.text || '';
+    el.style.color          = resolveColor(w.color      || 'text');
+    el.style.background     = resolveColor(w.background || 'transparent');
+    el.style.fontSize       = (w.font_size || config.theme.font_size || 16) + 'px';
+    el.style.fontWeight     = w.font_weight || '400';
+    el.style.padding        = '0 4px';
+    if (w.letter_spacing !== undefined) el.style.letterSpacing = w.letter_spacing + 'px';
+    if (w.opacity !== undefined)        el.style.opacity       = w.opacity;
+    var text = w.text !== undefined ? String(w.text) : '';
+
+    // Single raw FA codepoint (legacy) - apply font directly
+    if (text.length === 1 && text.charCodeAt(0) >= 0xF000 && text.charCodeAt(0) <= 0xF8FF) {
+      el.style.fontFamily = 'FontAwesome';
+      el.textContent = text;
+    } else {
+      // Handles plain text and [fa-name] icon tokens
+      buildTextContent(el, text);
+    }
+
+    // Labels without actions are transparent to taps - let clicks pass to widgets below
+    if (!w.action) {
+      el.style.pointerEvents = 'none';
+    }
 
     if (w.entity) {
       registerEntityCallback(w.entity, function (state) {
@@ -286,35 +535,93 @@
   function updateLabelFromState(el, w, state) {
     var val = state ? state.state : null;
 
-    // Apply text
-    el.textContent = formatValue(val, w);
-
-    // Apply state-based color if defined
-    var resolvedState = resolveWidgetState(w, state);
-    if (resolvedState && resolvedState.color) {
-      el.style.color = resolveColor(resolvedState.color);
+    // Apply text - handles plain text and [fa-name] icon tokens
+    var formatted = formatValue(val, w);
+    if (formatted.length === 1 && formatted.charCodeAt(0) >= 0xF000 && formatted.charCodeAt(0) <= 0xF8FF) {
+      el.style.fontFamily = 'FontAwesome';
+      el.textContent = formatted;
     } else {
-      el.style.color = resolveColor(w.color || 'text');
+      el.textContent = '';
+      buildTextContent(el, formatted);
+    }
+
+    // Apply state-based styles
+    var resolvedState = resolveWidgetState(w, state);
+    var s = resolvedState || {};
+    el.style.color   = resolveColor(s.color      || w.color      || 'text');
+    if (s.opacity   !== undefined) el.style.opacity       = s.opacity;
+    if (s.letter_spacing !== undefined) el.style.letterSpacing = s.letter_spacing + 'px';
+  }
+
+  // -- Rectangle --
+  function renderRectangle(el, w) {
+    el.className += ' widget-rectangle';
+    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    el.style.background   = resolveColor(w.background || 'surface');
+
+    // If no action, pass pointer events through so taps reach widgets below
+    if (!w.action) {
+      el.style.pointerEvents = 'none';
+    } else {
+      el.style.pointerEvents = 'auto';
+      el.style.cursor = 'pointer';
+
+      // Apply initial state styling
+      if (w.entity && w.states) {
+        var currentState = entityStates[w.entity];
+        if (currentState) {
+          applyRectangleState(el, w, currentState.state);
+        }
+      }
+
+      // Register entity callback for state-based styling
+      if (w.entity) {
+        registerEntityCallback(w.entity, function(state) {
+          applyRectangleState(el, w, state ? state.state : null);
+        });
+      }
+
+      // Tap handler
+      el.addEventListener('click', function() {
+        handleAction(w.action);
+        resetReturnTimer();
+      });
+
+      // Visual press feedback
+      el.addEventListener('mousedown',  function() { el.style.opacity = '0.75'; });
+      el.addEventListener('mouseup',    function() { el.style.opacity = '1'; });
+      el.addEventListener('mouseleave', function() { el.style.opacity = '1'; });
+      el.addEventListener('touchstart', function() { el.style.opacity = '0.75'; }, { passive: true });
+      el.addEventListener('touchend',   function() { el.style.opacity = '1'; });
     }
   }
 
-  // -- Rect --
-  function renderRect(el, w) {
-    el.className += ' widget-rect';
-    el.style.background  = resolveColor(w.background || 'surface');
-    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+  function applyRectangleState(el, w, stateVal) {
+    var states = w.states || {};
+    var s = states[stateVal] || states['default'] || {};
+    el.style.background = resolveColor(s.background || w.background || 'surface');
+    if (s.opacity      !== undefined) el.style.opacity     = s.opacity;
+    if (s.border_color !== undefined) el.style.borderColor = resolveColor(s.border_color);
+    if (s.border_width !== undefined) {
+      el.style.borderWidth = s.border_width + 'px';
+      el.style.borderStyle = 'solid';
+      el.style.boxSizing   = 'border-box';
+    }
   }
 
   // -- Bar --
   function renderBar(el, w) {
     el.className += ' widget-bar';
-    el.style.background   = 'transparent';
-    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    var radius = (w.radius !== undefined ? w.radius : 0) + 'px';
+
+    // Track (background) - built into the widget, no separate rect needed
+    el.style.background   = resolveColor(w.track_color || 'surface2');
+    el.style.borderRadius = radius;
     el.style.overflow     = 'hidden';
 
     var fill = document.createElement('div');
     fill.className = 'widget-bar-fill';
-    fill.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    fill.style.borderRadius = radius;
     fill.style.background   = '#008000';
     el.appendChild(fill);
 
@@ -358,8 +665,22 @@
     var labelEl = document.createElement('div');
     iconEl.className  = 'btn-icon';
     labelEl.className = 'btn-label';
-    iconEl.textContent  = w.icon_off || '';
-    labelEl.textContent = w.label    || '';
+
+    // setButtonIcon resolves [fa-name] tokens or raw FA codepoints
+    function setButtonIcon(icon) {
+      var ch = icon || '';
+      // Raw FA codepoint - set font directly
+      if (ch.length === 1 && ch.charCodeAt(0) >= 0xF000 && ch.charCodeAt(0) <= 0xF8FF) {
+        iconEl.style.fontFamily = 'FontAwesome';
+        iconEl.textContent = ch;
+      } else {
+        iconEl.style.fontFamily = '';
+        buildTextContent(iconEl, ch);
+      }
+    }
+
+    setButtonIcon(w.icon_off || '');
+    buildTextContent(labelEl, w.label || '');
 
     el.appendChild(iconEl);
     el.appendChild(labelEl);
@@ -371,15 +692,21 @@
       registerEntityCallback(w.entity, function (state) {
         var stateVal = state ? state.state : 'off';
         applyButtonState(el, iconEl, labelEl, w, stateVal);
-        iconEl.textContent = (stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || '');
+        setButtonIcon((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
       });
     }
 
     if (w.action) {
       el.addEventListener('click', function () {
-        callService(w.action.service, w.action.entity_id || w.entity);
+        handleAction(w.action);
         resetReturnTimer();
       });
+      el.style.cursor = 'pointer';
+      el.addEventListener('mousedown',  function() { el.style.opacity = '0.75'; });
+      el.addEventListener('mouseup',    function() { el.style.opacity = '1'; });
+      el.addEventListener('mouseleave', function() { el.style.opacity = '1'; });
+      el.addEventListener('touchstart', function() { el.style.opacity = '0.75'; }, { passive: true });
+      el.addEventListener('touchend',   function() { el.style.opacity = '1'; });
     }
   }
 
@@ -392,6 +719,364 @@
     labelEl.style.color   = resolveColor(s.label_color || w.label_color || 'text_dim');
   }
 
+  // -- Image widget --
+  // Displays a static or URL-sourced image. Optional fullscreen on tap.
+  function renderImage(el, w) {
+    el.className += ' widget-image';
+    el.style.overflow     = 'hidden';
+    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    el.style.background   = '#000';
+    el.style.cursor       = w.fullscreen_on_tap ? 'pointer' : 'default';
+
+    var img = document.createElement('img');
+    img.style.width     = '100%';
+    img.style.height    = '100%';
+    img.style.objectFit = w.fit || 'cover';
+    img.style.display   = 'block';
+    img.src = w.url || '';
+    el.appendChild(img);
+
+    if (w.fullscreen_on_tap) {
+      el.addEventListener('click', function() {
+        openFullscreenImage(w.url, null);
+      });
+    }
+  }
+
+  // -- Camera widget --
+  //
+  // preview modes:
+  //   "mjpeg"    - persistent MJPEG stream in an <img> tag via HA proxy (default, most efficient)
+  //   "snapshot" - polling snapshot, configurable interval (default 3s)
+  //   "poster"   - single snapshot refreshed every 60s, overlays a play button
+  //   "url"      - direct URL you supply, no HA auth needed
+  //
+  // Tapping always opens a fullscreen HLS stream.
+  //
+  function renderCamera(el, w) {
+    el.className += ' widget-image';
+    el.style.overflow     = 'hidden';
+    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    el.style.background   = '#111';
+    el.style.cursor       = 'pointer';
+
+    var preview = w.preview || 'mjpeg';
+    var snapshotEntity = w.snapshot_entity || w.entity;
+    var streamEntity   = w.stream_entity   || w.entity;
+
+    // Build the preview area based on mode
+    if (preview === 'mjpeg') {
+      renderCameraMjpeg(el, w, streamEntity);
+    } else if (preview === 'snapshot') {
+      renderCameraSnapshot(el, w, snapshotEntity, w.refresh_interval || 3000);
+    } else if (preview === 'poster') {
+      renderCameraSnapshot(el, w, snapshotEntity, w.refresh_interval || 60000, true);
+    } else if (preview === 'url') {
+      renderCameraDirectUrl(el, w);
+    }
+
+    // Tap -> fullscreen HLS stream
+    el.addEventListener('click', function() {
+      openFullscreenStream(streamEntity, w);
+    });
+  }
+
+  // MJPEG preview - one persistent connection, browser renders frames automatically
+  function renderCameraMjpeg(el, w, entity) {
+    var img = document.createElement('img');
+    img.style.width     = '100%';
+    img.style.height    = '100%';
+    img.style.objectFit = w.fit || 'cover';
+    img.style.display   = 'block';
+    el.appendChild(img);
+
+    var loader = document.createElement('div');
+    loader.className   = 'camera-loader';
+    loader.textContent = '';
+    el.appendChild(loader);
+
+    // Request a signed MJPEG stream URL - one sign per session, stream stays open
+    var path = '/api/camera_proxy_stream/' + entity;
+    requestSignedUrl(path, 3600, function(url) {
+      if (!url) { loader.textContent = ''; return; }
+      img.onload = function() { loader.style.display = 'none'; };
+      img.onerror = function() { loader.textContent = ''; };
+      img.src = url;
+    });
+
+    // MJPEG streams don't need polling - no timer to register
+  }
+
+  // Snapshot preview - polls at interval, optionally overlays a play button (poster mode)
+  function renderCameraSnapshot(el, w, entity, interval, showPlayButton) {
+    var img = document.createElement('img');
+    img.style.width     = '100%';
+    img.style.height    = '100%';
+    img.style.objectFit = w.fit || 'cover';
+    img.style.display   = 'block';
+    el.appendChild(img);
+
+    var loader = document.createElement('div');
+    loader.className   = 'camera-loader';
+    loader.textContent = '';
+    el.appendChild(loader);
+
+    if (showPlayButton) {
+      var playBtn = document.createElement('div');
+      playBtn.className = 'camera-play-btn';
+      playBtn.textContent = '';  // FA play-circle
+      el.appendChild(playBtn);
+    }
+
+    var active = true;
+    var pendingSignIds = [];
+
+    var fetchSnapshot = function() {
+      if (!active || !entity) return;
+
+      // Use camera entity's access_token from state cache - no WS round-trip
+      var state = entityStates[entity];
+      var token = state && state.attributes && state.attributes.access_token;
+
+      if (token) {
+        var url = haUrl + '/api/camera_proxy/' + entity
+                + '?token=' + token + '&t=' + Date.now();
+        var nextImg = new Image();
+        nextImg.onload = function() {
+          if (!active) return;
+          img.src = nextImg.src;
+          loader.style.display = 'none';
+        };
+        nextImg.onerror = function() {
+          if (!active) return;
+          if (entityStates[entity] && entityStates[entity].attributes) {
+            entityStates[entity].attributes.access_token = null;
+          }
+        };
+        nextImg.src = url;
+      } else {
+        // Token not in cache yet - fetch entity state once then sign the path
+        // Use a flag on the element to avoid hammering fetchEntityState every tick
+        if (!el._stateFetched) {
+          el._stateFetched = true;
+          fetchEntityState(entity);
+        }
+        var path   = '/api/camera_proxy/' + entity;
+        var ttl    = Math.ceil(interval / 1000) + 5;
+        var signId = requestSignedUrl(path, ttl, function(signedUrl) {
+          var i = pendingSignIds.indexOf(signId);
+          if (i !== -1) pendingSignIds.splice(i, 1);
+          if (!signedUrl || !active) return;
+          var fb = new Image();
+          fb.onload = function() { if (!active) return; img.src = fb.src; loader.style.display = 'none'; };
+          fb.src = signedUrl;
+        });
+        pendingSignIds.push(signId);
+      }
+    };
+
+    fetchSnapshot();
+    var timer = setInterval(fetchSnapshot, interval);
+    activePageTimers.push({
+      id:         timer,
+      stop:       function() { active = false; },
+      pendingIds: pendingSignIds
+    });
+  }
+
+  // Direct URL preview - for Reolink/ONVIF/any camera with a direct HTTP endpoint
+  // Note: if HA is served over HTTP and camera is HTTPS with a self-signed cert,
+  // the browser will block the request silently. Either:
+  //   a) use HTTP for the camera URL, or
+  //   b) visit the camera IP directly in the browser once to accept the certificate
+  function renderCameraDirectUrl(el, w) {
+    var img = document.createElement('img');
+    img.style.width     = '100%';
+    img.style.height    = '100%';
+    img.style.objectFit = w.fit || 'cover';
+    img.style.display   = 'block';
+
+    var loader = document.createElement('div');
+    loader.className   = 'camera-loader';
+    loader.textContent = '';
+    el.appendChild(img);
+    el.appendChild(loader);
+
+    var url = w.url || '';
+
+    img.onload  = function() { loader.style.display = 'none'; };
+    img.onerror = function() {
+      loader.style.display = 'flex';
+      loader.textContent   = '';  // warning - likely cert or mixed content
+    };
+
+    var active = true;
+    var doFetch = function() {
+      if (!active) return;
+      // Always bust cache - the rs= param in Reolink URLs isn't enough
+      img.src = url + (url.indexOf('?') !== -1 ? '&' : '?') + '_t=' + Date.now();
+    };
+
+    doFetch();
+
+    if (w.refresh_interval) {
+      var timer = setInterval(doFetch, w.refresh_interval);
+      activePageTimers.push({ id: timer, stop: function() { active = false; } });
+    }
+
+    if (w.preview === 'poster') {
+      var playBtn = document.createElement('div');
+      playBtn.className   = 'camera-play-btn';
+      playBtn.textContent = '';
+      el.appendChild(playBtn);
+    }
+  }
+
+  // ---- Fullscreen overlay ----------------------------------
+
+  function openFullscreenImage(url, title) {
+    var overlay = buildFullscreenOverlay(title);
+    var img = document.createElement('img');
+    img.style.maxWidth  = '100%';
+    img.style.maxHeight = '100%';
+    img.style.objectFit = 'contain';
+    img.src = url;
+    overlay.content.appendChild(img);
+    document.body.appendChild(overlay.el);
+  }
+
+  function openFullscreenStream(entity, w) {
+    var overlay = buildFullscreenOverlay(w.label || entity);
+
+    var loader = document.createElement('div');
+    loader.className   = 'camera-loader';
+    loader.textContent = '';
+    loader.style.position = 'relative';
+    loader.style.width    = '100%';
+    loader.style.height   = '100%';
+    overlay.content.appendChild(loader);
+    document.body.appendChild(overlay.el);
+
+    var streamMsgId = msgId++;
+    pendingStreamRequests[streamMsgId] = function(result) {
+      if (!result || !result.url) {
+        loader.textContent = '';
+        return;
+      }
+      var streamUrl = haUrl + result.url;
+      loader.style.display = 'none';
+
+      var video = document.createElement('video');
+      video.style.width     = '100%';
+      video.style.height    = '100%';
+      video.style.objectFit = 'contain';
+      video.style.background = '#000';
+      video.autoplay    = true;
+      video.playsInline = true;
+      video.controls    = true;
+      video.muted       = false;
+      video.loop        = true;
+
+      overlay.content.appendChild(video);
+
+      function startPlayback() {
+        video.play().catch(function() {
+          video.muted = true;
+          video.play();
+        });
+      }
+
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS - Safari and iOS
+        video.src = streamUrl;
+        startPlayback();
+      } else if (window.Hls && window.Hls.isSupported()) {
+        var hls = new window.Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        hls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+        overlay.el.addEventListener('overlay-close', function() { hls.destroy(); });
+      } else {
+        // Load HLS.js dynamically - only fetched once then cached by browser
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js';
+        script.onload = function() {
+          if (window.Hls.isSupported()) {
+            var hls = new window.Hls();
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+            overlay.el.addEventListener('overlay-close', function() { hls.destroy(); });
+          } else {
+            loader.textContent = '';
+            loader.style.display = 'flex';
+          }
+        };
+        script.onerror = function() {
+          loader.textContent = '';
+          loader.style.display = 'flex';
+        };
+        document.head.appendChild(script);
+      }
+
+      overlay.el.addEventListener('overlay-close', function() {
+        video.pause();
+        video.src = '';
+      });
+    };
+
+    wsSend({ id: streamMsgId, type: 'camera/stream', entity_id: entity });
+  }
+
+  function buildFullscreenOverlay(title) {
+    var overlay = document.createElement('div');
+    overlay.className = 'fs-overlay';
+
+    var header = document.createElement('div');
+    header.className = 'fs-header';
+
+    var titleEl = document.createElement('span');
+    titleEl.className   = 'fs-title';
+    titleEl.textContent = title || '';
+    header.appendChild(titleEl);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className        = 'fs-close';
+    closeBtn.textContent      = '';
+    closeBtn.style.fontFamily = 'FontAwesome';
+    closeBtn.addEventListener('click', function() {
+      overlay.dispatchEvent(new CustomEvent('overlay-close'));
+      document.body.removeChild(overlay);
+      resetReturnTimer();
+    });
+    header.appendChild(closeBtn);
+    overlay.appendChild(header);
+
+    var content = document.createElement('div');
+    content.className = 'fs-content';
+    overlay.appendChild(content);
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        overlay.dispatchEvent(new CustomEvent('overlay-close'));
+        document.body.removeChild(overlay);
+        resetReturnTimer();
+      }
+    });
+
+    return { el: overlay, content: content };
+  }
+
+  // Request signed URL helper (used by camera snapshot)
+  // Returns the msgId so callers can track and cancel if needed
+  function requestSignedUrl(path, expires, cb) {
+    var id = msgId++;
+    pendingStreamRequests[id] = function(result) {
+      cb(result && result.path ? haUrl + result.path : null);
+    };
+    wsSend({ id: id, type: 'auth/sign_path', path: path, expires: expires || 20 });
+    return id;
+  }
   // -- Clock --
   function renderClock(el, w) {
     el.className += ' widget-clock';
@@ -464,6 +1149,183 @@
     return null;
   }
 
+  // ---- Font Awesome 4 icon rendering ----------------------
+  // Supports [fa-fire] or [fa fa-fire] syntax in label text.
+  // Full FA4 icon list: https://fontawesome.com/v4/icons/
+
+  var FA_ICONS = {
+    // Common UI
+    'fa-home':            '',
+    'fa-cog':             '',
+    'fa-cogs':            '',
+    'fa-bell':            '',
+    'fa-bell-slash':      '',
+    'fa-search':          '',
+    'fa-times':           '',
+    'fa-check':           '',
+    'fa-plus':            '',
+    'fa-minus':           '',
+    'fa-bars':            '',
+    'fa-ellipsis-h':      '',
+    'fa-ellipsis-v':      '',
+    'fa-chevron-left':    '',
+    'fa-chevron-right':   '',
+    'fa-chevron-up':      '',
+    'fa-chevron-down':    '',
+    'fa-arrow-left':      '',
+    'fa-arrow-right':     '',
+    'fa-arrow-up':        '',
+    'fa-arrow-down':      '',
+    'fa-refresh':         '',
+    'fa-info-circle':     '',
+    'fa-warning':         '',
+    'fa-exclamation':     '',
+    'fa-question':        '',
+    'fa-lock':            '',
+    'fa-unlock':          '',
+    'fa-eye':             '',
+    'fa-eye-slash':       '',
+    // Lighting & power
+    'fa-lightbulb-o':     '',
+    'fa-bolt':            '',
+    'fa-power-off':       '',
+    'fa-toggle-on':       '',
+    'fa-toggle-off':      '',
+    'fa-plug':            '',
+    'fa-battery-full':    '',
+    'fa-battery-three-quarters': '',
+    'fa-battery-half':    '',
+    'fa-battery-quarter': '',
+    'fa-battery-empty':   '',
+    // Climate & environment
+    'fa-thermometer':     '',
+    'fa-thermometer-full':'',
+    'fa-thermometer-half':'',
+    'fa-fire':            '',
+    'fa-snowflake-o':     '',
+    'fa-sun-o':           '',
+    'fa-moon-o':          '',
+    'fa-cloud':           '',
+    'fa-umbrella':        '',
+    'fa-tint':            '',
+    'fa-wind':            '',  // closest in FA4
+    'fa-leaf':            '',
+    // Security & cameras
+    'fa-camera':          '',
+    'fa-video-camera':    '',
+    'fa-shield':          '',
+    'fa-lock':            '',
+    'fa-unlock-alt':      '',
+    'fa-user':            '',
+    'fa-users':           '',
+    'fa-street-view':     '',
+    'fa-map-marker':      '',
+    // Media & entertainment
+    'fa-play':            '',
+    'fa-pause':           '',
+    'fa-stop':            '',
+    'fa-play-circle':     '',
+    'fa-play-circle-o':   '',
+    'fa-volume-up':       '',
+    'fa-volume-down':     '',
+    'fa-volume-off':      '',
+    'fa-music':           '',
+    'fa-television':      '',
+    'fa-film':            '',
+    // Energy & solar
+    'fa-solar-panel':     '',  // FA4 has no solar-panel, sun-o is closest
+    'fa-industry':        '',
+    'fa-recycle':         '',
+    'fa-dashboard':       '',
+    'fa-tachometer':      '',
+    // Arrows & indicators
+    'fa-arrow-circle-up':   '',
+    'fa-arrow-circle-down': '',
+    'fa-level-up':          '',
+    'fa-level-down':        '',
+    'fa-exchange':          '',
+    // Misc household
+    'fa-car':             '',
+    'fa-bicycle':         '',
+    'fa-bed':             '',
+    'fa-bath':            '',
+    'fa-cutlery':         '',
+    'fa-coffee':          '',
+    'fa-clock-o':         '',
+    'fa-calendar':        '',
+    'fa-map':             '',
+    'fa-wifi':            '',
+    'fa-mobile':          '',
+    'fa-tablet':          '',
+    'fa-desktop':         '',
+    'fa-trash':           '',
+    'fa-pencil':          '',
+    'fa-wrench':          '',
+    'fa-flag':            '',
+    'fa-star':            '',
+    'fa-heart':           '',
+    'fa-envelope':        '',
+  };
+
+  // Replace [fa-name] or [fa fa-name] tokens in a string with FA icon characters.
+  // Returns an array of {text, isIcon} segments for rendering as mixed spans.
+  function parseIconText(str) {
+    var segments = [];
+    var re = /\[fa(?:\s+fa)?-([\w-]+)\]/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(str)) !== null) {
+      if (m.index > last) {
+        segments.push({ text: str.slice(last, m.index), isIcon: false });
+      }
+      var key = 'fa-' + m[1];
+      var ch  = FA_ICONS[key];
+      if (ch) {
+        segments.push({ text: ch, isIcon: true });
+      } else {
+        // Unknown icon - show as-is so the user knows something is wrong
+        segments.push({ text: m[0], isIcon: false });
+      }
+      last = m.index + m[0].length;
+    }
+    if (last < str.length) {
+      segments.push({ text: str.slice(last), isIcon: false });
+    }
+    return segments;
+  }
+
+  // Build a DOM element (span or text node) from a parsed text string.
+  // If the string contains icon tokens, returns a <span> with mixed children.
+  // Otherwise returns a plain text node (zero overhead for simple labels).
+  function buildTextContent(el, str) {
+    var segments = parseIconText(str);
+    var hasIcons = segments.some(function(s) { return s.isIcon; });
+
+    if (!hasIcons) {
+      el.textContent = str;
+      return;
+    }
+
+    el.textContent = '';
+    for (var i = 0; i < segments.length; i++) {
+      var s = segments[i];
+      if (s.isIcon) {
+        var span = document.createElement('span');
+        span.style.fontFamily = 'FontAwesome';
+        span.textContent = s.text;
+        // Add a small gap after the icon if the next segment is non-empty text
+        // that doesn't already start with a space
+        var next = segments[i + 1];
+        if (next && next.text && next.text[0] !== ' ') {
+          span.style.marginRight = '0.3em';
+        }
+        el.appendChild(span);
+      } else if (s.text) {
+        el.appendChild(document.createTextNode(s.text));
+      }
+    }
+  }
+
   // ---- Theme / color resolution ----------------------------
   function resolveColor(token) {
     if (!token) return 'transparent';
@@ -490,10 +1352,14 @@
 
   function subscribeToPageEntities(pageConfig) {
     // Collect unique entity IDs referenced on this page
+    // including camera-specific fields
     var entities = {};
     for (var i = 0; i < pageConfig.widgets.length; i++) {
       var w = pageConfig.widgets[i];
-      if (w.entity) entities[w.entity] = true;
+      if (w.entity)          entities[w.entity]          = true;
+      if (w.snapshot_entity) entities[w.snapshot_entity] = true;
+      if (w.stream_entity)   entities[w.stream_entity]   = true;
+      if (w.visible && w.visible.entity) entities[w.visible.entity] = true;
     }
 
     // If WS is ready, subscribe to state_changed for these entities
@@ -509,13 +1375,24 @@
   }
 
   function fetchEntityState(entityId) {
-    if (!ws || ws.readyState !== 1) return;
-    var id = msgId++;
-    ws.send(JSON.stringify({
-      id: id,
-      type: 'get_states'
-    }));
-    // We'll handle the response in onmessage by checking all states
+    // Fetch a single entity's current state via REST - avoids re-fetching all states
+    var url = haUrl + '/api/states/' + entityId;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + haToken);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try {
+          var state = JSON.parse(xhr.responseText);
+          entityStates[state.entity_id] = state;
+          if (entityCallbacks[state.entity_id]) {
+            var cbs = entityCallbacks[state.entity_id];
+            for (var i = 0; i < cbs.length; i++) cbs[i](state);
+          }
+        } catch(e) {}
+      }
+    };
+    xhr.send();
   }
 
   // ---- WebSocket connection ---------------------------------
@@ -552,27 +1429,47 @@
     };
   }
 
+    // Safe WebSocket send - never throws even if socket is closing
+  function wsSend(payload) {
+    try {
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify(payload));
+      }
+    } catch(e) {
+      console.warn('WebHASP: wsSend failed:', e.message);
+    }
+  }
+
   function handleWsMessage(msg) {
+    console.log('WebHASP WS:', msg.type);
     switch (msg.type) {
       case 'auth_required':
-        ws.send(JSON.stringify({ type: 'auth', access_token: haToken }));
+        console.log('WebHASP: authenticating, token length:', haToken.length);
+        wsSend({ type: 'auth', access_token: haToken });
         break;
 
       case 'auth_ok':
         setConnStatus('connected');
-        // Fetch all states at once then subscribe to changes
         fetchAllStates();
         subscribeStateChanged();
         break;
 
       case 'auth_invalid':
+        // Do NOT clear the token - it may be a stale socket issue
+        // Just log and show setup so user can retry
+        console.warn('WebHASP: auth_invalid received');
         setConnStatus('disconnected');
-        // Clear stored token so setup screen shows
-        localStorage.removeItem('webhash_token');
         showSetup();
         break;
 
       case 'result':
+        // Handle camera/stream responses
+        if (pendingStreamRequests[msg.id]) {
+          var streamCb = pendingStreamRequests[msg.id];
+          delete pendingStreamRequests[msg.id];
+          streamCb(msg.success ? msg.result : null);
+          break;
+        }
         if (msg.success && msg.result && Array.isArray(msg.result)) {
           // This is the get_states response
           for (var i = 0; i < msg.result.length; i++) {
@@ -611,33 +1508,55 @@
   }
 
   function fetchAllStates() {
-    var id = msgId++;
-    ws.send(JSON.stringify({ id: id, type: 'get_states' }));
+    wsSend({ id: msgId++, type: 'get_states' });
   }
 
   function subscribeStateChanged() {
-    if (wsSubscriptionId) return; // Already subscribed
+    if (wsSubscriptionId) return;
     var id = msgId++;
     wsSubscriptionId = id;
-    ws.send(JSON.stringify({
-      id: id,
-      type: 'subscribe_events',
-      event_type: 'state_changed'
-    }));
+    wsSend({ id: id, type: 'subscribe_events', event_type: 'state_changed' });
   }
 
   function callService(serviceDomain, entityId) {
-    if (!ws || ws.readyState !== 1) return;
-    var parts   = serviceDomain.split('.');
-    var domain  = parts[0];
-    var service = parts[1];
-    ws.send(JSON.stringify({
-      id: msgId++,
-      type: 'call_service',
-      domain: domain,
-      service: service,
-      target: { entity_id: entityId }
-    }));
+    var parts = serviceDomain.split('.');
+    wsSend({ id: msgId++, type: 'call_service', domain: parts[0], service: parts[1], target: { entity_id: entityId } });
+  }
+
+  // Handle any action type - service call, page navigation, or automation trigger
+  function handleAction(action) {
+    if (!action) return;
+
+    // Support legacy format: { service, entity_id } with no type field
+    var type = action.type || 'service';
+
+    if (type === 'navigate') {
+      navigateTo(action.page);
+      return;
+    }
+
+    if (type === 'automation') {
+      wsSend({ id: msgId++, type: 'call_service', domain: 'automation', service: 'trigger',
+               target: { entity_id: action.entity_id } });
+      return;
+    }
+
+    if (type === 'service') {
+      var svc = action.service || '';
+      var parts = svc.split('.');
+      if (parts.length === 2) {
+        var payload = { id: msgId++, type: 'call_service', domain: parts[0], service: parts[1] };
+        if (action.entity_id) payload.target = { entity_id: action.entity_id };
+        if (action.data)      payload.service_data = action.data;
+        wsSend(payload);
+      }
+      return;
+    }
+
+    // Shorthand: { service: 'domain.service', entity_id: ... } without explicit type
+    if (action.service) {
+      handleAction({ type: 'service', service: action.service, entity_id: action.entity_id, data: action.data });
+    }
   }
 
   function scheduleReconnect() {

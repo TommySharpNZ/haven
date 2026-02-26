@@ -1,0 +1,1824 @@
+{
+  "version": "1.0",
+  "ha": {
+    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
+    "url": "http://your-homeassistant-ip:8123",
+    "token": "your-long-lived-access-token-here"
+  },
+  "device": {
+    "name": "WebHASP Showcase",
+    "canvas": {
+      "width": 800,
+      "height": 480
+    },
+    "orientation": "landscape",
+    "default_page": 1,
+    "return_to_default": 600
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Welcome",
+      "widgets": [
+        {
+          "id": "logo",
+          "type": "label",
+          "x": 0,
+          "y": 60,
+          "w": 800,
+          "h": 80,
+          "text": "WebHASP",
+          "font_size": 72,
+          "align": "center",
+          "color": "primary",
+          "background": "background"
+        },
+        {
+          "id": "tagline",
+          "type": "label",
+          "x": 0,
+          "y": 148,
+          "w": 800,
+          "h": 36,
+          "text": "A browser-based dashboard for Home Assistant",
+          "font_size": 20,
+          "align": "center",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "divider",
+          "type": "rectangle",
+          "x": 280,
+          "y": 200,
+          "w": 240,
+          "h": 2,
+          "background": "surface2",
+          "radius": 1
+        },
+        {
+          "id": "desc1",
+          "type": "label",
+          "x": 60,
+          "y": 220,
+          "w": 680,
+          "h": 28,
+          "text": "Pixel-perfect fixed-canvas layouts driven entirely by JSON config files.",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc2",
+          "type": "label",
+          "x": 60,
+          "y": 252,
+          "w": 680,
+          "h": 28,
+          "text": "No addons. No automations. Just drop files into your HA www folder.",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc3",
+          "type": "label",
+          "x": 60,
+          "y": 284,
+          "w": 680,
+          "h": 28,
+          "text": "Works on tablets, iPads, smart TVs, and any device with a browser.",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "nav_hint",
+          "type": "label",
+          "x": 0,
+          "y": 430,
+          "w": 800,
+          "h": 28,
+          "text": "Use the dots below to navigate between pages",
+          "font_size": 14,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 340,
+          "y": 360,
+          "w": 120,
+          "h": 48,
+          "font_size": 36,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Labels",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Widget: Label",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 10,
+          "y": 8,
+          "w": 100,
+          "h": 30,
+          "font_size": 20,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 760,
+          "h": 24,
+          "text": "Labels display text and can bind to any HA entity. Values update in real time via WebSocket.",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "plain_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 88,
+          "w": 360,
+          "h": 80,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "plain_title",
+          "type": "label",
+          "x": 30,
+          "y": 94,
+          "w": 200,
+          "h": 24,
+          "text": "Static label",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "plain_label",
+          "type": "label",
+          "x": 30,
+          "y": 118,
+          "w": 340,
+          "h": 40,
+          "text": "Hello, WebHASP!",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "entity_box",
+          "type": "rectangle",
+          "x": 420,
+          "y": 88,
+          "w": 360,
+          "h": 80,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "entity_title",
+          "type": "label",
+          "x": 430,
+          "y": 94,
+          "w": 340,
+          "h": 24,
+          "text": "Entity binding: sensor.outdoor_temperature",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "entity_label",
+          "type": "label",
+          "x": 430,
+          "y": 118,
+          "w": 340,
+          "h": 40,
+          "text": "--",
+          "font_size": 28,
+          "align": "left",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.outdoor_temperature"
+        },
+        {
+          "id": "format_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 184,
+          "w": 760,
+          "h": 80,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "format_title",
+          "type": "label",
+          "x": 30,
+          "y": 190,
+          "w": 740,
+          "h": 24,
+          "text": "Built-in formats: power, kwh, percent  -  auto-switch from W to kW at 1000",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "format_power",
+          "type": "label",
+          "x": 30,
+          "y": 218,
+          "w": 180,
+          "h": 36,
+          "text": "-- w",
+          "font_size": 24,
+          "align": "center",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.solar_power",
+          "format": "power"
+        },
+        {
+          "id": "format_kwh",
+          "type": "label",
+          "x": 230,
+          "y": 218,
+          "w": 180,
+          "h": 36,
+          "text": "-- kWh",
+          "font_size": 24,
+          "align": "center",
+          "color": "warning",
+          "background": "surface",
+          "entity": "sensor.daily_energy",
+          "format": "kwh"
+        },
+        {
+          "id": "format_pct",
+          "type": "label",
+          "x": 430,
+          "y": 218,
+          "w": 180,
+          "h": 36,
+          "text": "--%",
+          "font_size": 24,
+          "align": "center",
+          "color": "#1196ee",
+          "background": "surface",
+          "entity": "sensor.battery_level",
+          "format": "percent"
+        },
+        {
+          "id": "state_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 280,
+          "w": 760,
+          "h": 160,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "state_title",
+          "type": "label",
+          "x": 30,
+          "y": 286,
+          "w": 740,
+          "h": 24,
+          "text": "State-based color  -  color changes based on entity value threshold",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "state_label1",
+          "type": "label",
+          "x": 30,
+          "y": 318,
+          "w": 220,
+          "h": 60,
+          "text": "-- w",
+          "font_size": 36,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.solar_power",
+          "format": "power",
+          "states": {
+            "generating": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "generating"
+          }
+        },
+        {
+          "id": "state_hint1",
+          "type": "label",
+          "x": 30,
+          "y": 370,
+          "w": 220,
+          "h": 24,
+          "text": "grey at 0, green above 0",
+          "font_size": 12,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface"
+        },
+        {
+          "id": "state_label2",
+          "type": "label",
+          "x": 290,
+          "y": 318,
+          "w": 220,
+          "h": 60,
+          "text": "--%",
+          "font_size": 36,
+          "align": "center",
+          "color": "danger",
+          "background": "surface",
+          "entity": "sensor.battery_level",
+          "format": "percent",
+          "states": {
+            "ok": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 20,
+            "state_key": "ok"
+          }
+        },
+        {
+          "id": "state_hint2",
+          "type": "label",
+          "x": 290,
+          "y": 370,
+          "w": 220,
+          "h": 24,
+          "text": "red below 20%, green above",
+          "font_size": 12,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface"
+        },
+        {
+          "id": "state_label3",
+          "type": "label",
+          "x": 550,
+          "y": 318,
+          "w": 200,
+          "h": 60,
+          "text": "--",
+          "font_size": 36,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface",
+          "entity": "sensor.outdoor_temperature"
+        },
+        {
+          "id": "state_hint3",
+          "type": "label",
+          "x": 550,
+          "y": 370,
+          "w": 200,
+          "h": 24,
+          "text": "raw entity state, no format",
+          "font_size": 12,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Rectangle",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Widget: Rectangle",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 10,
+          "y": 8,
+          "w": 100,
+          "h": 30,
+          "font_size": 20,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 760,
+          "h": 24,
+          "text": "Rect is a plain colored rectangle. Used for panel backgrounds, dividers, and decorative elements.",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "r1",
+          "type": "rectangle",
+          "x": 20,
+          "y": 96,
+          "w": 160,
+          "h": 100,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "l1",
+          "type": "label",
+          "x": 20,
+          "y": 206,
+          "w": 160,
+          "h": 24,
+          "text": "radius: 0",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "r2",
+          "type": "rectangle",
+          "x": 210,
+          "y": 96,
+          "w": 160,
+          "h": 100,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "l2",
+          "type": "label",
+          "x": 210,
+          "y": 206,
+          "w": 160,
+          "h": 24,
+          "text": "radius: 8",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "r3",
+          "type": "rectangle",
+          "x": 400,
+          "y": 96,
+          "w": 160,
+          "h": 100,
+          "background": "surface",
+          "radius": 20
+        },
+        {
+          "id": "l3",
+          "type": "label",
+          "x": 400,
+          "y": 206,
+          "w": 160,
+          "h": 24,
+          "text": "radius: 20",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "r4",
+          "type": "rectangle",
+          "x": 590,
+          "y": 96,
+          "w": 160,
+          "h": 100,
+          "background": "surface",
+          "radius": 50
+        },
+        {
+          "id": "l4",
+          "type": "label",
+          "x": 590,
+          "y": 206,
+          "w": 160,
+          "h": 24,
+          "text": "radius: 50",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "colors_label",
+          "type": "label",
+          "x": 20,
+          "y": 248,
+          "w": 760,
+          "h": 24,
+          "text": "Any theme token or hex color as background:",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc1",
+          "type": "rectangle",
+          "x": 20,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "primary",
+          "radius": 8
+        },
+        {
+          "id": "lc1",
+          "type": "label",
+          "x": 20,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "primary",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc2",
+          "type": "rectangle",
+          "x": 140,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "warning",
+          "radius": 8
+        },
+        {
+          "id": "lc2",
+          "type": "label",
+          "x": 140,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "warning",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc3",
+          "type": "rectangle",
+          "x": 260,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "danger",
+          "radius": 8
+        },
+        {
+          "id": "lc3",
+          "type": "label",
+          "x": 260,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "danger",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc4",
+          "type": "rectangle",
+          "x": 380,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "surface2",
+          "radius": 8
+        },
+        {
+          "id": "lc4",
+          "type": "label",
+          "x": 380,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "surface2",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc5",
+          "type": "rectangle",
+          "x": 500,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "#9b59b6",
+          "radius": 8
+        },
+        {
+          "id": "lc5",
+          "type": "label",
+          "x": 500,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "#9b59b6",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "rc6",
+          "type": "rectangle",
+          "x": 620,
+          "y": 282,
+          "w": 100,
+          "h": 60,
+          "background": "#1196ee",
+          "radius": 8
+        },
+        {
+          "id": "lc6",
+          "type": "label",
+          "x": 620,
+          "y": 350,
+          "w": 100,
+          "h": 20,
+          "text": "#1196ee",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "div1",
+          "type": "rectangle",
+          "x": 20,
+          "y": 400,
+          "w": 240,
+          "h": 4,
+          "background": "primary",
+          "radius": 2
+        },
+        {
+          "id": "div2",
+          "type": "rectangle",
+          "x": 280,
+          "y": 390,
+          "w": 4,
+          "h": 40,
+          "background": "surface2",
+          "radius": 2
+        },
+        {
+          "id": "div3",
+          "type": "rectangle",
+          "x": 304,
+          "y": 400,
+          "w": 476,
+          "h": 4,
+          "background": "surface2",
+          "radius": 2
+        },
+        {
+          "id": "div_label",
+          "type": "label",
+          "x": 20,
+          "y": 416,
+          "w": 400,
+          "h": 20,
+          "text": "Thin rects make useful dividers and accents",
+          "font_size": 12,
+          "align": "left",
+          "color": "icon_inactive",
+          "background": "background"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "label": "Bar",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Widget: Bar",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 10,
+          "y": 8,
+          "w": 100,
+          "h": 30,
+          "font_size": 20,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 760,
+          "h": 24,
+          "text": "Bar shows a numeric entity value as a horizontal fill. Track background is built in - no extra rect needed.",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "b1_label",
+          "type": "label",
+          "x": 20,
+          "y": 96,
+          "w": 160,
+          "h": 28,
+          "text": "Grid Power",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "b1_bar",
+          "type": "bar",
+          "x": 190,
+          "y": 96,
+          "w": 460,
+          "h": 28,
+          "entity": "sensor.master_house_total_import_power",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "#1196ee"
+            },
+            {
+              "below": 66,
+              "color": "primary"
+            },
+            {
+              "default": true,
+              "color": "#F9DA44"
+            }
+          ]
+        },
+        {
+          "id": "b1_value",
+          "type": "label",
+          "x": 664,
+          "y": 96,
+          "w": 120,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.master_house_total_import_power",
+          "format": "power"
+        },
+        {
+          "id": "b2_label",
+          "type": "label",
+          "x": 20,
+          "y": 144,
+          "w": 160,
+          "h": 28,
+          "text": "Battery",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "b2_bar",
+          "type": "bar",
+          "x": 190,
+          "y": 144,
+          "w": 460,
+          "h": 28,
+          "entity": "sensor.battery_state_of_charge",
+          "max": 100,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 20,
+              "color": "danger"
+            },
+            {
+              "below": 50,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "primary"
+            }
+          ]
+        },
+        {
+          "id": "b2_value",
+          "type": "label",
+          "x": 664,
+          "y": 144,
+          "w": 120,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.battery_state_of_charge",
+          "format": "percent"
+        },
+        {
+          "id": "b3_label",
+          "type": "label",
+          "x": 20,
+          "y": 192,
+          "w": 160,
+          "h": 28,
+          "text": "Phase #3",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_dim",
+          "background": "background"
+        },
+        {
+          "id": "b3_bar",
+          "type": "bar",
+          "x": 190,
+          "y": 192,
+          "w": 460,
+          "h": 28,
+          "entity": "sensor.master_house_phase_3_power",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "#008000"
+            },
+            {
+              "below": 66,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ]
+        },
+        {
+          "id": "b3_value",
+          "type": "label",
+          "x": 664,
+          "y": 192,
+          "w": 120,
+          "h": 28,
+          "text": "--",
+          "font_size": 15,
+          "align": "right",
+          "color": "text",
+          "background": "background",
+          "entity": "sensor.master_house_phase_3_power",
+          "format": "power"
+        },
+        {
+          "id": "hint_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 244,
+          "w": 760,
+          "h": 196,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "hint_title",
+          "type": "label",
+          "x": 32,
+          "y": 254,
+          "w": 740,
+          "h": 24,
+          "text": "How thresholds work",
+          "font_size": 15,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "hint0",
+          "type": "label",
+          "x": 32,
+          "y": 284,
+          "w": 736,
+          "h": 22,
+          "text": "Optional: add \"track_color\" to override the default grey track. Thresholds color the fill.",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint1",
+          "type": "label",
+          "x": 32,
+          "y": 314,
+          "w": 736,
+          "h": 22,
+          "text": "{ \"below\": 33, \"color\": \"#1196ee\" }  ->  blue  when value is 0-33% of max",
+          "font_size": 13,
+          "align": "left",
+          "color": "#1196ee",
+          "background": "surface"
+        },
+        {
+          "id": "hint2",
+          "type": "label",
+          "x": 32,
+          "y": 344,
+          "w": 736,
+          "h": 22,
+          "text": "{ \"below\": 66, \"color\": \"primary\"  }  ->  green when value is 33-66% of max",
+          "font_size": 13,
+          "align": "left",
+          "color": "primary",
+          "background": "surface"
+        },
+        {
+          "id": "hint3",
+          "type": "label",
+          "x": 32,
+          "y": 374,
+          "w": 736,
+          "h": 22,
+          "text": "{ \"default\": true, \"color\": \"warning\" }  ->  amber when value is 66-100% of max",
+          "font_size": 13,
+          "align": "left",
+          "color": "warning",
+          "background": "surface"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "label": "Button",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Widget: Button",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 10,
+          "y": 8,
+          "w": 100,
+          "h": 30,
+          "font_size": 20,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "desc",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 760,
+          "h": 24,
+          "text": "Buttons reflect entity state visually and call a HA service on tap. Icons from Font Awesome 4.",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "btn_light1",
+          "type": "button",
+          "x": 20,
+          "y": 88,
+          "w": 150,
+          "h": 120,
+          "label": "Kitchen",
+          "entity": "light.kitchen",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.kitchen"
+          }
+        },
+        {
+          "id": "btn_light2",
+          "type": "button",
+          "x": 190,
+          "y": 88,
+          "w": 150,
+          "h": 120,
+          "label": "Lounge",
+          "entity": "light.lounge",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.lounge"
+          }
+        },
+        {
+          "id": "btn_switch1",
+          "type": "button",
+          "x": 360,
+          "y": 88,
+          "w": 150,
+          "h": 120,
+          "label": "Fan",
+          "entity": "switch.fan",
+          "icon_on": "[fa-cogs]",
+          "icon_off": "[fa-cogs]",
+          "states": {
+            "on": {
+              "background": "#0d3349",
+              "icon_color": "#1196ee",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.fan"
+          }
+        },
+        {
+          "id": "btn_switch2",
+          "type": "button",
+          "x": 530,
+          "y": 88,
+          "w": 150,
+          "h": 120,
+          "label": "Outdoor",
+          "entity": "switch.outdoor_lights",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.outdoor_lights"
+          }
+        },
+        {
+          "id": "hint_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 228,
+          "w": 760,
+          "h": 220,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "hint_title",
+          "type": "label",
+          "x": 32,
+          "y": 238,
+          "w": 400,
+          "h": 24,
+          "text": "Button config structure",
+          "font_size": 15,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "hint1",
+          "type": "label",
+          "x": 32,
+          "y": 268,
+          "w": 736,
+          "h": 20,
+          "text": "entity       ->  which HA entity to watch for state changes",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint2",
+          "type": "label",
+          "x": 32,
+          "y": 294,
+          "w": 736,
+          "h": 20,
+          "text": "icon_on/off  ->  Font Awesome unicode codepoint e.g. \"[fa-lightbulb-o]\" for lightbulb",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint3",
+          "type": "label",
+          "x": 32,
+          "y": 320,
+          "w": 736,
+          "h": 20,
+          "text": "states       ->  background, icon_color, label_color per entity state",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint4",
+          "type": "label",
+          "x": 32,
+          "y": 346,
+          "w": 736,
+          "h": 20,
+          "text": "action       ->  service to call and entity_id to target on tap",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint5",
+          "type": "label",
+          "x": 32,
+          "y": 380,
+          "w": 736,
+          "h": 20,
+          "text": "All state styling lives here in the config - no HA automations needed.",
+          "font_size": 13,
+          "align": "left",
+          "color": "primary",
+          "background": "surface"
+        },
+        {
+          "id": "hint6",
+          "type": "label",
+          "x": 32,
+          "y": 406,
+          "w": 736,
+          "h": 20,
+          "text": "Font Awesome 4 icon reference:  fontawesome.com/v4/icons",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "label": "Clock",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Widget: Clock",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "desc",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 760,
+          "h": 24,
+          "text": "Clock displays current device time in HH:MM, updated every second. No HA entity needed.",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "clock_hero",
+          "type": "clock",
+          "x": 160,
+          "y": 110,
+          "w": 480,
+          "h": 120,
+          "font_size": 96,
+          "align": "center",
+          "color": "primary",
+          "background": "background"
+        },
+        {
+          "id": "hint_box",
+          "type": "rectangle",
+          "x": 20,
+          "y": 260,
+          "w": 760,
+          "h": 180,
+          "background": "surface",
+          "radius": 8
+        },
+        {
+          "id": "hint_title",
+          "type": "label",
+          "x": 32,
+          "y": 272,
+          "w": 500,
+          "h": 24,
+          "text": "Typical usage - small clock in a page header",
+          "font_size": 15,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "small_clock_demo",
+          "type": "clock",
+          "x": 600,
+          "y": 272,
+          "w": 160,
+          "h": 36,
+          "font_size": 24,
+          "align": "right",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "hint1",
+          "type": "label",
+          "x": 32,
+          "y": 308,
+          "w": 736,
+          "h": 22,
+          "text": "{ \"type\": \"clock\", \"x\": 10, \"y\": 8, \"w\": 120, \"h\": 36, \"font_size\": 22, \"color\": \"text\" }",
+          "font_size": 13,
+          "align": "left",
+          "color": "primary",
+          "background": "surface"
+        },
+        {
+          "id": "hint2",
+          "type": "label",
+          "x": 32,
+          "y": 344,
+          "w": 736,
+          "h": 22,
+          "text": "Place on page 0 (coming soon) to show on every page without repeating in config.",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint3",
+          "type": "label",
+          "x": 32,
+          "y": 376,
+          "w": 736,
+          "h": 22,
+          "text": "Uses local device time - works even when HA connection is lost.",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "hint4",
+          "type": "label",
+          "x": 32,
+          "y": 408,
+          "w": 736,
+          "h": 22,
+          "text": "Supports any font_size - from tiny status bar clock to full-screen display.",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "label": "New Features",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "New Features",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 10,
+          "y": 8,
+          "w": 100,
+          "h": 30,
+          "font_size": 20,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "vis_label",
+          "type": "label",
+          "x": 20,
+          "y": 52,
+          "w": 200,
+          "h": 24,
+          "text": "Visibility condition",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "vis_hint",
+          "type": "label",
+          "x": 20,
+          "y": 78,
+          "w": 760,
+          "h": 22,
+          "text": "These two widgets watch sensor.pv_power - one shows above 0, one shows below 0:",
+          "font_size": 13,
+          "color": "icon_inactive",
+          "background": "background"
+        },
+        {
+          "id": "vis_box_on",
+          "type": "rectangle",
+          "x": 20,
+          "y": 108,
+          "w": 220,
+          "h": 60,
+          "background": "#1a3320",
+          "radius": 8,
+          "visible": {
+            "entity": "sensor.pv_power",
+            "type": "above",
+            "value": 0
+          }
+        },
+        {
+          "id": "vis_label_on",
+          "type": "label",
+          "x": 20,
+          "y": 108,
+          "w": 220,
+          "h": 60,
+          "text": "[fa-sun-o]  Solar active",
+          "font_size": 18,
+          "align": "center",
+          "color": "primary",
+          "background": "transparent",
+          "visible": {
+            "entity": "sensor.pv_power",
+            "type": "above",
+            "value": 0
+          }
+        },
+        {
+          "id": "vis_box_off",
+          "type": "rectangle",
+          "x": 260,
+          "y": 108,
+          "w": 220,
+          "h": 60,
+          "background": "#2a1a1a",
+          "radius": 8,
+          "visible": {
+            "entity": "sensor.pv_power",
+            "type": "below",
+            "value": 1
+          }
+        },
+        {
+          "id": "vis_label_off",
+          "type": "label",
+          "x": 260,
+          "y": 108,
+          "w": 220,
+          "h": 60,
+          "text": "[fa-moon-o]  Solar inactive",
+          "font_size": 18,
+          "align": "center",
+          "color": "text_muted",
+          "background": "transparent",
+          "visible": {
+            "entity": "sensor.pv_power",
+            "type": "below",
+            "value": 1
+          }
+        },
+        {
+          "id": "action_label",
+          "type": "label",
+          "x": 20,
+          "y": 192,
+          "w": 200,
+          "h": 24,
+          "text": "Typed actions",
+          "font_size": 14,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "nav_btn",
+          "type": "rectangle",
+          "x": 20,
+          "y": 218,
+          "w": 180,
+          "h": 56,
+          "background": "surface",
+          "radius": 8,
+          "action": {
+            "type": "navigate",
+            "page": 1
+          }
+        },
+        {
+          "id": "nav_btn_label",
+          "type": "label",
+          "x": 20,
+          "y": 218,
+          "w": 180,
+          "h": 56,
+          "text": "[fa-arrow-left]  Page 1",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "auto_btn",
+          "type": "rectangle",
+          "x": 220,
+          "y": 218,
+          "w": 220,
+          "h": 56,
+          "background": "surface",
+          "radius": 8,
+          "action": {
+            "type": "automation",
+            "entity_id": "automation.good_night"
+          }
+        },
+        {
+          "id": "auto_btn_label",
+          "type": "label",
+          "x": 220,
+          "y": 218,
+          "w": 220,
+          "h": 56,
+          "text": "[fa-bell]  Good Night",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "svc_btn",
+          "type": "rectangle",
+          "x": 460,
+          "y": 218,
+          "w": 280,
+          "h": 56,
+          "background": "surface",
+          "radius": 8,
+          "action": {
+            "type": "service",
+            "service": "light.turn_on",
+            "entity_id": "light.kitchen",
+            "data": {
+              "brightness": 255,
+              "color_temp": 300
+            }
+          }
+        },
+        {
+          "id": "svc_btn_label",
+          "type": "label",
+          "x": 460,
+          "y": 218,
+          "w": 280,
+          "h": 56,
+          "text": "[fa-lightbulb-o]  Kitchen bright",
+          "font_size": 18,
+          "align": "center",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "style_label",
+          "type": "label",
+          "x": 20,
+          "y": 298,
+          "w": 300,
+          "h": 24,
+          "text": "Opacity, border, letter-spacing",
+          "font_size": 14,
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "opacity1",
+          "type": "rectangle",
+          "x": 20,
+          "y": 330,
+          "w": 120,
+          "h": 80,
+          "background": "primary",
+          "radius": 8,
+          "opacity": 1.0
+        },
+        {
+          "id": "opacity1_l",
+          "type": "label",
+          "x": 20,
+          "y": 418,
+          "w": 120,
+          "h": 20,
+          "text": "opacity: 1.0",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "opacity2",
+          "type": "rectangle",
+          "x": 160,
+          "y": 330,
+          "w": 120,
+          "h": 80,
+          "background": "primary",
+          "radius": 8,
+          "opacity": 0.6
+        },
+        {
+          "id": "opacity2_l",
+          "type": "label",
+          "x": 160,
+          "y": 418,
+          "w": 120,
+          "h": 20,
+          "text": "opacity: 0.6",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "opacity3",
+          "type": "rectangle",
+          "x": 300,
+          "y": 330,
+          "w": 120,
+          "h": 80,
+          "background": "primary",
+          "radius": 8,
+          "opacity": 0.25
+        },
+        {
+          "id": "opacity3_l",
+          "type": "label",
+          "x": 300,
+          "y": 418,
+          "w": 120,
+          "h": 20,
+          "text": "opacity: 0.25",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "border1",
+          "type": "rectangle",
+          "x": 460,
+          "y": 330,
+          "w": 140,
+          "h": 80,
+          "background": "surface",
+          "radius": 8,
+          "border_width": 2,
+          "border_color": "primary"
+        },
+        {
+          "id": "border1_l",
+          "type": "label",
+          "x": 460,
+          "y": 418,
+          "w": 140,
+          "h": 20,
+          "text": "border primary",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "border2",
+          "type": "rectangle",
+          "x": 620,
+          "y": 330,
+          "w": 140,
+          "h": 80,
+          "background": "surface",
+          "radius": 8,
+          "border_width": 3,
+          "border_color": "warning"
+        },
+        {
+          "id": "border2_l",
+          "type": "label",
+          "x": 620,
+          "y": 418,
+          "w": 140,
+          "h": 20,
+          "text": "border warning",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "spacing1",
+          "type": "label",
+          "x": 20,
+          "y": 450,
+          "w": 360,
+          "h": 24,
+          "text": "NORMAL SPACING",
+          "font_size": 18,
+          "align": "left",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "spacing2",
+          "type": "label",
+          "x": 20,
+          "y": 452,
+          "w": 760,
+          "h": 24,
+          "text": "WIDE  LETTER  SPACING",
+          "font_size": 18,
+          "align": "right",
+          "color": "primary",
+          "background": "background",
+          "letter_spacing": 6
+        }
+      ]
+    }
+  ]
+}
