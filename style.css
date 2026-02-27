@@ -88,7 +88,7 @@
   align-items: center;
   white-space: nowrap;
   overflow: hidden;
-  padding: 0 8px;   /* was 4px - extra room so icons don't clip at edges */
+  padding: 0;
 }
 
 .widget-label.align-left   { -webkit-box-pack: start;  -ms-flex-pack: start;  justify-content: flex-start; }
@@ -711,7 +711,7 @@
   align-items: center;
   white-space: nowrap;
   overflow: hidden;
-  padding: 0 8px;   /* was 4px - extra room so icons don't clip at edges */
+  padding: 0;
 }
 
 .widget-label.align-left   { -webkit-box-pack: start;  -ms-flex-pack: start;  justify-content: flex-start; }

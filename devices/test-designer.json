@@ -1,0 +1,163 @@
+{
+  "version": "1.0",
+  "device": {
+    "name": "Designer Test",
+    "canvas": {
+      "width": 900,
+      "height": 600
+    },
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 0,
+      "label": "Overlay",
+      "widgets": [
+        {
+          "id": "p0_clock",
+          "type": "label",
+          "x": 16,
+          "y": 12,
+          "w": 200,
+          "h": 36,
+          "text": "[mdi:clock-outline] 12:45",
+          "font_size": 20,
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "p0_status",
+          "type": "label",
+          "x": 820,
+          "y": 12,
+          "w": 60,
+          "h": 36,
+          "text": "[mdi:wifi]",
+          "font_size": 24,
+          "color": "primary",
+          "background": "transparent"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "label": "Page 1",
+      "widgets": [
+        {
+          "id": "p1_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 64,
+          "w": 420,
+          "h": 180,
+          "radius": 10,
+          "background": "surface2"
+        },
+        {
+          "id": "p1_title",
+          "type": "label",
+          "x": 28,
+          "y": 76,
+          "w": 380,
+          "h": 32,
+          "text": "Energy Summary",
+          "font_size": 20,
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "p1_value",
+          "type": "label",
+          "x": 28,
+          "y": 120,
+          "w": 380,
+          "h": 48,
+          "text": "[mdi:lightning-bolt] 2.4 kW",
+          "font_size": 28,
+          "color": "primary",
+          "background": "transparent"
+        },
+        {
+          "id": "p1_button",
+          "type": "button",
+          "x": 704,
+          "y": 56,
+          "w": 180,
+          "h": 120,
+          "label": "Kitchen",
+          "icon_on": "[mdi:lightbulb]",
+          "icon_off": "[mdi:lightbulb-outline]"
+        },
+        {
+          "id": "p1_bar",
+          "type": "bar",
+          "x": 28,
+          "y": 182,
+          "w": 380,
+          "h": 18,
+          "background": "surface",
+          "track_color": "surface"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Page 2",
+      "widgets": [
+        {
+          "id": "p2_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 64,
+          "w": 860,
+          "h": 240,
+          "radius": 8,
+          "background": "surface2"
+        },
+        {
+          "id": "p2_camera",
+          "type": "camera",
+          "x": 24,
+          "y": 80,
+          "w": 280,
+          "h": 200,
+          "label": "Front Door"
+        },
+        {
+          "id": "p2_image",
+          "type": "image",
+          "x": 320,
+          "y": 80,
+          "w": 280,
+          "h": 200,
+          "url": "images/floorplan.jpg"
+        },
+        {
+          "id": "p2_arc",
+          "type": "arc",
+          "x": 620,
+          "y": 80,
+          "w": 200,
+          "h": 200,
+          "label": "Battery"
+        }
+      ]
+    }
+  ]
+}

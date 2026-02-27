@@ -4,7 +4,7 @@
     "name": "Label Test",
     "canvas": {
       "width": 900,
-      "height": 700
+      "height": 900
     },
     "default_page": 1,
     "return_to_default": 0
@@ -635,7 +635,7 @@
           "id": "lbl_trans",
           "type": "label",
           "x": 600,
-          "y": 632,
+          "y": 640,
           "w": 300,
           "h": 40,
           "text": "[mdi:star]&nbsp;Floating label",
@@ -643,8 +643,92 @@
           "align": "center",
           "color": "warning",
           "background": "transparent"
+        },
+        {
+          "_comment": "---- 14. mode: dots ----",
+          "id": "lbl_dots_hdr",
+          "type": "label",
+          "x": 0,
+          "y": 680,
+          "w": 200,
+          "h": 48,
+          "text": "14. mode: dots",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "blue"
+        },
+        {
+          "id": "lbl_dots_desc",
+          "type": "label",
+          "x": 200,
+          "y": 680,
+          "w": 272,
+          "h": 48,
+          "mode": "wrap",
+          "text": "mode: \"dots\" — truncates with ellipsis when text is wider than the widget",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "yellow"
+        },
+        {
+          "id": "lbl_dots",
+          "type": "label",
+          "x": 600,
+          "y": 680,
+          "w": 300,
+          "h": 48,
+          "text": "Solar production is currently at maximum capacity",
+          "font_size": 18,
+          "align": "left",
+          "color": "text",
+          "background": "surface2",
+          "mode": "dots"
+        },
+        {
+          "_comment": "---- 15. mode: wrap ----",
+          "id": "lbl_wrap_hdr",
+          "type": "label",
+          "x": 0,
+          "y": 736,
+          "w": 200,
+          "h": 96,
+          "text": "15. mode: wrap",
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "yellow"
+        },
+        {
+          "id": "lbl_wrap_desc",
+          "type": "label",
+          "x": 200,
+          "y": 736,
+          "w": 272,
+          "h": 96,
+          "mode": "wrap",
+          "text": "mode: \"wrap\" — text flows onto multiple lines within the fixed widget height. Overflow clips at the bottom edge.",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "orange"
+        },
+        {
+          "id": "lbl_wrap",
+          "type": "label",
+          "x": 600,
+          "y": 736,
+          "w": 300,
+          "h": 96,
+          "text": "When this label is too long to fit on one line the text wraps within the fixed widget height and clips at the bottom edge.",
+          "font_size": 16,
+          "align": "left",
+          "color": "text",
+          "background": "surface2",
+          "mode": "wrap"
         }
       ]
     }
   ]
-}
+}\n

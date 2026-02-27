@@ -1,0 +1,106 @@
+{
+  "version": "1.0",
+  "device": {
+    "name": "Arc Widget Test",
+    "canvas": {
+      "width": 900,
+      "height": 760
+    },
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface":    "#272E36",
+      "surface2":   "#363f4a",
+      "primary":    "#8ADF45",
+      "warning":    "#F0AD4E",
+      "danger":     "#D9534F",
+      "text":       "#FFFFFF",
+      "text_dim":   "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Arc Tests",
+      "widgets": [
+
+        { "id": "hdr_case",   "type": "label", "x": 0,   "y": 0, "w": 200, "h": 32, "text": "Case",           "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_config", "type": "label", "x": 200, "y": 0, "w": 400, "h": 32, "text": "Config / intent", "font_size": 13, "align": "left",   "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_render", "type": "label", "x": 600, "y": 0, "w": 300, "h": 32, "text": "Rendered",        "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+
+        { "_comment": "---- 1. Default gauge with thresholds ----",
+          "id": "r1_hdr",  "type": "label", "x": 0,   "y": 32, "w": 200, "h": 182, "text": "1. Default gauge\nwith thresholds", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r1_desc", "type": "label", "x": 200, "y": 32, "w": 400, "h": 182,
+            "text": "start_angle: 135 (default)  end_angle: 405 (default)  line_width: 12 (default)  danger below 20%  warning below 50%  primary above 50%",
+            "font_size": 13, "align": "left", "color": "text_dim", "background": "purple" },
+          { "id": "r1_arc",  "type": "arc",   "x": 670, "y": 43, "w": 160, "h": 160,
+            "entity": "sensor.battery_state_of_charge",
+            "min": 0, "max": 100,
+            "format": "percent",
+            "label": "Battery",
+            "thresholds": [
+              { "below": 20, "color": "danger"   },
+              { "below": 50, "color": "warning"  },
+              { "default": true, "color": "primary" }
+            ]
+          },
+
+        { "_comment": "---- 2. Thin line, power format ----",
+          "id": "r2_hdr",  "type": "label", "x": 0,   "y": 214, "w": 200, "h": 182, "text": "2. Thin line\npower format", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r2_desc", "type": "label", "x": 200, "y": 214, "w": 400, "h": 182,
+            "text": "start_angle: 135 (default)  end_angle: 405 (default)  line_width: 5  color: primary (no thresholds)  format: power — auto-switches W / kW at 1000",
+            "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r2_arc",  "type": "arc",   "x": 670, "y": 225, "w": 160, "h": 160,
+            "entity": "sensor.pv_power",
+            "min": 0, "max": 10000,
+            "format": "power",
+            "label": "Solar",
+            "line_width": 5,
+            "color": "primary"
+          },
+
+        { "_comment": "---- 3. Upper semicircle (180 degree sweep) ----",
+          "id": "r3_hdr",  "type": "label", "x": 0,   "y": 396, "w": 200, "h": 182, "text": "3. Upper\nsemicircle\n180° sweep", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r3_desc", "type": "label", "x": 200, "y": 396, "w": 400, "h": 182,
+            "text": "start_angle: 270 (9 o'clock)  end_angle: 450 (3 o'clock, = 90°)  sweeps through 12 o'clock — upper half arc  line_width: 16  label_color: warning",
+            "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r3_arc",  "type": "arc",   "x": 670, "y": 407, "w": 160, "h": 160,
+            "entity": "sensor.gw1100c_indoor_temperature",
+            "min": -10, "max": 40,
+            "label": "Outdoor °C",
+            "start_angle": 270,
+            "end_angle": 450,
+            "line_width": 30,
+            "color": "warning"
+          },
+
+        { "_comment": "---- 4. Full ring (359 degree sweep) ----",
+          "id": "r4_hdr",  "type": "label", "x": 0,   "y": 578, "w": 200, "h": 182, "text": "4. Full ring\n359° sweep", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r4_desc", "type": "label", "x": 200, "y": 578, "w": 400, "h": 182,
+            "text": "start_angle: 0 (12 o'clock)  end_angle: 359 (nearly full circle)  line_width: 14  thresholds: primary < 60%  warning < 85%  danger above",
+            "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r4_arc",  "type": "arc",   "x": 670, "y": 589, "w": 160, "h": 160,
+            "entity": "sensor.processor_use_percent",
+            "min": 0, "max": 100,
+            "format": "percent",
+            "label": "CPU",
+            "start_angle": 0,
+            "end_angle": 359,
+            "line_width": 14,
+            "thresholds": [
+              { "below": 60, "color": "primary" },
+              { "below": 85, "color": "warning" },
+              { "default": true, "color": "danger" }
+            ]
+          }
+
+      ]
+    }
+  ]
+}

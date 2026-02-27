@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebHASP Designer (PoC)</title>
+  <style>
+    :root {
+      --bg: #0f141a;
+      --panel: #1b222a;
+      --panel2: #222b35;
+      --text: #e6e6e6;
+      --muted: #9fa5ad;
+      --accent: #8ADF45;
+      --border: #2d3641;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .toolbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar .title { font-weight: 600; }
+    .toolbar select, .toolbar button {
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .toolbar .spacer { flex: 1; }
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 240px 1fr 420px;
+      min-height: 0;
+    }
+    .panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 10px;
+      overflow: auto;
+    }
+    .panel.right {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+    .panel h3 {
+      margin: 8px 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    #stage-wrap {
+      position: relative;
+      background: #0b0f14;
+      overflow: hidden;
+    }
+    #stage {
+      position: absolute;
+      inset: 0;
+    }
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .tree-item:hover { background: #1f2832; }
+    .tree-item.active { background: #2a3440; }
+    .tree-item .meta { color: var(--muted); font-size: 12px; }
+    .tree-item input[type=checkbox] { margin: 0; }
+    .prop { font-size: 13px; margin: 6px 0; color: var(--muted); }
+    .prop strong { color: var(--text); }
+    .prop-row { display: flex; gap: 6px; align-items: center; }
+    .prop-row input, .prop-row select { flex: 1; min-width: 0; }
+    .prop-labels { display: flex; gap: 6px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+    .prop-labels div { flex: 1; }
+    .btn-small { padding: 4px 6px; font-size: 12px; }
+    .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  </style>
+</head>
+<body>
+    <div class="toolbar">
+      <div class="title">WebHASP Designer (PoC)</div>
+      <button id="pickDeviceBtn">Pick File…</button>
+      <label>Page:
+        <select id="pageSelect"></select>
+      </label>
+    <label>Grid:
+      <select id="gridSelect">
+        <option value="4">4px</option>
+        <option value="8" selected>8px</option>
+        <option value="12">12px</option>
+        <option value="16">16px</option>
+      </select>
+    </label>
+    <button id="saveBtn">Save</button>
+    <button id="previewBtn">Preview: Off</button>
+    <button id="undoBtn">Undo</button>
+    <button id="redoBtn">Redo</button>
+    <button id="toggleSnap">Snap: On</button>
+    <button id="togglePan">Pan: Off</button>
+    <div class="spacer"></div>
+    <div id="status" class="meta"></div>
+  </div>
+
+  <div class="layout">
+    <div class="panel" id="treePanel">
+      <h3>Widgets</h3>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="addLabelBtn">Add Label</button>
+        <button id="addRectBtn">Add Rect</button>
+      </div>
+      <h3>Guides</h3>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="addHGuideBtn">Add H</button>
+        <button id="addVGuideBtn">Add V</button>
+        <button id="clearGuidesBtn">Clear</button>
+      </div>
+      <div id="tree"></div>
+    </div>
+
+    <div id="stage-wrap">
+      <div id="stage"></div>
+    </div>
+
+    <div class="panel right" id="propsPanel">
+      <h3>Selection</h3>
+      <div id="props"></div>
+      <div class="note">PoC: drag to move, wheel to zoom, toggle Pan to drag the stage.</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/konva@9.3.6/konva.min.js"></script>
+  <script type="module" src="designer/app.js"></script>
+</body>
+</html>

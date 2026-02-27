@@ -26,9 +26,17 @@
   var internalTimeTimer = null;
   var haUrl = '';
   var haToken = '';
+  var configCacheBuster = null;
 
   // ---- Init -------------------------------------------------
   function init() {
+    if (window.WEBHASP_OVERRIDE_CONFIG) {
+      console.log('WebHASP preview: override config detected');
+      console.log('WebHASP preview: override page =', window.WEBHASP_OVERRIDE_PAGE);
+      config = window.WEBHASP_OVERRIDE_CONFIG;
+      applyConfig(config, true);
+      return;
+    }
     haUrl   = localStorage.getItem('webhasp_url')   || '';
     haToken = localStorage.getItem('webhasp_token') || '';
 
@@ -51,14 +59,29 @@
   function loadConfigForCredentials() {
     var deviceParam = getUrlParam('device') || 'default';
     var base        = window.location.pathname.replace(/\/[^\/]*$/, '/');
-    var configUrl   = base + 'devices/' + deviceParam + '.json?v=' + (window.WEBHASP_VERSION || Date.now());
+    var configUrl   = base + 'devices/' + deviceParam + '.json?v=' + getConfigCacheBuster();
 
     fetchJson(configUrl, function(err, data) {
-      if (!err && data && data.ha && data.ha.url && data.ha.token) {
+      if (err) {
+        console.log('WebHASP init: config fetch error: ' + err);
+        showSetup();
+        return;
+      }
+      if (!data) {
+        console.log('WebHASP init: config fetch returned no data');
+        showSetup();
+        return;
+      }
+
+      var credUrl   = (data.ha && data.ha.url)     || (data.device && data.device.ha_url)   || '';
+      var credToken = (data.ha && data.ha.token)   || (data.device && data.device.ha_token) || '';
+
+      console.log('WebHASP init: config loaded, credUrl=' + credUrl + ' credTokenLength=' + credToken.length);
+
+      if (credUrl && credToken) {
         console.log('WebHASP init: credentials found in device config');
-        haUrl   = data.ha.url;
-        haToken = data.ha.token;
-        // Store in localStorage so subsequent loads are instant
+        haUrl   = credUrl;
+        haToken = credToken;
         localStorage.setItem('webhasp_url',   haUrl);
         localStorage.setItem('webhasp_token', haToken);
         loadConfig();
@@ -105,11 +128,11 @@
 
     if (deviceParam) {
       // Device explicitly specified in URL - load it directly
-      loadConfigFromUrl(base + 'devices/' + deviceParam + '.json?v=' + (window.WEBHASP_VERSION || Date.now()), deviceParam);
+      loadConfigFromUrl(base + 'devices/' + deviceParam + '.json?v=' + getConfigCacheBuster(), deviceParam);
     } else {
       // No device specified - try default.json, fall back to landing page
       console.log('WebHASP: no device specified, trying default.json');
-      fetchJson(base + 'devices/default.json?v=' + (window.WEBHASP_VERSION || Date.now()), function(err, data) {
+      fetchJson(base + 'devices/default.json?v=' + getConfigCacheBuster(), function(err, data) {
         if (!err && data) {
           console.log('WebHASP: default.json found, loading');
           applyConfig(data);
@@ -132,7 +155,7 @@
     });
   }
 
-  function applyConfig(data) {
+  function applyConfig(data, isPreview) {
     console.log('WebHASP loadConfig: success, hiding setup overlay');
     var overlay = document.getElementById('setup-overlay');
     if (overlay) overlay.classList.add('hidden');
@@ -140,10 +163,22 @@
     setupCanvas();
     setupPageNav();
     renderPage0();   // persistent overlay - renders once, never cleared
-    renderPage(config.device.default_page || 1);
-    connectWebSocket();
+    var startPage = config.device.default_page || 1;
+    var pageParam = parseInt(getUrlParam('page'), 10);
+    if (window.WEBHASP_OVERRIDE_PAGE !== undefined && window.WEBHASP_OVERRIDE_PAGE !== null) {
+      console.log('WebHASP preview: using override page', window.WEBHASP_OVERRIDE_PAGE);
+      pageParam = parseInt(window.WEBHASP_OVERRIDE_PAGE, 10);
+    }
+    if (pageParam) {
+      for (var pi = 0; pi < config.pages.length; pi++) {
+        if (config.pages[pi].id === pageParam) { startPage = pageParam; break; }
+      }
+    }
+    renderPage(startPage);
+    if (!isPreview) connectWebSocket();
     startClock();
     startInternalTime();
+    if (isPreview) setConnStatus('disconnected');
   }
 
   function showLandingPage(base) {
@@ -198,6 +233,14 @@
       }
     };
     xhr.send();
+  }
+
+  // Always bust config file cache on page refresh to reflect JSON edits immediately
+  function getConfigCacheBuster() {
+    if (!configCacheBuster) {
+      configCacheBuster = Date.now();
+    }
+    return configCacheBuster;
   }
 
   // ---- Canvas scaling ---------------------------------------
@@ -465,6 +508,9 @@
     if (pageId === currentPage) return;
     if (pageId === 0) return;  // page 0 is a persistent overlay, not navigable
     renderPage(pageId);
+    if (history.replaceState) {
+      history.replaceState(null, '', setUrlParam('page', pageId));
+    }
   }
 
   // ---- Return-to-default timer ------------------------------
@@ -591,9 +637,30 @@
     el.style.background     = resolveColor(w.background || 'transparent');
     el.style.fontSize       = (w.font_size || config.theme.font_size || 16) + 'px';
     el.style.fontWeight     = w.font_weight || '400';
-    el.style.padding        = '0 4px';
+    el.style.lineHeight     = '1';
+    el.style.padding        = '0';
+    if (w.valign === 'top') el.style.alignItems = 'flex-start';
+    else if (w.valign === 'bottom') el.style.alignItems = 'flex-end';
+    else el.style.alignItems = 'center';
     if (w.letter_spacing !== undefined) el.style.letterSpacing = w.letter_spacing + 'px';
     if (w.opacity !== undefined)        el.style.opacity       = w.opacity;
+
+    // Text overflow mode (default: crop - clip silently at widget edge)
+    var mode = w.mode || 'crop';
+    if (mode === 'dots') {
+      // Switch to block layout so text-overflow: ellipsis works reliably
+      el.style.display      = 'block';
+      el.style.lineHeight   = w.h + 'px';     // vertical centre via line-height
+      el.style.textAlign    = w.align || 'left';
+      el.style.textOverflow = 'ellipsis';
+      // overflow:hidden and white-space:nowrap already set by .widget-label CSS
+    } else if (mode === 'wrap') {
+      el.style.whiteSpace        = 'normal';  // allow text to wrap within fixed box
+      el.style.webkitBoxAlign    = 'start';   // old webkit flex
+      el.style.msFlexAlign       = 'start';   // IE10 flex
+      el.style.alignItems        = 'flex-start'; // top-align wrapped text block
+      el.style.padding           = '4px';     // small vertical breathing room
+    }
     var text = w.text !== undefined ? String(w.text) : '';
 
     // Single raw FA codepoint (legacy) - apply font directly
@@ -621,8 +688,8 @@
     var val = state ? state.state : null;
 
     // Apply text - handles plain text and [fa-name] icon tokens
-    var resolvedState = resolveWidgetState(w, state);
-    var s = resolvedState || {};
+    var overrides = resolveOverrides(w, state);
+    var s = overrides || {};
     var textOverride = (s.text !== undefined) ? String(s.text) : null;
     var useTemplateText = (w.text && hasTemplate(w.text));
     var baseText = useTemplateText ? String(w.text) : (textOverride !== null ? textOverride : formatValue(val, w));
@@ -639,6 +706,7 @@
     var colorToken = s.color || w.color || 'text';
     colorToken = applyTemplate(colorToken, state);
     el.style.color   = resolveColor(colorToken);
+    if (s.background !== undefined) el.style.background = resolveColor(s.background);
     if (s.opacity   !== undefined) el.style.opacity       = s.opacity;
     if (s.letter_spacing !== undefined) el.style.letterSpacing = s.letter_spacing + 'px';
   }
@@ -756,25 +824,113 @@
     iconEl.className  = 'btn-icon';
     labelEl.className = 'btn-label';
 
+    if (w.radius !== undefined) {
+      el.style.borderRadius = w.radius + 'px';
+    }
+
+    if (w.gap !== undefined) {
+      el.style.gap = w.gap + 'px';
+    }
+    if (w.padding !== undefined) {
+      el.style.padding = w.padding + 'px';
+    }
+
+    var hasIcon = !!(w.icon_on || w.icon_off);
+    var hasLabel = (w.label !== undefined && w.label !== null && String(w.label).length > 0);
+
+    // Dynamic sizing based on button size (override with icon_size / label_size)
+    var base = Math.min(w.w, w.h);
+    var iconSize;
+    var labelSize;
+    if (w.icon_size !== undefined) {
+      iconSize = w.icon_size;
+    } else if (hasIcon && hasLabel) {
+      iconSize = Math.round(base * 0.42);
+    } else if (hasIcon) {
+      iconSize = Math.round(base * 0.60);
+    }
+
+    if (w.label_size !== undefined) {
+      labelSize = w.label_size;
+    } else if (hasIcon && hasLabel) {
+      labelSize = Math.round(base * 0.14);
+    } else if (hasLabel) {
+      labelSize = Math.round(base * 0.20);
+    }
+
+    if (!hasIcon) {
+      iconEl.style.display = 'none';
+    } else if (iconSize) {
+      iconEl.style.fontSize = iconSize + 'px';
+    }
+
+    if (!hasLabel) {
+      labelEl.style.display = 'none';
+    } else if (labelSize) {
+      labelEl.style.fontSize = labelSize + 'px';
+    }
+
     // setButtonIcon resolves [fa-name] tokens or raw FA codepoints
     function setButtonIcon(icon) {
       setContent(iconEl, icon || '');
     }
 
+    function setButtonLabel(text, state) {
+      var t = (text !== undefined && text !== null) ? String(text) : '';
+      t = applyTemplate(t, state);
+      setContent(labelEl, t);
+    }
+
     setButtonIcon(w.icon_off || '');
-    labelEl.textContent = w.label || '';
+    setButtonLabel(w.label || '', null);
 
     el.appendChild(iconEl);
     el.appendChild(labelEl);
 
-    // Apply initial off-state styling
-    applyButtonState(el, iconEl, labelEl, w, 'off');
+    // Apply initial styling
+    if (w.overrides && w.overrides.length) {
+      // Overrides path: apply base styles until first state arrives
+      el.style.background = resolveColor(w.background || 'surface2');
+      iconEl.style.color  = resolveColor(w.icon_color  || 'text');
+      labelEl.style.color = resolveColor(w.label_color || 'text_dim');
+    } else {
+      // Legacy states path
+      var initState = applyButtonState(el, iconEl, labelEl, w, 'off');
+      if (initState && initState.text !== undefined) {
+        setButtonLabel(initState.text, null);
+      }
+    }
 
     if (w.entity) {
       registerEntityCallback(w.entity, function (state) {
         var stateVal = state ? state.state : 'off';
-        applyButtonState(el, iconEl, labelEl, w, stateVal);
-        setButtonIcon((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
+        if (w.overrides && w.overrides.length) {
+          var ovr = resolveOverrides(w, state) || {};
+          el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
+          iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
+          labelEl.style.color = resolveColor(ovr.label_color !== undefined ? ovr.label_color : (w.label_color || 'text_dim'));
+          if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
+          if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
+          if (ovr.border_width !== undefined) {
+            el.style.borderWidth = ovr.border_width + 'px';
+            el.style.borderStyle = 'solid';
+            el.style.boxSizing   = 'border-box';
+          }
+          var icon = (ovr.icon !== undefined) ? ovr.icon
+            : ((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
+          setButtonIcon(icon);
+          var labelText = (ovr.label !== undefined) ? ovr.label : (w.label || '');
+          setButtonLabel(labelText, state);
+        } else {
+          // Legacy states path
+          var s = applyButtonState(el, iconEl, labelEl, w, stateVal);
+          setButtonIcon((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
+          if (s && s.text !== undefined) {
+            setButtonLabel(s.text, state);
+          } else {
+            setButtonLabel(w.label || '', state);
+          }
+        }
       });
     }
 
@@ -799,6 +955,13 @@
     el.style.background   = resolveColor(s.background || w.background || 'surface2');
     iconEl.style.color    = resolveColor(s.icon_color  || w.icon_color  || 'text');
     labelEl.style.color   = resolveColor(s.label_color || w.label_color || 'text_dim');
+    if (s.border_color !== undefined) el.style.borderColor = resolveColor(s.border_color);
+    if (s.border_width !== undefined) {
+      el.style.borderWidth = s.border_width + 'px';
+      el.style.borderStyle = 'solid';
+      el.style.boxSizing   = 'border-box';
+    }
+    return s;
   }
 
   // ---- Arc / gauge widget ----------------------------------
@@ -1520,18 +1683,74 @@
   //     { "type": "above", "value": 50, "state_key": "ok" }
   //   ]
   function resolveWidgetState(w, haState) {
-    if (!w.states || !w.state_condition || !haState) return null;
+    return null; // deprecated by overrides
+  }
 
-    var conditions = Array.isArray(w.state_condition)
-      ? w.state_condition
-      : [w.state_condition];
-
-    for (var i = 0; i < conditions.length; i++) {
-      var key = evalCondition(conditions[i], haState);
-      if (key && w.states[key]) return w.states[key];
+  // ---- Conditional overrides -------------------------------
+  // overrides: [{ when: { logic: 'all'|'any', conditions: [...] }, set: { ... } }, ...]
+  // conditions can be nested groups with their own logic/conditions.
+  // Each condition may specify source (default: 'state').
+  function resolveOverrides(w, haState) {
+    if (!w.overrides || !w.overrides.length || !haState) return null;
+    var out = {};
+    for (var i = 0; i < w.overrides.length; i++) {
+      var rule = w.overrides[i];
+      if (!rule || !rule.when || !rule.set) continue;
+      if (evalWhen(rule.when, haState)) {
+        mergeOverride(out, rule.set);
+      }
     }
+    return out;
+  }
 
-    return null;
+  function mergeOverride(target, set) {
+    for (var k in set) {
+      if (set.hasOwnProperty(k)) target[k] = set[k];
+    }
+  }
+
+  function evalWhen(when, haState) {
+    if (!when || !when.conditions || !when.conditions.length) return false;
+    var logic = when.logic === 'any' ? 'any' : 'all';
+    var conds = when.conditions;
+    for (var i = 0; i < conds.length; i++) {
+      var ok = evalConditionGroupOrLeaf(conds[i], haState);
+      if (logic === 'all' && !ok) return false;
+      if (logic === 'any' && ok) return true;
+    }
+    return logic === 'all';
+  }
+
+  function evalConditionGroupOrLeaf(cond, haState) {
+    if (!cond) return false;
+    if (cond.conditions && cond.logic) {
+      return evalWhen(cond, haState);
+    }
+    return evalCondition(cond, haState);
+  }
+
+  function evalCondition(cond, haState) {
+    if (!cond || !haState) return false;
+    var src = cond.source || 'state';
+    var val;
+    if (src === 'attribute') {
+      val = (haState.attributes && cond.attribute !== undefined)
+        ? haState.attributes[cond.attribute]
+        : undefined;
+      if (val === undefined || val === null) return false;
+      val = String(val);
+    } else {
+      val = haState.state;
+    }
+    var num = parseFloat(val);
+    var str = String(val);
+    switch (cond.type) {
+      case 'above':      return (!isNaN(num) && num > cond.value);
+      case 'below':      return (!isNaN(num) && num < cond.value);
+      case 'equals':     return (str === String(cond.value));
+      case 'not_equals': return (str !== String(cond.value));
+      default:           return false;
+    }
   }
 
   // ---- Icon rendering -------------------------------------
@@ -1856,6 +2075,21 @@
   }
 
   // ---- Utility ---------------------------------------------
+  function setUrlParam(name, value) {
+    var search = window.location.search.substring(1);
+    var parts  = search ? search.split('&') : [];
+    var found  = false;
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].split('=')[0] === name) {
+        parts[i] = name + '=' + value;
+        found = true;
+        break;
+      }
+    }
+    if (!found) parts.push(name + '=' + value);
+    return window.location.pathname + '?' + parts.join('&');
+  }
+
   function getUrlParam(name) {
     var search = window.location.search.substring(1);
     var parts  = search.split('&');

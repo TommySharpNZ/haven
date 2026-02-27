@@ -1,0 +1,997 @@
+{
+  "version": "1.0",
+  "ha": {
+    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
+  },
+  "device": {
+    "name": "Kitchen Lenovo",
+    "canvas": {
+      "width": 800,
+      "height": 1280
+    },
+    "orientation": "portrait",
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 0,
+      "label": "Persistent",
+      "_note": "Page 0 widgets render on every page. Use for clock, status bar, nav sidebar etc.",
+      "widgets": [
+        {
+          "id": "p0_clock",
+          "type": "label",
+          "entity": "internal.currentdtm",
+          "prefix": "[mdi:clock-outline]&nbsp;",
+          "format": "datetime_24",
+          "x": 12,
+          "y": 8,
+          "font_size": 18,
+          "align": "left",
+          "color": "text",
+          "background": "transparent",
+          "w": 216,
+          "h": 32
+        },
+        {
+          "id": "p0_connection_status",
+          "type": "label",
+          "x": 756,
+          "y": 16,
+          "w": 40,
+          "font_size": 18,
+          "align": "center",
+          "background": "",
+          "entity": "internal.connectionstatus",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "connected"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-check]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "connecting"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-sync]",
+                "color": "warning"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "disconnected"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-remove]",
+                "color": "danger"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "label": "Page1",
+      "widgets": [
+        {
+          "id": "rectangle_4",
+          "type": "rectangle",
+          "x": 16,
+          "y": 208,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_1",
+          "type": "label",
+          "x": 220,
+          "y": 8,
+          "w": 360,
+          "h": 32,
+          "text": "Energy System",
+          "font_size": 22,
+          "color": "text",
+          "background": "transparent",
+          "align": "center"
+        },
+        {
+          "id": "rectangle_2",
+          "type": "rectangle",
+          "x": 16,
+          "y": 48,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_2",
+          "type": "label",
+          "x": 20,
+          "y": 88,
+          "w": 160,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:transmission-tower]",
+          "font_size": 100,
+          "color": "white",
+          "entity": "sensor.master_house_total_import_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "icon_inactive"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "text": "[mdi:transmission-tower-export]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 10000
+                  }
+                ]
+              },
+              "set": {
+                "color": "danger"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_3",
+          "type": "label",
+          "x": 24,
+          "y": 56,
+          "w": 240,
+          "h": 48,
+          "align": "left",
+          "valign": "top",
+          "text": "Import",
+          "font_size": 28,
+          "color": "White"
+        },
+        {
+          "id": "label_4",
+          "type": "label",
+          "x": 184,
+          "y": 56,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 50,
+          "font_weight": 600,
+          "letter_spacing": -2,
+          "color": "White",
+          "entity": "sensor.master_house_total_import_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "grey"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_5",
+          "type": "label",
+          "x": 200,
+          "y": 112,
+          "w": 184,
+          "h": 40,
+          "text": "today",
+          "font_size": 18,
+          "color": "white",
+          "align": "right",
+          "valign": "bottom"
+        },
+        {
+          "id": "label_6",
+          "type": "label",
+          "x": 184,
+          "y": 136,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "White",
+          "entity": "sensor.daily_energy_import_total"
+        },
+        {
+          "id": "rectangle_3",
+          "type": "rectangle",
+          "x": 408,
+          "y": 48,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_7",
+          "type": "label",
+          "x": 576,
+          "y": 136,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "White",
+          "entity": "sensor.daily_energy_import_total"
+        },
+        {
+          "id": "label_8",
+          "type": "label",
+          "x": 592,
+          "y": 112,
+          "w": 184,
+          "h": 40,
+          "text": "today",
+          "font_size": 18,
+          "color": "white",
+          "align": "right",
+          "valign": "bottom"
+        },
+        {
+          "id": "label_9",
+          "type": "label",
+          "x": 576,
+          "y": 56,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 50,
+          "font_weight": 600,
+          "letter_spacing": -2,
+          "color": "White",
+          "entity": "sensor.master_house_total_export_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "grey"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_10",
+          "type": "label",
+          "x": 416,
+          "y": 56,
+          "w": 240,
+          "h": 48,
+          "align": "left",
+          "valign": "top",
+          "text": "Export",
+          "font_size": 28,
+          "color": "White"
+        },
+        {
+          "id": "label_11",
+          "type": "label",
+          "x": 412,
+          "y": 88,
+          "w": 160,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:transmission-tower]",
+          "font_size": 100,
+          "color": "white",
+          "entity": "sensor.master_house_total_export_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "icon_inactive"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "text": "[mdi:transmission-tower-import]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 10000
+                  }
+                ]
+              },
+              "set": {
+                "color": "danger"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rectangle_1",
+          "type": "rectangle",
+          "x": 408,
+          "y": 208,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_12",
+          "type": "label",
+          "x": 576,
+          "y": 296,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "White",
+          "entity": "sensor.daily_energy_import_total"
+        },
+        {
+          "id": "label_13",
+          "type": "label",
+          "x": 592,
+          "y": 272,
+          "w": 184,
+          "h": 40,
+          "text": "today",
+          "font_size": 18,
+          "color": "white",
+          "align": "right",
+          "valign": "bottom"
+        },
+        {
+          "id": "label_14",
+          "type": "label",
+          "x": 576,
+          "y": 216,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 50,
+          "font_weight": 600,
+          "letter_spacing": -2,
+          "color": "White",
+          "entity": "sensor.master_house_total_export_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "grey"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_15",
+          "type": "label",
+          "x": 416,
+          "y": 216,
+          "w": 240,
+          "h": 48,
+          "align": "left",
+          "valign": "top",
+          "text": "Export",
+          "font_size": 28,
+          "color": "White"
+        },
+        {
+          "id": "label_16",
+          "type": "label",
+          "x": 416,
+          "y": 248,
+          "w": 160,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:transmission-tower]",
+          "font_size": 100,
+          "color": "white",
+          "entity": "sensor.master_house_total_export_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "icon_inactive"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "text": "[mdi:transmission-tower-import]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 10000
+                  }
+                ]
+              },
+              "set": {
+                "color": "danger"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_17",
+          "type": "label",
+          "x": 184,
+          "y": 296,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "White",
+          "entity": "sensor.daily_energy_import_total"
+        },
+        {
+          "id": "label_18",
+          "type": "label",
+          "x": 200,
+          "y": 272,
+          "w": 184,
+          "h": 40,
+          "text": "today",
+          "font_size": 18,
+          "color": "white",
+          "align": "right",
+          "valign": "bottom"
+        },
+        {
+          "id": "label_19",
+          "type": "label",
+          "x": 184,
+          "y": 216,
+          "w": 200,
+          "h": 48,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 50,
+          "font_weight": 600,
+          "letter_spacing": -2,
+          "color": "White",
+          "entity": "sensor.master_house_total_import_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "grey"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_20",
+          "type": "label",
+          "x": 24,
+          "y": 216,
+          "w": 240,
+          "h": 48,
+          "align": "left",
+          "valign": "top",
+          "text": "Import",
+          "font_size": 28,
+          "color": "White"
+        },
+        {
+          "id": "label_21",
+          "type": "label",
+          "x": 16,
+          "y": 248,
+          "w": 160,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:transmission-tower]",
+          "font_size": 100,
+          "color": "white",
+          "entity": "sensor.master_house_total_import_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "icon_inactive"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "text": "[mdi:transmission-tower-export]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 10000
+                  }
+                ]
+              },
+              "set": {
+                "color": "danger"
+              }
+            }
+          ]
+        },
+        {
+          "id": "image_floorplan",
+          "type": "image",
+          "x": 16,
+          "y": 368,
+          "w": 768,
+          "h": 420,
+          "url": "images/floorplan.jpg",
+          "fit": "stretch",
+          "radius": 8
+        },
+        {
+          "id": "btn_floor_light_1",
+          "type": "button",
+          "x": 208,
+          "y": 524,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_off": "[mdi:lightbulb-outline]",
+          "icon_on": "[mdi:lightbulb]",
+          "entity": "light.esphome_mfa03_03_light",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#ffdd66"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_mfa03_03_light"
+          }
+        },
+        {
+          "id": "btn_floor_light_2",
+          "type": "button",
+          "x": 360,
+          "y": 520,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_off": "[mdi:lightbulb-outline]",
+          "icon_on": "[mdi:lightbulb]",
+          "entity": "light.esphome_mfa05_01_light",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#ffdd66"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_mfa05_01_light"
+          }
+        },
+        {
+          "id": "btn_floor_light_3",
+          "type": "button",
+          "x": 572,
+          "y": 472,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_off": "[mdi:lightbulb-outline]",
+          "icon_on": "[mdi:lightbulb]",
+          "entity": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#ffdd66"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2"
+          }
+        },
+        {
+          "id": "btn_floor_light_4",
+          "type": "button",
+          "x": 532,
+          "y": 608,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_off": "[mdi:lightbulb-outline]",
+          "icon_on": "[mdi:lightbulb]",
+          "entity": "switch.esphome_tx_ultimate_02_l1",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#ffdd66"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "icon_inactive"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.esphome_tx_ultimate_02_l1"
+          }
+        },
+        {
+          "id": "camera_kitchen",
+          "type": "camera",
+          "x": 16,
+          "y": 808,
+          "w": 376,
+          "h": 220,
+          "radius": 6,
+		  "label": "Sec Cam 10",
+          "preview": "poster",
+          "entity": "camera.seccam10_fluent",
+          "snapshot_entity": "camera.seccam10_snapshots_fluent",
+          "stream_entity": "camera.seccam10_fluent",
+          "refresh_interval": 60000,
+          "fit": "cover"
+        },
+        {
+          "id": "camera_front",
+          "type": "camera",
+          "x": 408,
+          "y": 808,
+          "w": 376,
+          "h": 220,
+          "entity": "camera.seccam05_snapshots_fluent",
+          "preview": "poster",
+          "fit": "cover",
+          "radius": 6
+        },
+        {
+          "id": "rect_scenes",
+          "type": "rectangle",
+          "x": 16,
+          "y": 1048,
+          "w": 768,
+          "h": 216,
+          "background": "surface2",
+          "radius": 8
+        },
+        {
+          "id": "btn_scene_cook",
+          "type": "button",
+          "x": 32,
+          "y": 1072,
+          "w": 224,
+          "h": 160,
+          "radius": 16,
+          "background": "surface",
+          "icon_off": "[mdi:chef-hat]",
+          "label": "Cooking",
+          "action": {
+            "service": "scene.turn_on",
+            "entity_id": "scene.kitchen_cooking"
+          }
+        },
+        {
+          "id": "btn_scene_movie",
+          "type": "button",
+          "x": 288,
+          "y": 1072,
+          "w": 224,
+          "h": 160,
+          "radius": 16,
+          "background": "surface",
+          "icon_off": "[mdi:movie-open]",
+          "label": "Movie",
+          "action": {
+            "service": "scene.turn_on",
+            "entity_id": "scene.lounge_movie"
+          }
+        },
+        {
+          "id": "btn_scene_all_off",
+          "type": "button",
+          "x": 544,
+          "y": 1072,
+          "w": 224,
+          "h": 160,
+          "radius": 16,
+          "background": "surface",
+          "icon_off": "[mdi:power]",
+          "label": "All Off",
+          "action": {
+            "service": "homeassistant.turn_off",
+            "entity_id": "group.all_lights"
+          }
+        }
+      ]
+    }
+  ],
+  "designer": {
+    "guides": {
+      "1": [
+        {
+          "id": "g1772174325750",
+          "type": "h",
+          "pos": 24
+        }
+      ]
+    }
+  }
+}

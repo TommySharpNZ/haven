@@ -277,6 +277,38 @@ The widget updates live as the entity state changes.
 
 ---
 
+## Conditional Overrides (Label)
+
+Labels support ordered conditional overrides via `overrides`. Each rule has a `when` block (logic + conditions) and a `set` block (attributes to override). Rules are evaluated in order; later rules win.
+
+```json
+"overrides": [
+  {
+    "when": {
+      "logic": "all",
+      "conditions": [ { "source": "state", "type": "above", "value": 0 } ]
+    },
+    "set": { "text": "[mdi:transmission-tower-import]", "color": "warning" }
+  },
+  {
+    "when": {
+      "logic": "all",
+      "conditions": [ { "source": "state", "type": "above", "value": 5000 } ]
+    },
+    "set": { "color": "danger" }
+  }
+]
+```
+
+**Condition logic**
+- `logic`: `all` (AND) or `any` (OR)
+- `conditions`: array of condition objects
+- `source`: currently only `state` (future: variables, attributes)
+- Condition types: `above`, `below`, `equals`, `not_equals`
+- Conditions can be nested using groups with their own `logic`/`conditions`
+
+---
+
 ## Widget Types
 
 All widgets share these base properties:
@@ -314,10 +346,10 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
   "letter_spacing": 1,
   "entity": "sensor.pv_power",
   "format": "power",
-  "states": {
-    "above_zero": { "color": "primary" }
-  },
-  "state_condition": { "type": "above", "value": 0, "state_key": "above_zero" }
+  "overrides": [
+    { "when": { "logic": "all", "conditions": [ { "source": "state", "type": "above", "value": 0 } ] },
+      "set": { "color": "primary" } }
+  ]
 }
 ```
 
@@ -326,6 +358,7 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `text` | Static text. Supports `[mdi:icon-name]` icons. Used as placeholder before entity loads. |
 | `font_size` | Size in pixels |
 | `align` | `left`, `center`, or `right` |
+| `valign` | Vertical alignment: `top`, `center` (default), or `bottom` |
 | `color` | Text color - token or hex |
 | `background` | Background color - token or hex |
 | `letter_spacing` | Letter spacing in px |
@@ -333,8 +366,7 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `entity` | HA entity ID for live value |
 | `format` | How to format the entity value (see below) |
 | `prefix` | Text prefix for `power_prefix` format |
-| `states` | Map of state name → style overrides |
-| `state_condition` | Condition that activates a named state |
+| `overrides` | Conditional attribute overrides (ordered) |
 
 **Format values:**
 
@@ -353,30 +385,32 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `datetime_12` | `2026-02-27 2:05 PM` |
 | *(none)* | Raw entity state string |
 
-**State-based styling:**
+**Conditional overrides (replaces states/state_condition):**
 
-`state_condition` can be a single condition or an array - first match wins:
+Use `overrides` to apply ordered attribute overrides when conditions match. Later rules win.
 
 ```json
-"states": {
-  "low":    { "color": "danger" },
-  "medium": { "color": "warning" },
-  "ok":     { "color": "primary" }
-},
-"state_condition": [
-  { "type": "below", "value": 20, "state_key": "low" },
-  { "type": "below", "value": 50, "state_key": "medium" },
-  { "type": "above", "value": 49, "state_key": "ok" }
+"overrides": [
+  {
+    "when": {
+      "logic": "all",
+      "conditions": [ { "source": "state", "type": "above", "value": 0 } ]
+    },
+    "set": { "text": "[mdi:transmission-tower-export]", "color": "warning" }
+  },
+  {
+    "when": {
+      "logic": "all",
+      "conditions": [ { "source": "state", "type": "above", "value": 5000 } ]
+    },
+    "set": { "color": "danger" }
+  }
 ]
 ```
 
-Single condition (still supported):
-```json
-"state_condition": { "type": "above", "value": 0, "state_key": "active" }
-```
-
-Condition types: `above`, `below`, `equals`, `not_equals`.
-State style properties: `color`, `background`, `opacity`, `letter_spacing`, `text`.
+`logic`: `all` (AND) or `any` (OR).  
+`conditions` can include nested groups with their own `logic`/`conditions`.  
+`source` is currently only `state` (future: variables, attributes).
 
 ---
 
@@ -494,11 +528,18 @@ A tappable button that reflects entity state visually and calls a HA service on 
 
 | Property | Description |
 |----------|-------------|
-| `label` | Text shown below the icon |
+| `label` | Text shown below the icon. Supports `[mdi:icon-name]` and `{{ ... }}` templates |
 | `entity` | HA entity to watch for on/off state |
 | `icon_on` | Icon shown when entity is `on`. Supports `[mdi:icon-name]`. |
 | `icon_off` | Icon shown when entity is `off`. Supports `[mdi:icon-name]`. |
-| `states.on` | Style when entity state is `on`: `background`, `icon_color`, `label_color` |
+| `icon_size` | Icon size in px (optional). If omitted, auto-scales based on button size |
+| `label_size` | Label font size in px (optional). If omitted, auto-scales based on button size |
+| `radius` | Corner radius in px (optional) |
+| `gap` | Space between icon and label in px (optional) |
+| `padding` | Padding inside the button in px (optional) |
+| `border_width` | Border thickness in px (optional) |
+| `border_color` | Border color - token or hex (optional) |
+| `states.on` | Style when entity state is `on`: `background`, `icon_color`, `label_color`, `border_width`, `border_color`, `text` |
 | `states.off` | Style when entity state is `off` |
 | `action` | Action to perform on tap |
 

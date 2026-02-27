@@ -30,14 +30,14 @@ A visual drag-and-drop editor for WebHASP device configs. Lives in `designer.htm
 
 ## Key Considerations Before Building
 
-### Do arc/gauge widgets first
-The designer should support all widget types from day one. Adding a new widget type after the designer exists means adding designer support for it too - double the work. The arc/gauge widget is the main missing type. Build it first so the designer can treat the widget set as complete.
+### Arc/gauge widget is now part of the set
+The arc/gauge widget now exists in the runtime, so the designer should include it from day one.
 
-### Fix icon spacing first
-The `[fa-name]` icon spacing bug (margin-right not applying correctly in button icons and labels) is small but will be very visible in the designer UI where widget labels are front and centre. Worth fixing before building a UI around it.
+### Icon spacing (MDI)
+Spacing around `[mdi:icon-name]` tokens is handled via `&nbsp;` in text and inline `display: inline` on MDI spans inside labels/buttons. The designer should render the same as the runtime.
 
 ### Page 0 awareness
-The designer needs to understand that page 0 widgets are persistent - they render on every page, not just their own. The canvas viewer should show page 0 widgets composited on top of whichever page is being designed, exactly as they would appear at runtime.
+Page 0 widgets are persistent and render on top of every page (now implemented in runtime). The designer should composite page 0 on top of the selected page exactly as it appears at runtime.
 
 ### groupid is already in the schema
 The `groupid` field is already supported in the widget schema and ignored by the runtime. The designer uses it to treat widgets with the same groupid as an atomic unit for selection and movement. No schema changes needed.
@@ -53,12 +53,46 @@ The designer lives in `designer.html` and has its own JS. It does not modify `ap
 *Useful on its own. Gets the scaffolding right before adding complexity.*
 
 - Load a config JSON (file picker or URL parameter `?device=name`)
-- Render the canvas at design resolution with all widgets visible
+- Render the canvas at design resolution with all widgets visible (including page 0 overlay)
 - Page switcher to view each page
 - Click a widget to highlight it and show its properties in a read-only sidebar
 - No editing, no saving
 
 This phase answers the hardest question: can we render the config accurately enough that what you see in the designer matches what you see in the dashboard? The rendering code will be shared/adapted from `app.js`.
+
+---
+
+## PoC Implementation Plan (Now)
+
+**Scope:** A small `designer.html` + `designer/` ES modules PoC that proves the hardest interactions first.
+
+**Tech choice:** Use Konva.js (local CDN link) for drag, zoom, snap, and selection. No build tooling required.
+
+**PoC features:**
+- Load `devices/test-designer.json` by default (override via `?device=name`)
+- Render a single page at a time + Page 0 overlay
+- Drag widgets to reposition (grid snapping)
+- Zoom with mouse wheel
+- Toggle “Pan mode” to drag the canvas
+- Tree view of widgets in JSON order
+- Hide/show widgets (designer‑only, in-memory)
+- Simple selection sidebar showing id/type/x/y/w/h
+- Property editor (x/y/w/h, label text/color/background/font)
+- Delete/Duplicate actions in selection panel
+- Undo/redo snapshot stack
+- Preview toggle (true runtime render, current page, synced zoom)
+- Guides with persistence (stored in device JSON under `designer.guides`)
+- Add Label / Add Rect buttons
+
+**Files:**
+- `designer.html`
+- `designer/app.js`
+- `designer/render.js`
+- `designer/grid.js`
+- `designer/tree.js`
+- `designer/selection.js`
+- `designer/io.js`
+- `devices/test-designer.json`
 
 ### Phase 2 - Property Editing
 *The most valuable phase for day-to-day config work.*
@@ -78,7 +112,7 @@ This phase answers the hardest question: can we render the config accurately eno
 - Group selection: click groupid group moves all widgets together
 
 ### Phase 4 - Add and Delete
-- Widget palette panel listing all widget types
+- Widget palette panel listing all widget types (label, rectangle, bar, button, clock, image, camera, arc)
 - Drag from palette onto canvas to create a new widget with sensible defaults
 - Delete key removes selected widget
 - Duplicate selected widget (cmd/ctrl+D)
@@ -88,7 +122,7 @@ This phase answers the hardest question: can we render the config accurately eno
 
 ## Architecture Notes
 
-**Rendering:** The designer canvas uses the same CSS transform scaling approach as the runtime. Widget rendering functions will be adapted from `app.js` but simplified - no entity subscriptions, no WebSocket, just static rendering from config values. A thin shared rendering layer is the goal rather than duplicating all of `app.js`.
+**Rendering:** The designer canvas uses the same CSS transform scaling approach as the runtime. Widget rendering functions will be adapted from `app.js` but simplified - no entity subscriptions, no WebSocket, just static rendering from config values. A thin shared rendering layer is the goal rather than duplicating all of `app.js`. Page 0 should be rendered inside the canvas and layered on top.
 
 **HA connection (optional):** The designer can optionally connect to HA (using stored localStorage credentials) to:
 - Populate entity pickers with real entity IDs
@@ -108,6 +142,8 @@ If not connected, entity fields are plain text inputs and values show as placeho
 - Ctrl+click: add to selection
 - Escape: deselect
 - Selected widgets show a blue outline and resize handles
+
+**Template expressions:** Labels support `{{ ... }}` expressions in runtime. Designer should render templates using placeholder values or live entity values if connected to HA. At minimum, leave the template string visible.
 
 **Grid:**
 - Default 8px grid, toggleable
@@ -147,3 +183,29 @@ If not connected, entity fields are plain text inputs and values show as placeho
 - **Color picker UX?** Native `<input type="color">` is fine for hex values but doesn't understand theme tokens. The sidebar probably needs a dual mode: token dropdown + custom hex option.
 - **Undo/redo?** Not in initial phases. The config is JSON and users can maintain their own backups. Could be added as a simple history stack later.
 - **Mobile/tablet use?** The designer is primarily a desktop tool - designing on the same tablet you're using as a dashboard is an edge case. Touch support for the canvas is a nice-to-have, not a requirement.
+
+---
+
+## Inspiration Resources
+
+- https://github.com/mvturnho/OpenHaspDesigner
+- https://haspdesigner.qrisonline.nl/
+- https://github.com/HASwitchPlate/openHASP/discussions/957
+- https://hasp-screen-maker-lenardo.replit.app/
+
+---
+
+## Designer Metadata
+
+Designer-only metadata is stored inside device configs under a `designer` block. This is ignored by the runtime.
+
+```json
+"designer": {
+  "guides": {
+    "1": [
+      { "id": "g1", "type": "h", "pos": 120 },
+      { "id": "g2", "type": "v", "pos": 320 }
+    ]
+  }
+}
+```

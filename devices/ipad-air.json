@@ -15,7 +15,7 @@
     },
     "orientation": "landscape",
     "default_page": 1,
-    "return_to_default": 60
+    "return_to_default": 600
   },
   "theme": {
     "colors": {
@@ -40,26 +40,41 @@
       "widgets": [
         {
           "id": "p0_clock",
-          "type": "clock",
+		  
+		  "type": "label",
+  "entity": "internal.currentdtm",
+  "prefix": "[mdi:clock-outline]&nbsp;",
+  "format": "datetime_24",
+		  
+		  
           "x": 16,
           "y": 12,
-          "w": 140,
-          "h": 36,
+
+
           "font_size": 26,
           "align": "left",
           "color": "text",
           "background": "transparent"
         },
         {
-          "id": "p0_status_dot",
-          "type": "rectangle",
-          "x": 1000,
-          "y": 20,
-          "w": 10,
-          "h": 10,
-          "radius": 5,
-          "background": "primary"
-        }
+  "id": "p0_connection_status",
+  "type": "label",
+  "x": 970, "y": 10,
+  "font_size": 26,
+  "align": "center",
+  "background": "",
+  "entity": "internal.connectionstatus",
+  "states": {
+    "connected":    { "text": "[mdi:wifi-check]",      "color": "primary" },
+    "connecting":   { "text": "[mdi:wifi-sync]",       "color": "warning" },
+    "disconnected": { "text": "[mdi:wifi-remove]",        "color": "danger" }
+  },
+  "state_condition": [
+    { "type": "equals", "value": "connected",    "state_key": "connected" },
+    { "type": "equals", "value": "connecting",   "state_key": "connecting" },
+    { "type": "equals", "value": "disconnected", "state_key": "disconnected" }
+  ]
+}
       ]
     },
     {
@@ -118,7 +133,7 @@
           "y": 84,
           "w": 60,
           "h": 50,
-          "text": "[fa-sun-o]",
+          "text": "[mdi:solar-power]",
           "font_size": 36,
           "align": "center",
           "color": "icon_inactive",
@@ -190,7 +205,7 @@
           "y": 84,
           "w": 60,
           "h": 50,
-          "text": "[fa-bolt]",
+          "text": "[mdi:transmission-tower-import]",
           "font_size": 36,
           "align": "center",
           "color": "icon_inactive",
@@ -262,7 +277,7 @@
           "y": 84,
           "w": 60,
           "h": 50,
-          "text": "[fa-battery-full]",
+          "text": "[mdi:battery]",
           "font_size": 36,
           "align": "center",
           "color": "icon_inactive",
@@ -313,7 +328,7 @@
           "y": 84,
           "w": 60,
           "h": 50,
-          "text": "[fa-upload]",
+          "text": "[mdi:transmission-tower-export]",
           "font_size": 36,
           "align": "center",
           "color": "icon_inactive",
@@ -763,7 +778,7 @@
           "y": 88,
           "w": 220,
           "h": 70,
-          "text": "[fa-lightbulb-o]",
+          "text": "[mdi:lighbulb]",
           "font_size": 52,
           "align": "center",
           "background": "transparent",
@@ -834,7 +849,7 @@
           "y": 88,
           "w": 220,
           "h": 70,
-          "text": "[fa-lightbulb-o]",
+          "text": "[mdi:lighbulb]",
           "font_size": 52,
           "align": "center",
           "background": "transparent",
@@ -884,7 +899,7 @@
           "h": 150,
           "radius": 10,
           "background": "surface2",
-          "entity": "switch.outdoor_lights",
+          "entity": "switch.ks_602s_01",
           "states": {
             "on": {
               "background": "#493416"
@@ -895,7 +910,7 @@
           },
           "action": {
             "service": "homeassistant.toggle",
-            "entity_id": "switch.outdoor_lights"
+            "entity_id": "switch.ks_602s_01"
           }
         },
         {
@@ -905,11 +920,11 @@
           "y": 88,
           "w": 220,
           "h": 70,
-          "text": "[fa-lightbulb-o]",
+          "text": "[mdi:lighbulb]",
           "font_size": 52,
           "align": "center",
           "background": "transparent",
-          "entity": "switch.outdoor_lights",
+          "entity": "switch.ks_602s_01",
           "states": {
             "on": {
               "color": "#e88c03"
@@ -946,6 +961,28 @@
           "background": "transparent",
           "entity": "switch.outdoor_lights"
         },
+		{
+  "id": "btn3",
+  "type": "button",
+  "x": 488,
+  "y": 272,
+  "w": 220,
+  "h": 150,
+  "radius": 50,
+  "label": "Outdoor",
+  "entity": "switch.ks_602s_01",
+  "icon_on": "[mdi:lightbulb]",
+  "icon_off": "[mdi:lightbulb-outline]",
+  "states": {
+    "on":  { "background": "#493416", "icon_color": "warning", "label_color": "text" },
+    "off": { "background": "surface2", "icon_color": "icon_inactive", "label_color": "text_muted" }
+  },
+  "action": {
+    "type": "service",
+    "service": "homeassistant.toggle",
+    "entity_id": "switch.ks_602s_01"
+  }
+},
         {
           "id": "btn4_bg",
           "type": "rectangle",
@@ -976,7 +1013,7 @@
           "y": 88,
           "w": 284,
           "h": 70,
-          "text": "[fa-cogs]",
+          "text": "[mdi:ceiling-fan]",
           "font_size": 52,
           "align": "center",
           "background": "transparent",
@@ -1487,7 +1524,7 @@
           "y": 390,
           "w": 460,
           "h": 20,
-          "text": "[fa-camera]  HA entity  \u2022  preview: mjpeg  \u2022  tap for HLS stream",
+          "text": "[mdi:cctv] HA entity  \u2022  preview: mjpeg  \u2022  tap for HLS stream",
           "font_size": 12,
           "align": "left",
           "color": "text_muted",
@@ -1517,7 +1554,7 @@
           "y": 390,
           "w": 460,
           "h": 20,
-          "text": "[fa-camera]  HA entity  \u2022  preview: poster  \u2022  refreshes every 60s",
+          "text": "[mdi:cctv] HA entity  \u2022  preview: poster  \u2022  refreshes every 60s",
           "font_size": 12,
           "align": "left",
           "color": "text_muted",
@@ -1546,7 +1583,7 @@
           "y": 684,
           "w": 460,
           "h": 20,
-          "text": "[fa-camera]  Direct Reolink URL  \u2022  preview: url  \u2022  5s poll  \u2022  tap for HA HLS",
+          "text": "[mdi:cctv] Direct Reolink URL  \u2022  preview: url  \u2022  5s poll  \u2022  tap for HA HLS",
           "font_size": 12,
           "align": "left",
           "color": "text_muted",
@@ -1576,7 +1613,7 @@
           "y": 684,
           "w": 460,
           "h": 20,
-          "text": "[fa-camera]  HA entity  \u2022  preview: snapshot  \u2022  5s poll  \u2022  tap for HLS",
+          "text": "[mdi:cctv] HA entity  \u2022  preview: snapshot  \u2022  5s poll  \u2022  tap for HLS",
           "font_size": 12,
           "align": "left",
           "color": "text_muted",

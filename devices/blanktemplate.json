@@ -1,19 +1,14 @@
 {
   "version": "1.0",
-  "ha": {
-    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
-    "url": "http://192.168.11.95:8123",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
-  },
   "device": {
-    "name": "WebHASP Showcase",
+    "name": "New Device Name",
     "canvas": {
-      "width": 800,
-      "height": 480
+      "width": 1024,
+      "height": 768
     },
     "orientation": "landscape",
     "default_page": 1,
-    "return_to_default": 60
+    "return_to_default": 600
   },
   "theme": {
     "colors": {
@@ -33,10 +28,10 @@
   "pages": [
     {
       "id": 1,
-      "label": "Welcome",
+      "label": "Page1",
       "widgets": [
         {
-          "id": "logo",
+          "id": "example_label",
           "type": "label",
           "x": 0,
           "y": 60,
