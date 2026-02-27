@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    WebHASP - app.js
    Pure vanilla JS, ES5-compatible for maximum browser support.
    No frameworks, no build tools, no dependencies.
@@ -1202,16 +1202,18 @@
     el.appendChild(img);
 
     var loader = document.createElement('div');
-    loader.className   = 'camera-loader';
-    loader.textContent = '';
+    loader.className = 'camera-loader';
+    var loaderIcon = document.createElement('span');
+    loaderIcon.className = 'mdi mdi-loading mdi-spin';
+    loader.appendChild(loaderIcon);
     el.appendChild(loader);
 
     // Request a signed MJPEG stream URL - one sign per session, stream stays open
     var path = '/api/camera_proxy_stream/' + entity;
     requestSignedUrl(path, 3600, function(url) {
-      if (!url) { loader.textContent = ''; return; }
+      if (!url) { loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e); return; }
       img.onload = function() { loader.style.display = 'none'; };
-      img.onerror = function() { loader.textContent = ''; };
+      img.onerror = function() { loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e); };
       img.src = url;
     });
 
@@ -1228,14 +1230,16 @@
     el.appendChild(img);
 
     var loader = document.createElement('div');
-    loader.className   = 'camera-loader';
-    loader.textContent = '';
+    loader.className = 'camera-loader';
+    var loaderIcon = document.createElement('span');
+    loaderIcon.className = 'mdi mdi-loading mdi-spin';
+    loader.appendChild(loaderIcon);
     el.appendChild(loader);
 
     if (showPlayButton) {
       var playBtn = document.createElement('div');
       playBtn.className = 'camera-play-btn';
-      playBtn.textContent = '';  // FA play-circle
+      var playIcon = document.createElement('span'); playIcon.className = 'mdi mdi-play-circle'; playBtn.appendChild(playIcon);
       el.appendChild(playBtn);
     }
 
@@ -1308,8 +1312,10 @@
     img.style.display   = 'block';
 
     var loader = document.createElement('div');
-    loader.className   = 'camera-loader';
-    loader.textContent = '';
+    loader.className = 'camera-loader';
+    var loaderIcon = document.createElement('span');
+    loaderIcon.className = 'mdi mdi-loading mdi-spin';
+    loader.appendChild(loaderIcon);
     el.appendChild(img);
     el.appendChild(loader);
 
@@ -1318,7 +1324,7 @@
     img.onload  = function() { loader.style.display = 'none'; };
     img.onerror = function() {
       loader.style.display = 'flex';
-      loader.textContent   = '';  // warning - likely cert or mixed content
+      loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
     };
 
     var active = true;
@@ -1338,7 +1344,7 @@
     if (w.preview === 'poster') {
       var playBtn = document.createElement('div');
       playBtn.className   = 'camera-play-btn';
-      playBtn.textContent = '';
+      var playIcon = document.createElement('span'); playIcon.className = 'mdi mdi-play-circle'; playBtn.appendChild(playIcon);
       el.appendChild(playBtn);
     }
   }
@@ -1360,8 +1366,10 @@
     var overlay = buildFullscreenOverlay(w.label || entity);
 
     var loader = document.createElement('div');
-    loader.className   = 'camera-loader';
-    loader.textContent = '';
+    loader.className = 'camera-loader';
+    var loaderIcon = document.createElement('span');
+    loaderIcon.className = 'mdi mdi-loading mdi-spin';
+    loader.appendChild(loaderIcon);
     loader.style.position = 'relative';
     loader.style.width    = '100%';
     loader.style.height   = '100%';
@@ -1371,7 +1379,7 @@
     var streamMsgId = msgId++;
     pendingStreamRequests[streamMsgId] = function(result) {
       if (!result || !result.url) {
-        loader.textContent = '';
+        loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
         return;
       }
       var streamUrl = haUrl + result.url;
@@ -1419,12 +1427,12 @@
             hls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
             overlay.el.addEventListener('overlay-close', function() { hls.destroy(); });
           } else {
-            loader.textContent = '';
+            loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
             loader.style.display = 'flex';
           }
         };
         script.onerror = function() {
-          loader.textContent = '';
+          loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
           loader.style.display = 'flex';
         };
         document.head.appendChild(script);
@@ -1453,8 +1461,9 @@
 
     var closeBtn = document.createElement('button');
     closeBtn.className        = 'fs-close';
-    closeBtn.textContent      = '';
-    closeBtn.style.fontFamily = 'FontAwesome';
+    var closeIcon = document.createElement('span');
+    closeIcon.className = 'mdi mdi-close';
+    closeBtn.appendChild(closeIcon);
     closeBtn.addEventListener('click', function() {
       overlay.dispatchEvent(new CustomEvent('overlay-close'));
       document.body.removeChild(overlay);

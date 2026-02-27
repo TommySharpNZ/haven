@@ -13,7 +13,7 @@
     },
     "orientation": "landscape",
     "default_page": 1,
-    "return_to_default": 60
+    "return_to_default": 0
   },
   "theme": {
     "colors": {
@@ -2160,6 +2160,240 @@
           "color": "primary",
           "background": "surface"
         }
+      ]
+    },
+
+    {
+      "id": 9,
+      "label": "Climate",
+      "widgets": [
+
+        { "id": "title", "type": "label",
+          "x": 0, "y": 0, "w": 800, "h": 44,
+          "text": "Climate Entity",
+          "font_size": 24, "align": "center", "color": "text", "background": "background" },
+
+        { "id": "clock", "type": "clock",
+          "x": 10, "y": 8, "w": 100, "h": 30,
+          "font_size": 20, "color": "text_muted", "background": "background" },
+
+        { "id": "desc", "type": "label",
+          "x": 20, "y": 52, "w": 760, "h": 22,
+          "text": "attr.xxx templates in label text, state overrides for hvac mode icon, attribute overrides for hvac_action colour.",
+          "font_size": 13, "align": "left", "color": "text_muted", "background": "background" },
+
+        { "id": "left_bg", "type": "rectangle",
+          "x": 20, "y": 82, "w": 330, "h": 388,
+          "background": "surface", "radius": 10 },
+
+        { "id": "mode_icon", "type": "label",
+          "x": 20, "y": 88, "w": 200, "h": 100,
+          "entity": "climate.living",
+          "text": "[mdi:thermostat]",
+          "font_size": 64, "align": "center",
+          "color": "text_muted", "background": "transparent",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "heat" }] },
+              "set": { "text": "[mdi:fire]", "color": "danger" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "cool" }] },
+              "set": { "text": "[mdi:snowflake]", "color": "primary" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "heat_cool" }] },
+              "set": { "text": "[mdi:sun-snowflake-variant]", "color": "warning" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "fan_only" }] },
+              "set": { "text": "[mdi:fan]", "color": "text" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "dry" }] },
+              "set": { "text": "[mdi:water-percent]", "color": "warning" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "off" }] },
+              "set": { "text": "[mdi:power-off]", "color": "icon_inactive" } }
+          ] },
+
+        { "id": "action_text", "type": "label",
+          "x": 228, "y": 94, "w": 112, "h": 42,
+          "entity": "climate.living",
+          "text": "{{ attr.hvac_action }}",
+          "font_size": 15, "align": "center",
+          "color": "text_muted", "background": "transparent",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "heating" }] },
+              "set": { "color": "danger" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "cooling" }] },
+              "set": { "color": "primary" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "idle" }] },
+              "set": { "color": "text_muted" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "off" }] },
+              "set": { "color": "icon_inactive" } }
+          ] },
+
+        { "id": "mode_text", "type": "label",
+          "x": 228, "y": 140, "w": 112, "h": 32,
+          "entity": "climate.living",
+          "text": "{{ state_str }}",
+          "font_size": 13, "align": "center",
+          "color": "text_muted", "background": "transparent",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "heat" }] },
+              "set": { "color": "danger" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "cool" }] },
+              "set": { "color": "primary" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "heat_cool" }] },
+              "set": { "color": "warning" } },
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "off" }] },
+              "set": { "color": "icon_inactive" } }
+          ] },
+
+        { "id": "div1", "type": "rectangle",
+          "x": 40, "y": 198, "w": 290, "h": 1, "background": "surface2" },
+
+        { "id": "curr_hdr", "type": "label",
+          "x": 30, "y": 206, "w": 150, "h": 18,
+          "text": "CURRENT", "font_size": 11, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "curr_temp", "type": "label",
+          "x": 20, "y": 222, "w": 330, "h": 110,
+          "entity": "climate.living",
+          "text": "{{ round(attr.current_temperature, 1) }}°",
+          "font_size": 80, "align": "center",
+          "color": "text", "background": "transparent",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "current_temperature", "type": "above", "value": 24 }] },
+              "set": { "color": "danger" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "current_temperature", "type": "below", "value": 18 }] },
+              "set": { "color": "primary" } }
+          ] },
+
+        { "id": "tgt_hdr", "type": "label",
+          "x": 30, "y": 338, "w": 130, "h": 18,
+          "text": "TARGET", "font_size": 11, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "tgt_temp", "type": "label",
+          "x": 20, "y": 356, "w": 155, "h": 52,
+          "entity": "climate.living",
+          "text": "{{ attr.temperature }}°",
+          "font_size": 36, "align": "center",
+          "color": "text", "background": "transparent" },
+
+        { "id": "preset_hdr", "type": "label",
+          "x": 190, "y": 338, "w": 150, "h": 18,
+          "text": "PRESET", "font_size": 11, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "preset_val", "type": "label",
+          "x": 183, "y": 356, "w": 157, "h": 52,
+          "entity": "climate.living",
+          "text": "{{ attr.preset_mode }}",
+          "font_size": 18, "align": "center", "valign": "center",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "fan_hdr", "type": "label",
+          "x": 30, "y": 418, "w": 130, "h": 18,
+          "text": "FAN", "font_size": 11, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "fan_val", "type": "label",
+          "x": 20, "y": 438, "w": 155, "h": 24,
+          "entity": "climate.living",
+          "text": "{{ attr.fan_mode }}",
+          "font_size": 18, "align": "center",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "right_bg", "type": "rectangle",
+          "x": 366, "y": 82, "w": 414, "h": 388,
+          "background": "surface", "radius": 10 },
+
+        { "id": "attr_hdr", "type": "label",
+          "x": 376, "y": 94, "w": 394, "h": 20,
+          "text": "[mdi:database-outline]&nbsp;Live attributes via  attr.xxx  templates",
+          "font_size": 13, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "box1_bg", "type": "rectangle",
+          "x": 376, "y": 118, "w": 190, "h": 78, "background": "surface2", "radius": 6 },
+        { "id": "box1_key", "type": "label",
+          "x": 386, "y": 124, "w": 170, "h": 16,
+          "text": "[mdi:thermostat]&nbsp;hvac_action",
+          "font_size": 11, "align": "left", "color": "text_muted", "background": "transparent" },
+        { "id": "box1_val", "type": "label",
+          "x": 386, "y": 144, "w": 170, "h": 32,
+          "entity": "climate.living",
+          "text": "{{ attr.hvac_action }}",
+          "font_size": 20, "align": "left",
+          "color": "text_muted", "background": "transparent",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "heating" }] },
+              "set": { "color": "danger" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "cooling" }] },
+              "set": { "color": "primary" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "idle" }] },
+              "set": { "color": "text_muted" } }
+          ] },
+
+        { "id": "box2_bg", "type": "rectangle",
+          "x": 578, "y": 118, "w": 190, "h": 78, "background": "surface2", "radius": 6 },
+        { "id": "box2_key", "type": "label",
+          "x": 588, "y": 124, "w": 170, "h": 16,
+          "text": "[mdi:fan]&nbsp;fan_mode",
+          "font_size": 11, "align": "left", "color": "text_muted", "background": "transparent" },
+        { "id": "box2_val", "type": "label",
+          "x": 588, "y": 144, "w": 170, "h": 32,
+          "entity": "climate.living",
+          "text": "{{ attr.fan_mode }}",
+          "font_size": 20, "align": "left",
+          "color": "text", "background": "transparent" },
+
+        { "id": "box3_bg", "type": "rectangle",
+          "x": 376, "y": 204, "w": 190, "h": 78, "background": "surface2", "radius": 6 },
+        { "id": "box3_key", "type": "label",
+          "x": 386, "y": 210, "w": 170, "h": 16,
+          "text": "[mdi:home-outline]&nbsp;preset_mode",
+          "font_size": 11, "align": "left", "color": "text_muted", "background": "transparent" },
+        { "id": "box3_val", "type": "label",
+          "x": 386, "y": 230, "w": 170, "h": 32,
+          "entity": "climate.living",
+          "text": "{{ attr.preset_mode }}",
+          "font_size": 20, "align": "left",
+          "color": "text", "background": "transparent" },
+
+        { "id": "box4_bg", "type": "rectangle",
+          "x": 578, "y": 204, "w": 190, "h": 78, "background": "surface2", "radius": 6 },
+        { "id": "box4_key", "type": "label",
+          "x": 588, "y": 210, "w": 170, "h": 16,
+          "text": "[mdi:thermometer]&nbsp;target temp",
+          "font_size": 11, "align": "left", "color": "text_muted", "background": "transparent" },
+        { "id": "box4_val", "type": "label",
+          "x": 588, "y": 230, "w": 170, "h": 32,
+          "entity": "climate.living",
+          "text": "{{ attr.temperature }}°",
+          "font_size": 20, "align": "left",
+          "color": "text", "background": "transparent" },
+
+        { "id": "div2", "type": "rectangle",
+          "x": 376, "y": 292, "w": 394, "h": 1, "background": "surface2" },
+
+        { "id": "ovr_hdr", "type": "label",
+          "x": 376, "y": 300, "w": 394, "h": 20,
+          "text": "[mdi:palette-outline]&nbsp;Attribute overrides: source: attribute, attribute: hvac_action",
+          "font_size": 12, "align": "left",
+          "color": "text_muted", "background": "transparent" },
+
+        { "id": "action_indicator", "type": "label",
+          "x": 376, "y": 326, "w": 394, "h": 136,
+          "entity": "climate.living",
+          "text": "[mdi:thermostat]",
+          "font_size": 28, "align": "center", "valign": "center",
+          "color": "text_muted", "background": "surface2",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "heating" }] },
+              "set": { "text": "[mdi:fire]&nbsp;Heating", "color": "danger", "background": "#2a1010" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "cooling" }] },
+              "set": { "text": "[mdi:snowflake]&nbsp;Cooling", "color": "primary", "background": "#0a1d2a" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "idle" }] },
+              "set": { "text": "[mdi:pause-circle-outline]&nbsp;Idle", "color": "text_muted", "background": "surface2" } },
+            { "when": { "logic": "all", "conditions": [{ "source": "attribute", "attribute": "hvac_action", "type": "equals", "value": "off" }] },
+              "set": { "text": "[mdi:power-off]&nbsp;Off", "color": "icon_inactive", "background": "surface" } }
+          ] }
+
       ]
     }
   ]

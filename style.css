@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    WebHASP - Style
    Designed for fixed-canvas pixel-perfect display
    Compatible with old browsers - no CSS Grid, no custom props
@@ -461,7 +461,7 @@
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  font-family: 'FontAwesome';
+
   font-size: 56px;
   color: rgba(255,255,255,0.85);
   text-shadow: 0 2px 12px rgba(0,0,0,0.6);
@@ -498,7 +498,7 @@
   -webkit-box-pack: center;
   -ms-flex-pack: center;
   justify-content: center;
-  font-family: 'FontAwesome';
+
   font-size: 48px;
   color: rgba(255,255,255,0.2);
   background: #111;
@@ -614,7 +614,7 @@
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  font-family: 'FontAwesome';
+
   font-size: 56px;
   color: rgba(255,255,255,0.85);
   text-shadow: 0 2px 12px rgba(0,0,0,0.6);
@@ -1084,7 +1084,7 @@
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  font-family: 'FontAwesome';
+
   font-size: 56px;
   color: rgba(255,255,255,0.85);
   text-shadow: 0 2px 12px rgba(0,0,0,0.6);
@@ -1121,7 +1121,7 @@
   -webkit-box-pack: center;
   -ms-flex-pack: center;
   justify-content: center;
-  font-family: 'FontAwesome';
+
   font-size: 48px;
   color: rgba(255,255,255,0.2);
   background: #111;
@@ -1237,7 +1237,7 @@
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  font-family: 'FontAwesome';
+
   font-size: 56px;
   color: rgba(255,255,255,0.85);
   text-shadow: 0 2px 12px rgba(0,0,0,0.6);

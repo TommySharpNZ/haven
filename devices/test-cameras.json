@@ -1,0 +1,336 @@
+{
+  "version": "1.0",
+  "ha": {
+    "_comment": "Remove this block to use the setup screen / localStorage auth instead",
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
+  },
+  "device": {
+    "name": "Camera Tests",
+    "canvas": { "width": 1024, "height": 768 },
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Preview Modes",
+      "_note": "One camera per preview mode. All four use the same HA entity so output is identical — only the delivery mechanism differs.",
+      "widgets": [
+        {
+          "id": "p1_header_bg",
+          "type": "rectangle",
+          "x": 0, "y": 0, "w": 1024, "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "p1_title",
+          "type": "label",
+          "x": 0, "y": 8, "w": 1024, "h": 40,
+          "text": "Camera Widget — Preview Modes",
+          "font_size": 22,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "p1_hint",
+          "type": "label",
+          "x": 0, "y": 58, "w": 1024, "h": 20,
+          "text": "Tap any camera to open fullscreen live stream",
+          "font_size": 13,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "background",
+          "letter_spacing": 1
+        },
+
+        {
+          "_note": "--- MODE 1: mjpeg — persistent MJPEG stream via HA proxy. One signed URL at load, browser streams continuously. Most efficient for live preview. ---",
+          "id": "cam_mjpeg",
+          "type": "camera",
+          "x": 16, "y": 84, "w": 460, "h": 300,
+          "radius": 10,
+          "label": "mjpeg preview",
+          "preview": "mjpeg",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "cover"
+        },
+        {
+          "id": "cam_mjpeg_lbl",
+          "type": "label",
+          "x": 16, "y": 390, "w": 460, "h": 18,
+          "text": "[mdi:cctv] preview: mjpeg  •  continuous stream  •  tap for HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- MODE 2: poster — snapshot at refresh_interval with a play button overlay. Best for multi-camera grids where bandwidth matters. ---",
+          "id": "cam_poster",
+          "type": "camera",
+          "x": 548, "y": 84, "w": 460, "h": 300,
+          "radius": 10,
+          "label": "poster preview",
+          "preview": "poster",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 60000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_poster_lbl",
+          "type": "label",
+          "x": 548, "y": 390, "w": 460, "h": 18,
+          "text": "[mdi:cctv] preview: poster  •  60s refresh  •  play button overlay  •  tap for HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- MODE 3: snapshot — polls HA camera proxy at refresh_interval. Uses entity access_token from state cache (no per-request sign_path). ---",
+          "id": "cam_snapshot",
+          "type": "camera",
+          "x": 16, "y": 418, "w": 460, "h": 260,
+          "radius": 10,
+          "label": "snapshot preview",
+          "preview": "snapshot",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 5000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_snapshot_lbl",
+          "type": "label",
+          "x": 16, "y": 684, "w": 460, "h": 18,
+          "text": "[mdi:cctv] preview: snapshot  •  5s poll  •  HA access_token auth  •  tap for HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- MODE 4: url — direct URL, no HA auth. HTTPS self-signed cert: visit camera IP in browser once to accept cert. stream_entity still used for fullscreen HLS tap. ---",
+          "id": "cam_url",
+          "type": "camera",
+          "x": 548, "y": 418, "w": 460, "h": 260,
+          "radius": 10,
+          "label": "direct url preview",
+          "preview": "url",
+          "url": "https://192.168.11.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=webhasp&user=guest&password=IAmWatch1ng",
+          "refresh_interval": 5000,
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "cover"
+        },
+        {
+          "id": "cam_url_lbl",
+          "type": "label",
+          "x": 548, "y": 684, "w": 460, "h": 18,
+          "text": "[mdi:cctv] preview: url  •  5s poll  •  direct Reolink URL  •  tap for HA HLS",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "label": "Options",
+      "_note": "Tests for fit, radius, label visibility, and refresh_interval variations. All cameras use the same HA entity.",
+      "widgets": [
+        {
+          "id": "p2_header_bg",
+          "type": "rectangle",
+          "x": 0, "y": 0, "w": 1024, "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "p2_title",
+          "type": "label",
+          "x": 0, "y": 8, "w": 1024, "h": 40,
+          "text": "Camera Widget — Options & Variations",
+          "font_size": 22,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+
+        {
+          "_note": "--- fit: cover (default) — image fills the widget box, cropping the sides. ---",
+          "id": "cam_fit_cover",
+          "type": "camera",
+          "x": 16, "y": 80, "w": 320, "h": 280,
+          "radius": 10,
+          "label": "fit: cover",
+          "preview": "mjpeg",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "cover"
+        },
+        {
+          "id": "cam_fit_cover_lbl",
+          "type": "label",
+          "x": 16, "y": 364, "w": 320, "h": 18,
+          "text": "fit: cover  •  fills box, crops edges",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- fit: contain — image fits entirely within the widget box, letterboxed. ---",
+          "id": "cam_fit_contain",
+          "type": "camera",
+          "x": 352, "y": 80, "w": 320, "h": 280,
+          "radius": 10,
+          "label": "fit: contain",
+          "preview": "mjpeg",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "fit": "contain"
+        },
+        {
+          "id": "cam_fit_contain_lbl",
+          "type": "label",
+          "x": 352, "y": 364, "w": 320, "h": 18,
+          "text": "fit: contain  •  letterboxed, no crop",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- No label property — camera renders with no overlay text in the corner. ---",
+          "id": "cam_no_label",
+          "type": "camera",
+          "x": 688, "y": 80, "w": 320, "h": 280,
+          "radius": 10,
+          "preview": "snapshot",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 5000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_no_label_lbl",
+          "type": "label",
+          "x": 688, "y": 364, "w": 320, "h": 18,
+          "text": "no label property  •  no overlay text",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- radius: 0 — square corners, no border-radius. ---",
+          "id": "cam_radius_0",
+          "type": "camera",
+          "x": 16, "y": 400, "w": 320, "h": 260,
+          "radius": 0,
+          "label": "radius: 0",
+          "preview": "snapshot",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 5000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_radius_0_lbl",
+          "type": "label",
+          "x": 16, "y": 664, "w": 320, "h": 18,
+          "text": "radius: 0  •  square corners",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- radius: 40 — heavily rounded corners, approaching pill/circle shape. ---",
+          "id": "cam_radius_large",
+          "type": "camera",
+          "x": 352, "y": 400, "w": 320, "h": 260,
+          "radius": 40,
+          "label": "radius: 40",
+          "preview": "snapshot",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 5000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_radius_large_lbl",
+          "type": "label",
+          "x": 352, "y": 664, "w": 320, "h": 18,
+          "text": "radius: 40  •  heavily rounded",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+
+        {
+          "_note": "--- poster with short refresh_interval: 10000 — less aggressive than 60s default but not live. Shows play button overlay. ---",
+          "id": "cam_poster_fast",
+          "type": "camera",
+          "x": 688, "y": 400, "w": 320, "h": 260,
+          "radius": 10,
+          "label": "poster 10s",
+          "preview": "poster",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
+          "refresh_interval": 10000,
+          "fit": "cover"
+        },
+        {
+          "id": "cam_poster_fast_lbl",
+          "type": "label",
+          "x": 688, "y": 664, "w": 320, "h": 18,
+          "text": "preview: poster  •  10s refresh  •  play button",
+          "font_size": 12,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        }
+      ]
+    }
+  ]
+}
