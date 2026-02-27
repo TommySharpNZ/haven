@@ -2,8 +2,8 @@
   "version": "1.0",
   "ha": {
     "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
-    "url": "http://your-homeassistant-ip:8123",
-    "token": "your-long-lived-access-token-here"
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
   },
   "device": {
     "name": "WebHASP Showcase",
@@ -13,7 +13,7 @@
     },
     "orientation": "landscape",
     "default_page": 1,
-    "return_to_default": 600
+    "return_to_default": 60
   },
   "theme": {
     "colors": {
@@ -449,7 +449,7 @@
     },
     {
       "id": 3,
-      "label": "Rectangle",
+      "label": "Rect",
       "widgets": [
         {
           "id": "title",
@@ -458,7 +458,7 @@
           "y": 0,
           "w": 800,
           "h": 44,
-          "text": "Widget: Rectangle",
+          "text": "Widget: Rect",
           "font_size": 24,
           "align": "center",
           "color": "text",
@@ -824,7 +824,7 @@
           "y": 96,
           "w": 160,
           "h": 28,
-          "text": "Grid Power",
+          "text": "Solar Power",
           "font_size": 15,
           "align": "left",
           "color": "text_dim",
@@ -837,8 +837,8 @@
           "y": 96,
           "w": 460,
           "h": 28,
-          "entity": "sensor.master_house_total_import_power",
-          "max": 14000,
+          "entity": "sensor.solar_power",
+          "max": 5000,
           "radius": 4,
           "thresholds": [
             {
@@ -867,7 +867,7 @@
           "align": "right",
           "color": "text",
           "background": "background",
-          "entity": "sensor.master_house_total_import_power",
+          "entity": "sensor.solar_power",
           "format": "power"
         },
         {
@@ -890,7 +890,7 @@
           "y": 144,
           "w": 460,
           "h": 28,
-          "entity": "sensor.battery_state_of_charge",
+          "entity": "sensor.battery_level",
           "max": 100,
           "radius": 4,
           "thresholds": [
@@ -920,7 +920,7 @@
           "align": "right",
           "color": "text",
           "background": "background",
-          "entity": "sensor.battery_state_of_charge",
+          "entity": "sensor.battery_level",
           "format": "percent"
         },
         {
@@ -930,7 +930,7 @@
           "y": 192,
           "w": 160,
           "h": 28,
-          "text": "Phase #3",
+          "text": "Phase 1",
           "font_size": 15,
           "align": "left",
           "color": "text_dim",
@@ -943,7 +943,7 @@
           "y": 192,
           "w": 460,
           "h": 28,
-          "entity": "sensor.master_house_phase_3_power",
+          "entity": "sensor.load_l1",
           "max": 14000,
           "radius": 4,
           "thresholds": [
@@ -973,7 +973,7 @@
           "align": "right",
           "color": "text",
           "background": "background",
-          "entity": "sensor.master_house_phase_3_power",
+          "entity": "sensor.load_l1",
           "format": "power"
         },
         {
@@ -1488,7 +1488,7 @@
           "y": 78,
           "w": 760,
           "h": 22,
-          "text": "These two widgets watch sensor.pv_power - one shows above 0, one shows below 0:",
+          "text": "These two widgets watch sensor.solar_power - one shows above 0, one shows below 0:",
           "font_size": 13,
           "color": "icon_inactive",
           "background": "background"
@@ -1503,7 +1503,7 @@
           "background": "#1a3320",
           "radius": 8,
           "visible": {
-            "entity": "sensor.pv_power",
+            "entity": "sensor.solar_power",
             "type": "above",
             "value": 0
           }
@@ -1521,7 +1521,7 @@
           "color": "primary",
           "background": "transparent",
           "visible": {
-            "entity": "sensor.pv_power",
+            "entity": "sensor.solar_power",
             "type": "above",
             "value": 0
           }
@@ -1536,7 +1536,7 @@
           "background": "#2a1a1a",
           "radius": 8,
           "visible": {
-            "entity": "sensor.pv_power",
+            "entity": "sensor.solar_power",
             "type": "below",
             "value": 1
           }
@@ -1554,7 +1554,7 @@
           "color": "text_muted",
           "background": "transparent",
           "visible": {
-            "entity": "sensor.pv_power",
+            "entity": "sensor.solar_power",
             "type": "below",
             "value": 1
           }
@@ -1817,6 +1817,346 @@
           "color": "primary",
           "background": "background",
           "letter_spacing": 6
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "label": "Arc / Gauge",
+      "widgets": [
+        {
+          "id": "arc_header_bg",
+          "type": "rectangle",
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 56,
+          "background": "surface",
+          "radius": 0
+        },
+        {
+          "id": "arc_clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "arc_title",
+          "type": "label",
+          "x": 0,
+          "y": 12,
+          "w": 1024,
+          "h": 36,
+          "text": "Widget: Arc / Gauge",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "arc_desc",
+          "type": "label",
+          "x": 40,
+          "y": 72,
+          "w": 944,
+          "h": 24,
+          "text": "SVG arc gauges driven by HA entities. Thresholds change color by percentage of range.",
+          "font_size": 15,
+          "align": "left",
+          "color": "text_muted",
+          "background": "background"
+        },
+        {
+          "id": "arc_bg1",
+          "type": "rectangle",
+          "x": 40,
+          "y": 110,
+          "w": 220,
+          "h": 260,
+          "background": "surface",
+          "radius": 12
+        },
+        {
+          "id": "arc_battery",
+          "type": "arc",
+          "x": 70,
+          "y": 130,
+          "w": 160,
+          "h": 160,
+          "entity": "sensor.battery_state_of_charge",
+          "min": 0,
+          "max": 100,
+          "start_angle": 135,
+          "end_angle": 405,
+          "line_width": 14,
+          "thresholds": [
+            {
+              "below": 20,
+              "color": "danger"
+            },
+            {
+              "below": 50,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "primary"
+            }
+          ],
+          "format": "percent",
+          "label": "Battery"
+        },
+        {
+          "id": "arc_battery_lbl",
+          "type": "label",
+          "x": 40,
+          "y": 300,
+          "w": 220,
+          "h": 60,
+          "text": "Battery\nstart: 135  end: 405\nthresholds: danger/warning/ok",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "arc_bg2",
+          "type": "rectangle",
+          "x": 300,
+          "y": 110,
+          "w": 220,
+          "h": 260,
+          "background": "surface",
+          "radius": 12
+        },
+        {
+          "id": "arc_solar",
+          "type": "arc",
+          "x": 330,
+          "y": 130,
+          "w": 160,
+          "h": 160,
+          "entity": "sensor.pv_power",
+          "min": 0,
+          "max": 5000,
+          "start_angle": 180,
+          "end_angle": 360,
+          "line_width": 16,
+          "color": "primary",
+          "format": "power",
+          "label": "[fa-sun-o] Solar"
+        },
+        {
+          "id": "arc_solar_lbl",
+          "type": "label",
+          "x": 300,
+          "y": 300,
+          "w": 220,
+          "h": 60,
+          "text": "Solar power\nstart: 180  end: 360 (half arc)\nicon in label",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "arc_bg3",
+          "type": "rectangle",
+          "x": 560,
+          "y": 110,
+          "w": 220,
+          "h": 260,
+          "background": "surface",
+          "radius": 12
+        },
+        {
+          "id": "arc_temp",
+          "type": "arc",
+          "x": 590,
+          "y": 130,
+          "w": 160,
+          "h": 160,
+          "entity": "sensor.living_room_temperature",
+          "min": 15,
+          "max": 30,
+          "start_angle": 150,
+          "end_angle": 390,
+          "line_width": 10,
+          "thresholds": [
+            {
+              "below": 40,
+              "color": "primary"
+            },
+            {
+              "below": 70,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ],
+          "label": "[fa-thermometer] Temp"
+        },
+        {
+          "id": "arc_temp_lbl",
+          "type": "label",
+          "x": 560,
+          "y": 300,
+          "w": 220,
+          "h": 60,
+          "text": "Temperature 15-30\u00b0\nstart: 150  end: 390\nthinner line_width: 10",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "arc_bg4",
+          "type": "rectangle",
+          "x": 820,
+          "y": 110,
+          "w": 170,
+          "h": 260,
+          "background": "surface",
+          "radius": 12
+        },
+        {
+          "id": "arc_small",
+          "type": "arc",
+          "x": 840,
+          "y": 130,
+          "w": 130,
+          "h": 130,
+          "entity": "sensor.battery_state_of_charge",
+          "min": 0,
+          "max": 100,
+          "start_angle": 135,
+          "end_angle": 405,
+          "line_width": 8,
+          "color": "warning",
+          "format": "percent",
+          "label": "Small"
+        },
+        {
+          "id": "arc_small_lbl",
+          "type": "label",
+          "x": 820,
+          "y": 280,
+          "w": 170,
+          "h": 80,
+          "text": "Smaller arc\n130x130px\nfixed color (no thresholds)",
+          "font_size": 12,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_bg",
+          "type": "rectangle",
+          "x": 40,
+          "y": 390,
+          "w": 944,
+          "h": 200,
+          "background": "surface",
+          "radius": 12
+        },
+        {
+          "id": "arc_schema_title",
+          "type": "label",
+          "x": 60,
+          "y": 406,
+          "w": 200,
+          "h": 28,
+          "text": "Arc config structure",
+          "font_size": 16,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_1",
+          "type": "label",
+          "x": 60,
+          "y": 440,
+          "w": 440,
+          "h": 24,
+          "text": "entity        ->  HA numeric entity",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_2",
+          "type": "label",
+          "x": 60,
+          "y": 464,
+          "w": 440,
+          "h": 24,
+          "text": "min / max     ->  value range (default 0-100)",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_3",
+          "type": "label",
+          "x": 60,
+          "y": 488,
+          "w": 440,
+          "h": 24,
+          "text": "start_angle / end_angle  ->  degrees, 0=top, clockwise",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_4",
+          "type": "label",
+          "x": 60,
+          "y": 512,
+          "w": 440,
+          "h": 24,
+          "text": "line_width    ->  stroke thickness in px",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_5",
+          "type": "label",
+          "x": 60,
+          "y": 536,
+          "w": 440,
+          "h": 24,
+          "text": "thresholds    ->  same as bar widget, color by % of range",
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "arc_schema_note",
+          "type": "label",
+          "x": 540,
+          "y": 440,
+          "w": 430,
+          "h": 130,
+          "text": "All state styling lives in the config.\nNo HA automations needed.",
+          "font_size": 14,
+          "align": "left",
+          "color": "primary",
+          "background": "surface"
         }
       ]
     }

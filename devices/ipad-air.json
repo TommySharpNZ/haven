@@ -2,9 +2,9 @@
   "version": "1.0",
   "_device_notes": "iPad Air 1st Gen (MD788X/B) - 9.7in Retina display, landscape orientation. Physical resolution 2048x1536 at 264ppi. CSS viewport in landscape is 1024x768 (device pixel ratio 2). Design at 1024x768.",
   "ha": {
-    "_comment": "Optional - fill in to skip the setup screen on first load",
-    "url": "http://your-homeassistant-ip:8123",
-    "token": "your-long-lived-access-token-here"
+    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
   },
   "device": {
     "name": "iPad Air",
@@ -33,6 +33,35 @@
     "font_size": 16
   },
   "pages": [
+    {
+      "id": 0,
+      "label": "Persistent",
+      "_note": "Page 0 widgets render on every page. Use for clock, status bar, nav sidebar etc.",
+      "widgets": [
+        {
+          "id": "p0_clock",
+          "type": "clock",
+          "x": 16,
+          "y": 12,
+          "w": 140,
+          "h": 36,
+          "font_size": 26,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "p0_status_dot",
+          "type": "rectangle",
+          "x": 1000,
+          "y": 20,
+          "w": 10,
+          "h": 10,
+          "radius": 5,
+          "background": "primary"
+        }
+      ]
+    },
     {
       "id": 1,
       "label": "Home",

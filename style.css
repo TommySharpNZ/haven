@@ -22,32 +22,20 @@
    Reference: https://fontawesome.com/v4/icons/
    ------------------------------------------------------------ */
 
-@font-face {
-  font-family: 'FontAwesome';
-  src: url('fonts/fontawesome-webfont.woff2') format('woff2'),
-       url('fonts/fontawesome-webfont.woff')  format('woff'),
-       url('fonts/fontawesome-webfont.ttf')   format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: block;
+/* ---- Material Design Icons ---------------------------------
+   Loaded via fonts/materialdesignicons.css (MDI's own stylesheet).
+   Use [mdi:icon-name] syntax in config - renders as:
+   <span class="mdi mdi-icon-name"></span>
+   Icons at: https://pictogrammers.com/library/mdi/              */
+
+/* MDI defaults to inline-block which causes flex to collapse adjacent
+   whitespace. Override to inline so spaces in config text are preserved. */
+.widget-label .mdi,
+.widget-clock .mdi,
+.btn-label .mdi {
+  display: inline;
 }
 
-/* Force browser to load FontAwesome immediately rather than lazily */
-.fa-preload::before {
-  font-family: 'FontAwesome';
-  content: '\f000';
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
 /* ---- Canvas scaling ----------------------------------------
    The canvas is a fixed-size div matching the design resolution.
@@ -100,6 +88,7 @@ html, body {
   align-items: center;
   white-space: nowrap;
   overflow: hidden;
+  padding: 0 8px;   /* was 4px - extra room so icons don't clip at edges */
 }
 
 .widget-label.align-left   { -webkit-box-pack: start;  -ms-flex-pack: start;  justify-content: flex-start; }
@@ -456,6 +445,16 @@ html, body {
   pointer-events: none;  /* clicks pass through to the container */
 }
 
+/* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
 .camera-play-btn {
   position: absolute;
   top: 50%;
@@ -472,7 +471,17 @@ html, body {
 }
 
 .widget-image:hover .camera-play-btn,
-.widget-image:active .camera-play-btn {
+.widget-image:active /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
   opacity: 0.6;
 }
 
@@ -589,7 +598,17 @@ html, body {
   border-radius: 6px;
 }
 
-.fs-content .camera-play-btn {
+.fs-content /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -605,7 +624,640 @@ html, body {
 }
 
 .widget-image:hover .camera-play-btn,
-.widget-image:active .camera-play-btn {
+.widget-image:active /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
+  opacity: 0.6;
+}
+
+.camera-loader {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}/* ---- Material Design Icons ---------------------------------
+   Font file: fonts/materialdesignicons-webfont.woff2
+   Icons are raw Unicode codepoints in text strings.
+   Codepoints at: https://pictogrammers.com/library/mdi/         */
+
+@font-face {
+  font-family: 'Material Design Icons';
+  src: url('fonts/materialdesignicons-webfont.woff2') format('woff2');
+  font-weight: normal;
+  font-style:  normal;
+}
+
+/* Applied automatically by JS when MDI codepoints detected in string */
+.mdi-font {
+  font-family: 'Material Design Icons', sans-serif;
+}
+
+/* ---- Canvas scaling ----------------------------------------
+   The canvas is a fixed-size div matching the design resolution.
+   JS calculates a scale factor and applies transform: scale()
+   so it fills the screen without breaking layout.
+   transform-origin: top left means scaling expands right+down.
+   ------------------------------------------------------------ */
+
+#canvas-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+#canvas {
+  position: relative;
+  /* width and height set by JS from config */
+  background: #161C23;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-transform-origin: top left;
+  transform-origin: top left;
+  overflow: hidden;
+  /* Prevent text selection on touch */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- Widget base -------------------------------------------
+   All widgets are absolutely positioned divs inside #canvas.
+   position, size and z-index set inline by JS.
+   ------------------------------------------------------------ */
+
+.widget {
+  position: absolute;
+  overflow: hidden;
+}
+
+/* ---- Label widget ------------------------------------------ */
+
+.widget-label {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0 8px;   /* was 4px - extra room so icons don't clip at edges */
+}
+
+.widget-label.align-left   { -webkit-box-pack: start;  -ms-flex-pack: start;  justify-content: flex-start; }
+.widget-label.align-center { -webkit-box-pack: center; -ms-flex-pack: center; justify-content: center; }
+.widget-label.align-right  { -webkit-box-pack: end;    -ms-flex-pack: end;    justify-content: flex-end; }
+
+/* ---- Rectangle widget ------------------------------------- */
+
+.widget-rectangle {
+  /* purely visual, no content by default */
+}
+
+/* ---- Bar widget -------------------------------------------- */
+
+.widget-bar {
+  /* The bar fill is a child div whose width% is updated by JS */
+}
+
+.widget-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  -webkit-transition: width 0.4s ease, background-color 0.4s ease;
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+/* ---- Button widget ----------------------------------------- */
+
+.widget-button {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-transition: opacity 0.1s ease;
+  transition: opacity 0.1s ease;
+  gap: 6px;
+}
+
+.widget-button:active {
+  opacity: 0.7;
+}
+
+.widget-button .btn-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.widget-button .btn-label {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ---- Clock widget ------------------------------------------ */
+
+.widget-clock {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ---- Connection status dot --------------------------------- */
+
+#conn-status {
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  z-index: 9999;
+  -webkit-transition: background-color 0.5s ease;
+  transition: background-color 0.5s ease;
+}
+
+.conn-connected    { background: #44C647; }
+.conn-connecting   { background: #F0AD4E; }
+.conn-disconnected { background: #D9534F; }
+
+/* ---- Page navigation dots ---------------------------------- */
+
+#page-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 6px;
+  z-index: 9998;
+  padding: 12px 16px;  /* large tap area */
+  align-items: center;
+}
+
+.page-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  /* Transparent border expands tap area without affecting layout */
+  border: 10px solid transparent;
+  background-clip: padding-box;
+  -webkit-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-transition: background-color 0.2s ease, -webkit-transform 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-dot.active {
+  background: rgba(255,255,255,0.85);
+  background-clip: padding-box;
+  -webkit-transform: scale(1.3);
+  transform: scale(1.3);
+}
+
+.page-dot:hover {
+  background: rgba(255,255,255,0.5);
+  background-clip: padding-box;
+}
+
+/* ---- Setup overlay ----------------------------------------- */
+
+#setup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #0d1117;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+#setup-overlay.hidden {
+  display: none;
+}
+
+#setup-box {
+  background: #1c2433;
+  border: 1px solid #2d3a4a;
+  border-radius: 12px;
+  padding: 32px;
+  width: 90%;
+  max-width: 480px;
+  color: #e6e6e6;
+}
+
+#setup-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #8ADF45;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+
+#setup-box p {
+  font-size: 14px;
+  color: #9fa5ad;
+  margin-bottom: 20px;
+}
+
+#setup-box label {
+  display: block;
+  font-size: 13px;
+  color: #9fa5ad;
+  margin-bottom: 16px;
+}
+
+#setup-box input,
+#setup-box textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  background: #111820;
+  border: 1px solid #2d3a4a;
+  border-radius: 6px;
+  color: #e6e6e6;
+  font-size: 14px;
+  font-family: monospace;
+  resize: none;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#setup-box input:focus,
+#setup-box textarea:focus {
+  border-color: #8ADF45;
+}
+
+#setup-save {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #8ADF45;
+  color: #111;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+
+#setup-save:active {
+  background: #6db534;
+}
+
+#setup-error {
+  color: #D9534F;
+  font-size: 13px;
+  min-height: 20px;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* ---- Landing page (no device specified) -------------------- */
+
+#landing {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #161C23;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  font-family: sans-serif;
+}
+
+.landing-inner {
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+}
+
+.landing-logo {
+  font-size: 64px;
+  font-weight: bold;
+  color: #8ADF45;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.landing-tagline {
+  font-size: 18px;
+  color: #9fa5ad;
+  margin-bottom: 24px;
+}
+
+.landing-divider {
+  width: 80px;
+  height: 2px;
+  background: #363f4a;
+  margin: 0 auto 32px auto;
+  border-radius: 1px;
+}
+
+.landing-section {
+  background: #272E36;
+  border-radius: 10px;
+  padding: 18px 24px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.landing-label {
+  font-size: 13px;
+  color: #8ADF45;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.landing-hint {
+  font-size: 15px;
+  color: #9fa5ad;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.landing-example {
+  font-size: 16px;
+  color: #FFFFFF;
+  background: #363f4a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-family: monospace;
+}
+
+.landing-example em {
+  color: #8ADF45;
+  font-style: normal;
+}
+
+.landing-hint code {
+  background: #363f4a;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  color: #e6e6e6;
+  font-size: 14px;
+}
+
+/* ---- Image / Camera widget --------------------------------- */
+
+.widget-image {
+  background: #000;
+}
+
+.widget-image img,
+.widget-image video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;  /* clicks pass through to the container */
+}
+
+/* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  font-family: 'FontAwesome';
+  font-size: 56px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  pointer-events: none;
+  -webkit-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+}
+
+.widget-image:hover .camera-play-btn,
+.widget-image:active /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
+  opacity: 0.6;
+}
+
+.camera-loader {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  font-family: 'FontAwesome';
+  font-size: 48px;
+  color: rgba(255,255,255,0.2);
+  background: #111;
+  pointer-events: none;
+}
+
+/* ---- Fullscreen overlay ------------------------------------ */
+
+.fs-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  z-index: 99999;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.fs-header {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.6);
+  -webkit-box-flex: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+
+.fs-title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 18px;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 1px;
+}
+
+.fs-close {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  line-height: 44px;
+  text-align: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-transition: background 0.15s;
+  transition: background 0.15s;
+}
+
+.fs-close:hover,
+.fs-close:active {
+  background: rgba(255,255,255,0.25);
+}
+
+.fs-content {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.fs-content video {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -o-object-fit: contain;
+}
+
+.fs-content img {
+  position: absolute;
+  top: 50%; left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  -o-object-fit: contain;
+  border-radius: 6px;
+}
+
+.fs-content /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  font-family: 'FontAwesome';
+  font-size: 56px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  pointer-events: none;
+  -webkit-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+}
+
+.widget-image:hover .camera-play-btn,
+.widget-image:active /* ---- Arc / gauge widget ------------------------------------ */
+
+.widget-arc {
+  position: absolute;
+}
+
+.widget-arc svg {
+  pointer-events: none;
+}
+
+.camera-play-btn {
   opacity: 0.6;
 }
 

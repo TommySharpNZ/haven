@@ -14,12 +14,16 @@
   var wsReconnectTimer = null;
   var wsSubscriptionId = null;
   var msgId = 1;
-  var entityCallbacks = {};        // entityId -> [callback, ...]
+  var entityCallbacks = {};        // entityId -> [callback, ...] for current page
+  var page0Callbacks  = {};        // entityId -> [callback, ...] persistent (page 0 widgets)
   var pendingStreamRequests = {};  // msgId -> callback for camera/stream responses
   var activePageTimers      = [];  // setInterval IDs to clear on page change
   var entityStates = {};      // entityId -> stateObject (cached)
+  var INTERNAL_CONN_ENTITY = 'internal.connectionstatus';
+  var INTERNAL_TIME_ENTITY = 'internal.currentdtm';
   var returnTimer = null;
   var clockTimer = null;
+  var internalTimeTimer = null;
   var haUrl = '';
   var haToken = '';
 
@@ -135,9 +139,11 @@
     config = data;
     setupCanvas();
     setupPageNav();
+    renderPage0();   // persistent overlay - renders once, never cleared
     renderPage(config.device.default_page || 1);
     connectWebSocket();
     startClock();
+    startInternalTime();
   }
 
   function showLandingPage(base) {
@@ -235,9 +241,54 @@
     canvas.style.transformOrigin       = '0 0';
     canvas.style.webkitTransform       = 'scale(' + scale + ')';
     canvas.style.transform             = 'scale(' + scale + ')';
+
   }
 
   // ---- Page rendering ---------------------------------------
+  // ---- Page 0 (persistent overlay) ------------------------
+  // Page 0 widgets render once into a fixed overlay div that sits above
+  // the canvas and is never cleared on page navigation. Used for persistent
+  // elements like a clock, status bar, or navigation sidebar.
+  function renderPage0() {
+    var page0Config = null;
+    for (var i = 0; i < config.pages.length; i++) {
+      if (config.pages[i].id === 0) { page0Config = config.pages[i]; break; }
+    }
+    if (!page0Config) return;  // no page 0 defined - nothing to do
+
+    // Create persistent overlay div inside the canvas
+    var wrapper = document.getElementById('canvas');
+    var overlay = document.createElement('div');
+    overlay.id = 'page0-overlay';
+    overlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+    wrapper.appendChild(overlay);
+
+    // Temporarily swap entityCallbacks for page0Callbacks so widget
+    // registration goes into the persistent map
+    var savedCallbacks = entityCallbacks;
+    entityCallbacks = page0Callbacks;
+
+    for (var w = 0; w < page0Config.widgets.length; w++) {
+      var widget = page0Config.widgets[w];
+      // Page 0 widgets that need to be interactive (buttons, etc.)
+      // must opt-in via pointer-events so the overlay doesn't block canvas taps
+      renderWidget(widget, overlay);
+    }
+
+    // Restore normal callbacks
+    entityCallbacks = savedCallbacks;
+
+    // Re-enable pointer events on interactive page 0 widgets
+    var els = overlay.querySelectorAll('.widget-button, .widget-image');
+    for (var e = 0; e < els.length; e++) {
+      els[e].style.pointerEvents = 'auto';
+    }
+
+    // Pre-fetch entity states for page 0 entities
+    subscribeToPageEntities(page0Config);
+
+  }
+
   function renderPage(pageId) {
     currentPage = pageId;
 
@@ -245,6 +296,11 @@
     entityCallbacks = {};
 
     var canvas  = document.getElementById('canvas');
+    // Preserve page 0 overlay while clearing page content
+    var page0 = document.getElementById('page0-overlay');
+    if (page0 && page0.parentNode === canvas) {
+      canvas.removeChild(page0);
+    }
     // Clear all snapshot timers and pending sign requests from previous page
     for (var t = 0; t < activePageTimers.length; t++) {
       clearInterval(activePageTimers[t].id);
@@ -309,6 +365,11 @@
       renderWidget(pageConfig.widgets[w], canvas);
     }
 
+    // Re-attach page 0 overlay on top
+    if (page0) {
+      canvas.appendChild(page0);
+    }
+
     // Re-subscribe to relevant entities for this page
     subscribeToPageEntities(pageConfig);
 
@@ -327,6 +388,7 @@
     if (config.pages.length <= 1) return;
 
     for (var i = 0; i < config.pages.length; i++) {
+      if (config.pages[i].id === 0) continue;  // page 0 is persistent, not in nav dots
       (function (page) {
         var dot = document.createElement('div');
         dot.className   = 'page-dot';
@@ -372,7 +434,7 @@
       if (adx < 50)  return;  // too short
       if (ady > adx) return;  // more vertical than horizontal - ignore
 
-      var pageIds = config.pages.map(function(p) { return p.id; });
+      var pageIds = config.pages.map(function(p) { return p.id; }).filter(function(id) { return id !== 0; });
       var idx     = pageIds.indexOf(currentPage);
 
       if (dx < 0 && idx < pageIds.length - 1) {
@@ -401,6 +463,7 @@
 
   function navigateTo(pageId) {
     if (pageId === currentPage) return;
+    if (pageId === 0) return;  // page 0 is a persistent overlay, not navigable
     renderPage(pageId);
   }
 
@@ -432,6 +495,27 @@
     for (var i = 0; i < els.length; i++) {
       els[i].textContent = timeStr;
     }
+  }
+
+  // ---- Internal time entity --------------------------------
+  // Updates internal.currentdtm once per minute (aligned to minute boundary)
+  function startInternalTime() {
+    updateInternalEntity(INTERNAL_TIME_ENTITY, (new Date()).toISOString());
+    if (internalTimeTimer) {
+      clearTimeout(internalTimeTimer);
+      internalTimeTimer = null;
+    }
+
+    var now = new Date();
+    var msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    if (msToNextMinute < 0) msToNextMinute = 0;
+
+    internalTimeTimer = setTimeout(function () {
+      updateInternalEntity(INTERNAL_TIME_ENTITY, (new Date()).toISOString());
+      internalTimeTimer = setInterval(function () {
+        updateInternalEntity(INTERNAL_TIME_ENTITY, (new Date()).toISOString());
+      }, 60000);
+    }, msToNextMinute);
   }
 
   // ---- Widget rendering -------------------------------------
@@ -466,6 +550,7 @@
       case 'clock':        renderClock(el, w);        break;
       case 'image':        renderImage(el, w);        break;
       case 'camera':       renderCamera(el, w);       break;
+      case 'arc':          renderArc(el, w);          break;
       default:
         el.style.background = 'rgba(255,0,0,0.3)';
         el.textContent = 'Unknown: ' + w.type;
@@ -514,10 +599,10 @@
     // Single raw FA codepoint (legacy) - apply font directly
     if (text.length === 1 && text.charCodeAt(0) >= 0xF000 && text.charCodeAt(0) <= 0xF8FF) {
       el.style.fontFamily = 'FontAwesome';
-      el.textContent = text;
+      setContent(el, text);
     } else {
       // Handles plain text and [fa-name] icon tokens
-      buildTextContent(el, text);
+      setContent(el, text);
     }
 
     // Labels without actions are transparent to taps - let clicks pass to widgets below
@@ -536,19 +621,24 @@
     var val = state ? state.state : null;
 
     // Apply text - handles plain text and [fa-name] icon tokens
-    var formatted = formatValue(val, w);
+    var resolvedState = resolveWidgetState(w, state);
+    var s = resolvedState || {};
+    var textOverride = (s.text !== undefined) ? String(s.text) : null;
+    var useTemplateText = (w.text && hasTemplate(w.text));
+    var baseText = useTemplateText ? String(w.text) : (textOverride !== null ? textOverride : formatValue(val, w));
+    var formatted = applyTemplate(baseText, state);
     if (formatted.length === 1 && formatted.charCodeAt(0) >= 0xF000 && formatted.charCodeAt(0) <= 0xF8FF) {
       el.style.fontFamily = 'FontAwesome';
-      el.textContent = formatted;
+      setContent(el, formatted);
     } else {
       el.textContent = '';
-      buildTextContent(el, formatted);
+      setContent(el, formatted);
     }
 
     // Apply state-based styles
-    var resolvedState = resolveWidgetState(w, state);
-    var s = resolvedState || {};
-    el.style.color   = resolveColor(s.color      || w.color      || 'text');
+    var colorToken = s.color || w.color || 'text';
+    colorToken = applyTemplate(colorToken, state);
+    el.style.color   = resolveColor(colorToken);
     if (s.opacity   !== undefined) el.style.opacity       = s.opacity;
     if (s.letter_spacing !== undefined) el.style.letterSpacing = s.letter_spacing + 'px';
   }
@@ -668,19 +758,11 @@
 
     // setButtonIcon resolves [fa-name] tokens or raw FA codepoints
     function setButtonIcon(icon) {
-      var ch = icon || '';
-      // Raw FA codepoint - set font directly
-      if (ch.length === 1 && ch.charCodeAt(0) >= 0xF000 && ch.charCodeAt(0) <= 0xF8FF) {
-        iconEl.style.fontFamily = 'FontAwesome';
-        iconEl.textContent = ch;
-      } else {
-        iconEl.style.fontFamily = '';
-        buildTextContent(iconEl, ch);
-      }
+      setContent(iconEl, icon || '');
     }
 
     setButtonIcon(w.icon_off || '');
-    buildTextContent(labelEl, w.label || '');
+    labelEl.textContent = w.label || '';
 
     el.appendChild(iconEl);
     el.appendChild(labelEl);
@@ -717,6 +799,172 @@
     el.style.background   = resolveColor(s.background || w.background || 'surface2');
     iconEl.style.color    = resolveColor(s.icon_color  || w.icon_color  || 'text');
     labelEl.style.color   = resolveColor(s.label_color || w.label_color || 'text_dim');
+  }
+
+  // ---- Arc / gauge widget ----------------------------------
+  // SVG-based circular arc gauge. Driven by a numeric HA entity.
+  //
+  // Config:
+  //   entity        - HA entity providing the numeric value
+  //   min           - value at start of arc (default 0)
+  //   max           - value at end of arc (default 100)
+  //   start_angle   - degrees, 0 = top, clockwise (default 135)
+  //   end_angle     - degrees (default 405, i.e. 135 + 270)
+  //   line_width    - arc stroke width in px (default 12)
+  //   track_color   - background arc color (default surface2 token)
+  //   label         - static text shown below the value (optional)
+  //   format        - value format (same as label widget)
+  //   thresholds    - same format as bar widget, color changes by % of range
+  //
+  // Example:
+  //   { "type": "arc", "x": 100, "y": 100, "w": 160, "h": 160,
+  //     "entity": "sensor.battery_state_of_charge",
+  //     "min": 0, "max": 100,
+  //     "start_angle": 135, "end_angle": 405,
+  //     "line_width": 14,
+  //     "thresholds": [
+  //       { "below": 20, "color": "danger" },
+  //       { "below": 50, "color": "warning" },
+  //       { "default": true, "color": "primary" }
+  //     ],
+  //     "label": "Battery" }
+
+  function renderArc(el, w) {
+    el.className += ' widget-arc';
+    el.style.overflow = 'visible';
+
+    var min        = w.min !== undefined ? w.min : 0;
+    var max        = w.max !== undefined ? w.max : 100;
+    var startAngle = w.start_angle !== undefined ? w.start_angle : 135;
+    var endAngle   = w.end_angle   !== undefined ? w.end_angle   : 405;
+    var lineWidth  = w.line_width  !== undefined ? w.line_width  : 12;
+    var trackColor = resolveColor(w.track_color || 'surface2');
+
+    // SVG coordinate system: cx/cy at centre, r fits inside widget
+    var size = Math.min(w.w, w.h);
+    var cx   = w.w / 2;
+    var cy   = w.h / 2;
+    var r    = (size / 2) - (lineWidth / 2) - 2;
+
+    var ns  = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width',  w.w);
+    svg.setAttribute('height', w.h);
+    svg.style.position = 'absolute';
+    svg.style.top      = '0';
+    svg.style.left     = '0';
+    svg.style.overflow = 'visible';
+
+    // Track arc (full background arc)
+    var trackPath = document.createElementNS(ns, 'path');
+    trackPath.setAttribute('fill',         'none');
+    trackPath.setAttribute('stroke',       trackColor);
+    trackPath.setAttribute('stroke-width', lineWidth);
+    trackPath.setAttribute('stroke-linecap', 'round');
+    trackPath.setAttribute('d', describeArc(cx, cy, r, startAngle, endAngle));
+    svg.appendChild(trackPath);
+
+    // Value arc (filled portion)
+    var valuePath = document.createElementNS(ns, 'path');
+    valuePath.setAttribute('fill',         'none');
+    valuePath.setAttribute('stroke-width', lineWidth);
+    valuePath.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(valuePath);
+
+    el.appendChild(svg);
+
+    // Centre value label
+    var valueEl = document.createElement('div');
+    valueEl.style.cssText = [
+      'position:absolute',
+      'top:0', 'left:0',
+      'width:' + w.w + 'px',
+      'height:' + w.h + 'px',
+      'display:flex',
+      'flex-direction:column',
+      'align-items:center',
+      'justify-content:center',
+      'pointer-events:none'
+    ].join(';');
+
+    var numEl = document.createElement('div');
+    numEl.style.cssText = 'font-size:' + Math.round(size * 0.22) + 'px;font-weight:600;line-height:1;color:' + resolveColor(w.color || 'text') + ';';
+    numEl.textContent = '--';
+    valueEl.appendChild(numEl);
+
+    if (w.label) {
+      var lblEl = document.createElement('div');
+      lblEl.style.cssText = 'font-size:' + Math.round(size * 0.11) + 'px;margin-top:4px;color:' + resolveColor(w.label_color || 'text_muted') + ';';
+      setContent(lblEl, w.label);
+      valueEl.appendChild(lblEl);
+    }
+
+    el.appendChild(valueEl);
+
+    // Update function - called on entity state change
+    function updateArc(state) {
+      if (!state) return;
+      var raw = parseFloat(state.state);
+      if (isNaN(raw)) { numEl.textContent = state.state; return; }
+
+      var val     = Math.max(min, Math.min(max, raw));
+      var pct     = (val - min) / (max - min);
+      var fillEnd = startAngle + pct * (endAngle - startAngle);
+
+      // Determine color from thresholds
+      var arcColor = resolveColor(w.color || 'primary');
+      if (w.thresholds) {
+        var pctInt = Math.round(pct * 100);
+        for (var t = 0; t < w.thresholds.length; t++) {
+          var th = w.thresholds[t];
+          if (th.default || pctInt < th.below) {
+            arcColor = resolveColor(th.color);
+            break;
+          }
+        }
+      }
+
+      valuePath.setAttribute('stroke', arcColor);
+      if (pct <= 0) {
+        valuePath.setAttribute('d', '');
+      } else if (pct >= 1) {
+        // Full arc - draw as track to avoid path calculation edge case
+        valuePath.setAttribute('d', describeArc(cx, cy, r, startAngle, endAngle - 0.01));
+      } else {
+        valuePath.setAttribute('d', describeArc(cx, cy, r, startAngle, fillEnd));
+      }
+
+      numEl.textContent = formatValue(state.state, w);
+      numEl.style.color = arcColor;
+    }
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, updateArc);
+    }
+  }
+
+  // Convert polar angle (degrees, 0=top, clockwise) to SVG arc path
+  function describeArc(cx, cy, r, startDeg, endDeg) {
+    var start = polarToCartesian(cx, cy, r, startDeg);
+    var end   = polarToCartesian(cx, cy, r, endDeg);
+    var span  = endDeg - startDeg;
+    // Normalise span to handle wrap-around
+    while (span < 0)   span += 360;
+    while (span > 360) span -= 360;
+    var large = span > 180 ? 1 : 0;
+    return [
+      'M', start.x, start.y,
+      'A', r, r, 0, large, 1, end.x, end.y
+    ].join(' ');
+  }
+
+  function polarToCartesian(cx, cy, r, angleDeg) {
+    // Offset by -90 so 0 degrees = top, then add offset
+    var rad = (angleDeg - 90) * Math.PI / 180;
+    return {
+      x: cx + r * Math.cos(rad),
+      y: cy + r * Math.sin(rad)
+    };
   }
 
   // -- Image widget --
@@ -1096,6 +1344,16 @@
     var prefix = w.prefix || '';
 
     switch (fmt) {
+      case 'time_24':
+      case 'time_12':
+      case 'date_iso':
+      case 'date_short':
+      case 'datetime_24':
+      case 'datetime_12':
+        var d = parseDateValue(val);
+        if (!d) return '--';
+        return formatDateValue(d, fmt, prefix);
+
       case 'power':
         if (isNaN(num)) return '--';
         if (num < 0) num = Math.abs(num);
@@ -1129,200 +1387,195 @@
     }
   }
 
+  // ---- Template expressions --------------------------------
+  // Supports {{ expr }} blocks inside strings.
+  // expr can reference: state, state_str, attr.<name>
+  // Functions: round(x,n), min(a,b), max(a,b), abs(x), floor(x), ceil(x)
+  var templateExprCache = {};
+
+  function hasTemplate(str) {
+    return (str && String(str).indexOf('{{') !== -1);
+  }
+
+  function applyTemplate(str, state) {
+    if (!str) return '';
+    var s = String(str);
+    if (s.indexOf('{{') === -1) return s;
+
+    return s.replace(/\{\{([\s\S]*?)\}\}/g, function(_, expr) {
+      var val = evaluateExpression(expr, state);
+      if (val === null || val === undefined) return '';
+      return String(val);
+    });
+  }
+
+  function evaluateExpression(expr, state) {
+    var key = String(expr).trim();
+    if (!key) return '';
+
+    var fn = templateExprCache[key];
+    if (!fn) {
+      try {
+        fn = new Function(
+          'state', 'state_str', 'attr', 'round', 'min', 'max', 'abs', 'floor', 'ceil',
+          '"use strict"; return (' + key + ');'
+        );
+      } catch (e) {
+        templateExprCache[key] = null;
+        return '';
+      }
+      templateExprCache[key] = fn;
+    }
+    if (!fn) return '';
+
+    var raw = state ? state.state : null;
+    var num = parseFloat(raw);
+    var stateVal = (!isNaN(num) ? num : raw);
+    var stateStr = (raw !== null && raw !== undefined) ? String(raw) : '';
+    var attrs = state && state.attributes ? state.attributes : {};
+
+    try {
+      return fn(stateVal, stateStr, attrs, tmplRound, Math.min, Math.max, Math.abs, Math.floor, Math.ceil);
+    } catch (e2) {
+      return '';
+    }
+  }
+
+  function tmplRound(val, decimals) {
+    var n = parseFloat(val);
+    if (isNaN(n)) return val;
+    if (decimals === undefined || decimals === null) return Math.round(n);
+    var d = parseInt(decimals, 10);
+    if (isNaN(d) || d < 0) d = 0;
+    var m = Math.pow(10, d);
+    return Math.round(n * m) / m;
+  }
+
+  function parseDateValue(val) {
+    if (!val) return null;
+    var d = new Date(val);
+    if (!isNaN(d.getTime())) return d;
+    // Try a simple space -> T conversion for non-ISO strings
+    var s = String(val).replace(' ', 'T');
+    d = new Date(s);
+    if (!isNaN(d.getTime())) return d;
+    return null;
+  }
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function formatDateValue(d, fmt, prefix) {
+    var yyyy = d.getFullYear();
+    var mm = pad2(d.getMonth() + 1);
+    var dd = pad2(d.getDate());
+    var HH = pad2(d.getHours());
+    var MM = pad2(d.getMinutes());
+
+    var h12 = d.getHours() % 12;
+    if (h12 === 0) h12 = 12;
+    var ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+
+    switch (fmt) {
+      case 'time_24':     return prefix + HH + ':' + MM;
+      case 'time_12':     return prefix + h12 + ':' + MM + ' ' + ampm;
+      case 'date_iso':    return prefix + yyyy + '-' + mm + '-' + dd;
+      case 'date_short':  return prefix + dd + ' ' + MONTHS_SHORT[d.getMonth()];
+      case 'datetime_24': return prefix + yyyy + '-' + mm + '-' + dd + ' ' + HH + ':' + MM;
+      case 'datetime_12': return prefix + yyyy + '-' + mm + '-' + dd + ' ' + h12 + ':' + MM + ' ' + ampm;
+      default:            return prefix + d.toISOString();
+    }
+  }
+
+  var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   // ---- State condition resolution ---------------------------
+  // Evaluate a single condition object against a HA state value.
+  // Returns the matching states entry or null.
+  function evalCondition(cond, haState) {
+    if (!cond || !haState) return null;
+    var num = parseFloat(haState.state);
+    var str = haState.state;
+    switch (cond.type) {
+      case 'above':      return (!isNaN(num) && num > cond.value)       ? cond.state_key : null;
+      case 'below':      return (!isNaN(num) && num < cond.value)       ? cond.state_key : null;
+      case 'equals':     return (str === String(cond.value))            ? cond.state_key : null;
+      case 'not_equals': return (str !== String(cond.value))            ? cond.state_key : null;
+      default:           return null;
+    }
+  }
+
+  // Resolve which named state applies given the current HA entity state.
+  // state_condition can be a single condition object OR an array of conditions
+  // evaluated in order - first match wins.
+  //
+  // Single condition (legacy, still supported):
+  //   "state_condition": { "type": "above", "value": 0, "state_key": "active" }
+  //
+  // Multiple conditions (new - first match wins, like CSS):
+  //   "state_condition": [
+  //     { "type": "below", "value": 20, "state_key": "low" },
+  //     { "type": "below", "value": 50, "state_key": "medium" },
+  //     { "type": "above", "value": 50, "state_key": "ok" }
+  //   ]
   function resolveWidgetState(w, haState) {
     if (!w.states || !w.state_condition || !haState) return null;
 
-    var cond = w.state_condition;
-    var val  = parseFloat(haState.state);
+    var conditions = Array.isArray(w.state_condition)
+      ? w.state_condition
+      : [w.state_condition];
 
-    if (cond.type === 'above' && !isNaN(val) && val > cond.value) {
-      return w.states[cond.state_key] || null;
-    }
-    if (cond.type === 'below' && !isNaN(val) && val < cond.value) {
-      return w.states[cond.state_key] || null;
-    }
-    if (cond.type === 'equals' && haState.state === String(cond.value)) {
-      return w.states[cond.state_key] || null;
+    for (var i = 0; i < conditions.length; i++) {
+      var key = evalCondition(conditions[i], haState);
+      if (key && w.states[key]) return w.states[key];
     }
 
     return null;
   }
 
-  // ---- Font Awesome 4 icon rendering ----------------------
-  // Supports [fa-fire] or [fa fa-fire] syntax in label text.
-  // Full FA4 icon list: https://fontawesome.com/v4/icons/
+  // ---- Icon rendering -------------------------------------
+  // Use [mdi:icon-name] in any text string. Emits:
+  //   <span class="mdi mdi-icon-name"></span>
+  // MDI's own CSS (fonts/materialdesignicons.css) handles the rest.
+  // No mapping table - any valid MDI name just works.
+  // Find icons at: https://pictogrammers.com/library/mdi/
 
-  var FA_ICONS = {
-    // Common UI
-    'fa-home':            '',
-    'fa-cog':             '',
-    'fa-cogs':            '',
-    'fa-bell':            '',
-    'fa-bell-slash':      '',
-    'fa-search':          '',
-    'fa-times':           '',
-    'fa-check':           '',
-    'fa-plus':            '',
-    'fa-minus':           '',
-    'fa-bars':            '',
-    'fa-ellipsis-h':      '',
-    'fa-ellipsis-v':      '',
-    'fa-chevron-left':    '',
-    'fa-chevron-right':   '',
-    'fa-chevron-up':      '',
-    'fa-chevron-down':    '',
-    'fa-arrow-left':      '',
-    'fa-arrow-right':     '',
-    'fa-arrow-up':        '',
-    'fa-arrow-down':      '',
-    'fa-refresh':         '',
-    'fa-info-circle':     '',
-    'fa-warning':         '',
-    'fa-exclamation':     '',
-    'fa-question':        '',
-    'fa-lock':            '',
-    'fa-unlock':          '',
-    'fa-eye':             '',
-    'fa-eye-slash':       '',
-    // Lighting & power
-    'fa-lightbulb-o':     '',
-    'fa-bolt':            '',
-    'fa-power-off':       '',
-    'fa-toggle-on':       '',
-    'fa-toggle-off':      '',
-    'fa-plug':            '',
-    'fa-battery-full':    '',
-    'fa-battery-three-quarters': '',
-    'fa-battery-half':    '',
-    'fa-battery-quarter': '',
-    'fa-battery-empty':   '',
-    // Climate & environment
-    'fa-thermometer':     '',
-    'fa-thermometer-full':'',
-    'fa-thermometer-half':'',
-    'fa-fire':            '',
-    'fa-snowflake-o':     '',
-    'fa-sun-o':           '',
-    'fa-moon-o':          '',
-    'fa-cloud':           '',
-    'fa-umbrella':        '',
-    'fa-tint':            '',
-    'fa-wind':            '',  // closest in FA4
-    'fa-leaf':            '',
-    // Security & cameras
-    'fa-camera':          '',
-    'fa-video-camera':    '',
-    'fa-shield':          '',
-    'fa-lock':            '',
-    'fa-unlock-alt':      '',
-    'fa-user':            '',
-    'fa-users':           '',
-    'fa-street-view':     '',
-    'fa-map-marker':      '',
-    // Media & entertainment
-    'fa-play':            '',
-    'fa-pause':           '',
-    'fa-stop':            '',
-    'fa-play-circle':     '',
-    'fa-play-circle-o':   '',
-    'fa-volume-up':       '',
-    'fa-volume-down':     '',
-    'fa-volume-off':      '',
-    'fa-music':           '',
-    'fa-television':      '',
-    'fa-film':            '',
-    // Energy & solar
-    'fa-solar-panel':     '',  // FA4 has no solar-panel, sun-o is closest
-    'fa-industry':        '',
-    'fa-recycle':         '',
-    'fa-dashboard':       '',
-    'fa-tachometer':      '',
-    // Arrows & indicators
-    'fa-arrow-circle-up':   '',
-    'fa-arrow-circle-down': '',
-    'fa-level-up':          '',
-    'fa-level-down':        '',
-    'fa-exchange':          '',
-    // Misc household
-    'fa-car':             '',
-    'fa-bicycle':         '',
-    'fa-bed':             '',
-    'fa-bath':            '',
-    'fa-cutlery':         '',
-    'fa-coffee':          '',
-    'fa-clock-o':         '',
-    'fa-calendar':        '',
-    'fa-map':             '',
-    'fa-wifi':            '',
-    'fa-mobile':          '',
-    'fa-tablet':          '',
-    'fa-desktop':         '',
-    'fa-trash':           '',
-    'fa-pencil':          '',
-    'fa-wrench':          '',
-    'fa-flag':            '',
-    'fa-star':            '',
-    'fa-heart':           '',
-    'fa-envelope':        '',
-  };
-
-  // Replace [fa-name] or [fa fa-name] tokens in a string with FA icon characters.
-  // Returns an array of {text, isIcon} segments for rendering as mixed spans.
-  function parseIconText(str) {
-    var segments = [];
-    var re = /\[fa(?:\s+fa)?-([\w-]+)\]/g;
-    var last = 0;
-    var m;
-    while ((m = re.exec(str)) !== null) {
-      if (m.index > last) {
-        segments.push({ text: str.slice(last, m.index), isIcon: false });
-      }
-      var key = 'fa-' + m[1];
-      var ch  = FA_ICONS[key];
-      if (ch) {
-        segments.push({ text: ch, isIcon: true });
-      } else {
-        // Unknown icon - show as-is so the user knows something is wrong
-        segments.push({ text: m[0], isIcon: false });
-      }
-      last = m.index + m[0].length;
-    }
-    if (last < str.length) {
-      segments.push({ text: str.slice(last), isIcon: false });
-    }
-    return segments;
+  // Decode HTML entities in config text strings.
+  // Supports &nbsp; (non-breaking space for icon gaps) and common entities.
+  function decodeEntities(str) {
+    return str
+      .replace(/&nbsp;/g,  '\u00A0')
+      .replace(/&amp;/g,   '&')
+      .replace(/&lt;/g,    '<')
+      .replace(/&gt;/g,    '>')
+      .replace(/&quot;/g,  '"');
   }
 
-  // Build a DOM element (span or text node) from a parsed text string.
-  // If the string contains icon tokens, returns a <span> with mixed children.
-  // Otherwise returns a plain text node (zero overhead for simple labels).
-  function buildTextContent(el, str) {
-    var segments = parseIconText(str);
-    var hasIcons = segments.some(function(s) { return s.isIcon; });
+  function setContent(el, str) {
+    if (!str) { el.textContent = ''; return; }
 
-    if (!hasIcons) {
-      el.textContent = str;
-      return;
-    }
+    var re = /\[mdi:([\w-]+)\]/g;
+    var m  = re.exec(str);
+    if (!m) { el.textContent = decodeEntities(str); return; }  // plain text - fast path
 
+    // Split string into text and icon segments, preserving all whitespace.
+    // Spacing is entirely the user's responsibility - put spaces in the
+    // config text where you want them e.g. "[mdi:home] Living Room"
     el.textContent = '';
-    for (var i = 0; i < segments.length; i++) {
-      var s = segments[i];
-      if (s.isIcon) {
-        var span = document.createElement('span');
-        span.style.fontFamily = 'FontAwesome';
-        span.textContent = s.text;
-        // Add a small gap after the icon if the next segment is non-empty text
-        // that doesn't already start with a space
-        var next = segments[i + 1];
-        if (next && next.text && next.text[0] !== ' ') {
-          span.style.marginRight = '0.3em';
-        }
-        el.appendChild(span);
-      } else if (s.text) {
-        el.appendChild(document.createTextNode(s.text));
+    var last = 0;
+    do {
+      if (m.index > last) {
+        el.appendChild(document.createTextNode(decodeEntities(str.slice(last, m.index))));
       }
+      var span = document.createElement('span');
+      span.className = 'mdi mdi-' + m[1];
+      el.appendChild(span);
+      last = m.index + m[0].length;
+    } while ((m = re.exec(str)) !== null);
+
+    if (last < str.length) {
+      el.appendChild(document.createTextNode(decodeEntities(str.slice(last))));
     }
   }
 
@@ -1347,6 +1600,28 @@
     // If we already have a cached state, call back immediately
     if (entityStates[entityId]) {
       callback(entityStates[entityId]);
+    }
+  }
+
+  function updateInternalEntity(entityId, state) {
+    var now = (new Date()).toISOString();
+    var obj = {
+      entity_id: entityId,
+      state: state,
+      attributes: {
+        friendly_name: entityId
+      },
+      last_changed: now,
+      last_updated: now
+    };
+    entityStates[entityId] = obj;
+    if (entityCallbacks[entityId]) {
+      var cbs = entityCallbacks[entityId];
+      for (var i = 0; i < cbs.length; i++) cbs[i](obj);
+    }
+    if (page0Callbacks[entityId]) {
+      var p0cbs = page0Callbacks[entityId];
+      for (var p0 = 0; p0 < p0cbs.length; p0++) p0cbs[p0](obj);
     }
   }
 
@@ -1495,7 +1770,13 @@
           // Update cache
           entityStates[entId] = newState;
 
-          // Fire callbacks only if this entity is on the current page
+          // Fire page 0 callbacks (persistent - always active)
+          if (page0Callbacks[entId] && newState) {
+            var p0cbs = page0Callbacks[entId];
+            for (var p0 = 0; p0 < p0cbs.length; p0++) p0cbs[p0](newState);
+          }
+
+          // Fire callbacks for the current page
           if (entityCallbacks[entId] && newState) {
             var callbacks = entityCallbacks[entId];
             for (var j = 0; j < callbacks.length; j++) {
@@ -1571,6 +1852,7 @@
   function setConnStatus(status) {
     var el = document.getElementById('conn-status');
     el.className = 'conn-' + status;
+    updateInternalEntity(INTERNAL_CONN_ENTITY, status);
   }
 
   // ---- Utility ---------------------------------------------

@@ -8,7 +8,7 @@
   <title>WebHASP</title>
 
   <!-- Version stamp - bump this to bust browser cache on all devices -->
-  <script>var WEBHASP_VERSION = '0.4.2';</script>
+  <script>var WEBHASP_VERSION = '0.6.8';</script>
 
   <!-- Assets loaded with version query string for cache busting -->
   <script>
@@ -17,6 +17,7 @@
       var css = document.createElement('link');
       css.rel = 'stylesheet';
       css.href = 'style.css' + v;
+      var mdi = document.createElement('link'); mdi.rel = 'stylesheet'; mdi.href = 'fonts/materialdesignicons.css'; document.head.appendChild(mdi);
       document.head.appendChild(css);
 
       // Font loaded via @font-face in style.css with font-display: block

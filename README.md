@@ -23,9 +23,11 @@ Works on tablets, iPads, old Android devices, smart TVs, or any device with a br
   - [clock](#clock)
   - [image](#image)
   - [camera](#camera)
+  - [arc](#arc)
 - [Pages & Navigation](#pages--navigation)
 - [Credentials & Security](#credentials--security)
 - [Connection Status](#connection-status)
+- [Internal Entities](#internal-entities)
 - [Roadmap](#roadmap)
 
 ---
@@ -63,7 +65,7 @@ config/
 
 - Each tablet/device has its own JSON config file in `devices/`
 - `?device=name` in the URL loads `devices/name.json`
-- Omit `?device=` to load `devices/default.json`
+- Omit `?device=` to load `devices/default.json` (if missing, a landing/help page is shown)
 - The config defines a fixed canvas size (e.g. 1024x768) and all widgets are placed at absolute pixel positions within that canvas
 - The canvas scales uniformly to fill whatever screen it is displayed on - like a retro game emulator
 - On load the app connects to HA via WebSocket, fetches current entity states, then subscribes to `state_changed` events
@@ -165,47 +167,65 @@ Pages can have a background image:
 
 ## Icons
 
-WebHASP uses [Font Awesome 4](https://fontawesome.com/v4/icons/) icons, bundled locally - no internet required.
+WebHASP uses [Material Design Icons](https://pictogrammers.com/library/mdi/) (MDI), bundled locally - no internet required. MDI is the same icon set used by Home Assistant's own UI, so names are already familiar if you've written HA config YAML.
 
-Use `[fa-name]` syntax anywhere in label `text` or button `icon_on`/`icon_off` fields:
+Use `[mdi:icon-name]` syntax anywhere in label `text` or button `icon_on`/`icon_off` fields:
 
 ```json
-"text":     "[fa-fire] Heating"
-"text":     "[fa-lightbulb-o] Living Room  •  3 lights on"
-"icon_off": "[fa-lightbulb-o]"
-"icon_on":  "[fa-lightbulb-o]"
+"text":     "[mdi:fire] Heating"
+"text":     "[mdi:lightbulb-outline] Living Room  •  3 lights on"
+"text":     "[mdi:solar-panel] 1.4 kW"
+"icon_off": "[mdi:lightbulb-outline]"
+"icon_on":  "[mdi:lightbulb]"
 ```
 
-Icons and text can be freely mixed in a single string. The icon name matches the FA4 class name exactly.
+Icons and text can be freely mixed in a single string. The icon name matches the MDI name exactly - the same name you'd use in a HA entity `icon:` field.
 
 **Common home automation icons:**
 
-| Icon | Name | Use |
-|------|------|-----|
-| 💡 | `fa-lightbulb-o` | Lights |
-| ⚡ | `fa-bolt` | Power / electricity |
-| 🔥 | `fa-fire` | Heating |
-| ❄️ | `fa-snowflake-o` | Cooling |
-| ☀️ | `fa-sun-o` | Solar |
-| 🌙 | `fa-moon-o` | Night mode |
-| 🌡️ | `fa-thermometer` | Temperature |
-| 💧 | `fa-tint` | Humidity / water |
-| 🔋 | `fa-battery-full` | Battery |
-| 📷 | `fa-camera` | Camera |
-| 🔔 | `fa-bell` | Notifications |
-| 🏠 | `fa-home` | Home |
-| ⚙️ | `fa-cog` | Settings |
-| ⏻ | `fa-power-off` | Power toggle |
-| ▶️ | `fa-play-circle` | Play / stream |
-| 🚗 | `fa-car` | Vehicle |
-| ☁️ | `fa-cloud` | Weather |
-| 📶 | `fa-wifi` | Network |
-| ↑ | `fa-arrow-circle-up` | Import / up |
-| ↓ | `fa-arrow-circle-down` | Export / down |
+| Name | Use |
+|------|-----|
+| `mdi:lightbulb` / `mdi:lightbulb-outline` | Light on / off |
+| `mdi:lightning-bolt` | Power / electricity |
+| `mdi:solar-panel` / `mdi:solar-power` | Solar |
+| `mdi:home-battery` | Battery storage |
+| `mdi:battery` / `mdi:battery-outline` | Battery level |
+| `mdi:thermometer` | Temperature |
+| `mdi:fire` / `mdi:fireplace` | Heating |
+| `mdi:heat-pump` | Heat pump |
+| `mdi:snowflake` / `mdi:air-conditioner` | Cooling |
+| `mdi:fan` / `mdi:fan-off` | Fan |
+| `mdi:water-percent` | Humidity |
+| `mdi:weather-sunny` / `mdi:weather-night` | Sun / moon |
+| `mdi:transmission-tower` | Grid import/export |
+| `mdi:power-plug` / `mdi:power-plug-off` | Smart plug |
+| `mdi:cctv` | Camera |
+| `mdi:motion-sensor` | Motion sensor |
+| `mdi:door-open` / `mdi:door-closed` | Door sensor |
+| `mdi:lock` / `mdi:lock-open` | Lock |
+| `mdi:garage` / `mdi:garage-open` | Garage door |
+| `mdi:car-electric` / `mdi:ev-station` | EV / charger |
+| `mdi:robot-vacuum` | Robot vacuum |
+| `mdi:smoke-detector` | Smoke detector |
+| `mdi:bell` / `mdi:bell-off` | Notifications |
+| `mdi:power` | Power toggle |
+| `mdi:cog` / `mdi:tune` | Settings |
 
-Full icon reference: https://fontawesome.com/v4/icons/
+Full icon library: https://pictogrammers.com/library/mdi/
 
----
+> **Font files required:** Place `materialdesignicons-webfont.woff2` and `materialdesignicons.css` in the `fonts/` folder.
+
+**Spacing around icons**
+
+Regular spaces work fine in plain text. However flex rendering collapses spaces that are directly adjacent to icon spans. Use `&nbsp;` when you need guaranteed space next to an icon:
+
+```json
+"text": "[mdi:home]&nbsp;Living Room"
+"text": "Solar&nbsp;[mdi:weather-sunny]"
+"text": "12.4&nbsp;[mdi:arrow-right]&nbsp;8.1"
+```
+
+`&amp;`, `&lt;`, `&gt;`, and `&quot;` are also supported.
 
 ## Actions
 
@@ -270,6 +290,8 @@ All widgets share these base properties:
 | `w` | Width in pixels |
 | `h` | Height in pixels |
 | `opacity` | 0.0–1.0, optional |
+| `border_width` | Border thickness in px, optional |
+| `border_color` | Border color - token or hex, optional |
 | `visible` | Visibility condition, optional |
 | `groupid` | Designer grouping hint, ignored at runtime |
 
@@ -301,12 +323,13 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 
 | Property | Description |
 |----------|-------------|
-| `text` | Static text. Supports `[fa-name]` icons. Used as placeholder before entity loads. |
+| `text` | Static text. Supports `[mdi:icon-name]` icons. Used as placeholder before entity loads. |
 | `font_size` | Size in pixels |
 | `align` | `left`, `center`, or `right` |
 | `color` | Text color - token or hex |
 | `background` | Background color - token or hex |
 | `letter_spacing` | Letter spacing in px |
+| `font_weight` | CSS font-weight value (e.g. `400`, `600`, `bold`) |
 | `entity` | HA entity ID for live value |
 | `format` | How to format the entity value (see below) |
 | `prefix` | Text prefix for `power_prefix` format |
@@ -322,19 +345,71 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `power_prefix` | Power value with a text prefix from the `prefix` field |
 | `kwh` | `25.0 kWh` |
 | `percent` | `89%` |
+| `time_24` | `14:05` |
+| `time_12` | `2:05 PM` |
+| `date_iso` | `2026-02-27` |
+| `date_short` | `27 Feb` |
+| `datetime_24` | `2026-02-27 14:05` |
+| `datetime_12` | `2026-02-27 2:05 PM` |
 | *(none)* | Raw entity state string |
 
 **State-based styling:**
 
+`state_condition` can be a single condition or an array - first match wins:
+
 ```json
 "states": {
-  "above_zero": { "color": "primary", "opacity": 1.0 },
-  "default":    { "color": "icon_inactive", "opacity": 0.5 }
+  "low":    { "color": "danger" },
+  "medium": { "color": "warning" },
+  "ok":     { "color": "primary" }
 },
-"state_condition": { "type": "above", "value": 0, "state_key": "above_zero" }
+"state_condition": [
+  { "type": "below", "value": 20, "state_key": "low" },
+  { "type": "below", "value": 50, "state_key": "medium" },
+  { "type": "above", "value": 49, "state_key": "ok" }
+]
 ```
 
-State style properties: `color`, `background`, `opacity`, `letter_spacing`.
+Single condition (still supported):
+```json
+"state_condition": { "type": "above", "value": 0, "state_key": "active" }
+```
+
+Condition types: `above`, `below`, `equals`, `not_equals`.
+State style properties: `color`, `background`, `opacity`, `letter_spacing`, `text`.
+
+---
+
+### Template expressions
+
+Labels can include `{{ ... }}` expressions in their `text` field (and in `states.*.text` or `color`). Expressions are evaluated locally against the bound entity state.
+
+**Variables**
+- `state` (numeric if possible, otherwise string)
+- `state_str` (always string)
+- `attr.<name>` (entity attributes)
+
+**Functions**
+- `round(x, n)`, `min(a,b)`, `max(a,b)`, `abs(x)`, `floor(x)`, `ceil(x)`
+
+**Example**
+```json
+{
+  "type": "label",
+  "entity": "sensor.temperature",
+  "text": "[mdi:thermometer]&nbsp;{{ round(state, 1) }} °C"
+}
+```
+
+**Conditional example**
+```json
+{
+  "type": "label",
+  "entity": "sensor.master_house_total_power",
+  "text": "{{ round((state / 1000), 2) }} kW",
+  "color": "{{ ((state/1000)/21*100) <= 33 ? '#008000' : ((state/1000)/21*100) <= 66 ? '#cc7a00' : '#cc0000' }}"
+}
+```
 
 ---
 
@@ -360,6 +435,9 @@ A plain colored rectangle. Used for panel/card backgrounds and decorative elemen
 | `radius` | Corner radius in px |
 | `border_width` | Border thickness in px |
 | `border_color` | Border color - token or hex |
+| `action` | Optional action to perform on tap |
+| `entity` | Optional HA entity to drive state-based styling |
+| `states` | Optional map of state → style overrides (`background`, `opacity`, `border_width`, `border_color`) |
 
 ---
 
@@ -388,6 +466,7 @@ A horizontal progress bar driven by a numeric entity value.
 | `entity` | HA entity providing the numeric value |
 | `max` | Value that represents 100% fill |
 | `radius` | Corner radius in px |
+| `track_color` | Background track color (token or hex, default `surface2`) |
 | `thresholds` | Array of color rules. First matching `below` (as % of max) wins. `default` applies when no `below` matches. |
 
 ---
@@ -403,8 +482,8 @@ A tappable button that reflects entity state visually and calls a HA service on 
   "x": 20, "y": 60, "w": 180, "h": 140,
   "label": "Kitchen",
   "entity": "light.kitchen",
-  "icon_on":  "[fa-lightbulb-o]",
-  "icon_off": "[fa-lightbulb-o]",
+  "icon_on":  "[mdi:lightbulb]",
+  "icon_off": "[mdi:lightbulb-outline]",
   "states": {
     "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text" },
     "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted" }
@@ -417,8 +496,8 @@ A tappable button that reflects entity state visually and calls a HA service on 
 |----------|-------------|
 | `label` | Text shown below the icon |
 | `entity` | HA entity to watch for on/off state |
-| `icon_on` | Icon shown when entity is `on`. Supports `[fa-name]`. |
-| `icon_off` | Icon shown when entity is `off`. Supports `[fa-name]`. |
+| `icon_on` | Icon shown when entity is `on`. Supports `[mdi:icon-name]`. |
+| `icon_off` | Icon shown when entity is `off`. Supports `[mdi:icon-name]`. |
 | `states.on` | Style when entity state is `on`: `background`, `icon_color`, `label_color` |
 | `states.off` | Style when entity state is `off` |
 | `action` | Action to perform on tap |
@@ -463,6 +542,7 @@ Displays a static image from a URL or local path. Optionally opens fullscreen on
 | `url` | Image URL or path relative to webhasp folder |
 | `fit` | `cover` (default, may crop) or `contain` (letterbox) |
 | `fullscreen_on_tap` | `true` to open fullscreen overlay on tap |
+| `radius` | Corner radius in px |
 
 ---
 
@@ -495,6 +575,7 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
 | `refresh_interval` | Milliseconds between snapshot refreshes (snapshot/poster modes) |
 | `url` | Direct camera URL for `url` mode |
 | `fit` | `cover` (default) or `contain` |
+| `radius` | Corner radius in px |
 
 **Preview modes:**
 
@@ -522,6 +603,51 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
 
 ---
 
+### arc
+
+An SVG-based circular gauge driven by a numeric entity value.
+
+```json
+{
+  "id": "battery_arc",
+  "type": "arc",
+  "x": 80, "y": 120, "w": 160, "h": 160,
+  "entity": "sensor.battery_state_of_charge",
+  "min": 0,
+  "max": 100,
+  "start_angle": 135,
+  "end_angle": 405,
+  "line_width": 14,
+  "track_color": "surface2",
+  "color": "primary",
+  "thresholds": [
+    { "below": 20, "color": "danger" },
+    { "below": 50, "color": "warning" },
+    { "default": true, "color": "primary" }
+  ],
+  "label": "Battery",
+  "label_color": "text_muted",
+  "format": "percent"
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `entity` | HA entity providing the numeric value |
+| `min` | Minimum value (default `0`) |
+| `max` | Maximum value (default `100`) |
+| `start_angle` | Start angle in degrees (default `135`) |
+| `end_angle` | End angle in degrees (default `405`) |
+| `line_width` | Arc stroke width in px (default `12`) |
+| `track_color` | Background arc color (token or hex, default `surface2`) |
+| `color` | Arc color when no thresholds match (token or hex) |
+| `thresholds` | Array of color rules; first matching `below` (as % of range) wins |
+| `label` | Optional label shown under the value |
+| `label_color` | Label color (token or hex, default `text_muted`) |
+| `format` | Value format (same as label widget) |
+
+---
+
 ## Pages & Navigation
 
 Pages are defined in the `pages` array. Navigate between them by swiping left/right or tapping the dot indicators at the bottom of the screen.
@@ -533,6 +659,10 @@ Pages are defined in the `pages` array. Navigate between them by swiping left/ri
   { "id": 3, "label": "Cameras", "widgets": [] }
 ]
 ```
+
+### Page 0 (persistent overlay)
+
+If you define a page with `"id": 0`, it renders once as a persistent overlay and stays on top of all other pages. It does not appear in the navigation dots and cannot be navigated to directly. Use it for always-on elements like clocks, status bars, or navigation sidebars.
 
 ### Return to default
 
@@ -579,6 +709,25 @@ A small dot in the bottom-right corner of the screen shows WebSocket state:
 
 ---
 
+## Internal Entities
+
+WebHASP exposes a few internal entities you can bind to widgets just like HA entities:
+
+- `internal.connectionstatus` - `connected`, `connecting`, `disconnected`
+- `internal.currentdtm` - current datetime (ISO string), updates once per minute
+
+Example (icon + time):
+```json
+{
+  "type": "label",
+  "entity": "internal.currentdtm",
+  "prefix": "[mdi:clock-outline]&nbsp;",
+  "format": "time_24"
+}
+```
+
+---
+
 ## Roadmap
 
 **Done**
@@ -587,18 +736,18 @@ A small dot in the bottom-right corner of the screen shows WebSocket state:
 - [x] Camera widget - MJPEG, snapshot, poster, and direct URL preview modes
 - [x] Fullscreen HLS camera stream with audio
 - [x] Swipe gesture navigation
-- [x] Font Awesome 4 icons bundled locally - works offline
-- [x] `[fa-name]` icon syntax - mix icons and text in any label or button
+- [x] Material Design Icons (MDI) bundled locally - works offline
+- [x] `[mdi:icon-name]` icon syntax - mix icons and text in any label or button
 - [x] State-based styling (color, opacity, border, letter-spacing)
 - [x] Typed actions (navigate, automation, service with data payload)
 - [x] Visibility conditions (above, below, equals, not_equals)
 - [x] Page background images with opacity and fit
 - [x] Return-to-default timer
 - [x] Version-based cache busting
+- [x] Page 0 persistent overlay
+- [x] Arc / gauge widget
 
 **Coming**
-- [ ] Arc / gauge widget
-- [ ] Page 0 - persistent overlay for clock, sidebar, status bar
 - [ ] HA event-triggered page navigation (fire `webhasp_command` from automations)
 - [ ] Screensaver / idle screen dimming
 - [ ] Visual drag-and-drop designer

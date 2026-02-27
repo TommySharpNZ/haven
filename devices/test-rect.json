@@ -1,0 +1,125 @@
+{
+  "version": "1.0",
+  "device": {
+    "name": "Rectangle Test",
+    "canvas": {
+      "width": 900,
+      "height": 760
+    },
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface":    "#272E36",
+      "surface2":   "#363f4a",
+      "primary":    "#8ADF45",
+      "warning":    "#F0AD4E",
+      "danger":     "#D9534F",
+      "text":       "#FFFFFF",
+      "text_dim":   "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Rectangle Tests",
+      "widgets": [
+
+        { "id": "hdr_case",   "type": "label", "x": 0,   "y": 0, "w": 200, "h": 32, "text": "Case",          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_config", "type": "label", "x": 200, "y": 0, "w": 400, "h": 32, "text": "Config / intent","font_size": 13, "align": "left",   "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_render", "type": "label", "x": 600, "y": 0, "w": 300, "h": 32, "text": "Rendered",      "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+
+        { "_comment": "---- 1. Basic fill ----",
+          "id": "r1_hdr",  "type": "label",     "x": 0,   "y": 40, "w": 200, "h": 48, "text": "1. Basic fill",          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r1_desc", "type": "label",     "x": 200, "y": 40, "w": 400, "h": 48, "text": "background: surface2, radius: 0", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r1",      "type": "rectangle", "x": 650, "y": 48, "w": 200, "h": 32, "background": "surface2", "radius": 0 },
+
+        { "_comment": "---- 2. Rounded corners ----",
+          "id": "r2_hdr",  "type": "label",     "x": 0,   "y": 96, "w": 200, "h": 48, "text": "2. Rounded corners",     "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r2_desc", "type": "label",     "x": 200, "y": 96, "w": 400, "h": 48, "text": "radius: 8",              "font_size": 13, "align": "left",   "color": "text_dim",   "background": "surface" },
+          { "id": "r2",      "type": "rectangle", "x": 650, "y": 104, "w": 200, "h": 32, "background": "surface2", "radius": 8 },
+
+        { "_comment": "---- 3. Pill shape ----",
+          "id": "r3_hdr",  "type": "label",     "x": 0,   "y": 152, "w": 200, "h": 48, "text": "3. Pill shape",          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r3_desc", "type": "label",     "x": 200, "y": 152, "w": 400, "h": 48, "text": "radius: 16 (= half height)", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r3",      "type": "rectangle", "x": 650, "y": 160, "w": 200, "h": 32, "background": "primary", "radius": 16 },
+
+        { "_comment": "---- 4. Hex color ----",
+          "id": "r4_hdr",  "type": "label",     "x": 0,   "y": 208, "w": 200, "h": 48, "text": "4. Hex color",           "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r4_desc", "type": "label",     "x": 200, "y": 208, "w": 400, "h": 48, "text": "background: #2255AA",   "font_size": 13, "align": "left",   "color": "text_dim",   "background": "surface" },
+          { "id": "r4",      "type": "rectangle", "x": 650, "y": 216, "w": 200, "h": 32, "background": "#2255AA", "radius": 4 },
+
+        { "_comment": "---- 5. Border ----",
+          "id": "r5_hdr",  "type": "label",     "x": 0,   "y": 264, "w": 200, "h": 48, "text": "5. Border",              "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r5_desc", "type": "label",     "x": 200, "y": 264, "w": 400, "h": 48, "text": "border_color + border_width, transparent fill", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r5",      "type": "rectangle", "x": 650, "y": 272, "w": 200, "h": 32,
+            "background": "transparent",
+            "radius": 6,
+            "states": { "default": { "border_color": "primary", "border_width": 2 } }
+          },
+
+        { "_comment": "---- 6. Label floated over rect ----",
+          "id": "r6_hdr",  "type": "label",     "x": 0,   "y": 320, "w": 200, "h": 48, "text": "6. Label over rect",    "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r6_desc", "type": "label",     "x": 200, "y": 320, "w": 400, "h": 48, "text": "rect + label with transparent bg — card pattern", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r6_bg",   "type": "rectangle", "x": 618, "y": 328, "w": 264, "h": 32, "background": "surface2", "radius": 6 },
+          { "id": "r6_lbl",  "type": "label",     "x": 618, "y": 328, "w": 264, "h": 32, "text": "[mdi:home]&nbsp;Living Room", "font_size": 16, "align": "center", "color": "text", "background": "transparent" },
+
+        { "_comment": "---- 7. Opacity ----",
+          "id": "r7_hdr",  "type": "label",     "x": 0,   "y": 376, "w": 200, "h": 48, "text": "7. Opacity",             "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r7_desc", "type": "label",     "x": 200, "y": 376, "w": 400, "h": 48, "text": "opacity: 0.35 — dimmed panel", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r7",      "type": "rectangle", "x": 650, "y": 384, "w": 200, "h": 32, "background": "primary", "radius": 4,
+            "states": { "default": { "opacity": 0.35 } }
+          },
+
+        { "_comment": "---- 8. Entity state - background changes ----",
+          "id": "r8_hdr",  "type": "label",     "x": 0,   "y": 432, "w": 200, "h": 64, "text": "8. State-based bg",     "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r8_desc", "type": "label",     "x": 200, "y": 432, "w": 400, "h": 64, "text": "entity: binary_sensor.front_door\nstates: on=danger, off=surface2", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r8",      "type": "rectangle", "x": 650, "y": 448, "w": 200, "h": 32, "radius": 4,
+            "entity": "binary_sensor.front_door",
+            "background": "surface2",
+            "states": {
+              "on":  { "background": "danger" },
+              "off": { "background": "surface2" }
+            }
+          },
+
+        { "_comment": "---- 9. Tappable rect (action) ----",
+          "id": "r9_hdr",  "type": "label",     "x": 0,   "y": 504, "w": 200, "h": 48, "text": "9. Tappable rect",      "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r9_desc", "type": "label",     "x": 200, "y": 504, "w": 400, "h": 48, "text": "action: navigate page 2 — tap anywhere on rect", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r9_bg",   "type": "rectangle", "x": 618, "y": 512, "w": 264, "h": 32, "background": "surface2", "radius": 6,
+            "action": { "type": "navigate", "page": 2 }
+          },
+          { "id": "r9_lbl",  "type": "label",     "x": 618, "y": 512, "w": 264, "h": 32, "text": "Tap me", "font_size": 16, "align": "center", "color": "text_muted", "background": "transparent" },
+
+        { "_comment": "---- 10. Divider line ----",
+          "id": "r10_hdr",  "type": "label",     "x": 0,   "y": 560, "w": 200, "h": 48, "text": "10. Divider line",      "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r10_desc","type": "label",     "x": 200, "y": 560, "w": 400, "h": 48, "text": "h: 2 — thin horizontal rule", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r10",     "type": "rectangle", "x": 620, "y": 580, "w": 260, "h": 2,  "background": "surface2", "radius": 0 },
+
+        { "_comment": "---- 11. Colour swatch row ----",
+          "id": "r11_hdr",  "type": "label",     "x": 0,   "y": 616, "w": 200, "h": 48, "text": "11. Theme colors",      "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r11_desc","type": "label",     "x": 200, "y": 616, "w": 400, "h": 48, "text": "All theme color tokens as filled rects", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r11_c1",  "type": "rectangle", "x": 604, "y": 624, "w": 36, "h": 32, "background": "primary",  "radius": 3 },
+          { "id": "r11_c2",  "type": "rectangle", "x": 644, "y": 624, "w": 36, "h": 32, "background": "warning",  "radius": 3 },
+          { "id": "r11_c3",  "type": "rectangle", "x": 684, "y": 624, "w": 36, "h": 32, "background": "danger",   "radius": 3 },
+          { "id": "r11_c4",  "type": "rectangle", "x": 724, "y": 624, "w": 36, "h": 32, "background": "surface2", "radius": 3 },
+          { "id": "r11_c5",  "type": "rectangle", "x": 764, "y": 624, "w": 36, "h": 32, "background": "surface",  "radius": 3 },
+          { "id": "r11_c6",  "type": "rectangle", "x": 804, "y": 624, "w": 36, "h": 32, "background": "text_muted","radius": 3 },
+          { "id": "r11_c7",  "type": "rectangle", "x": 844, "y": 624, "w": 36, "h": 32, "background": "icon_inactive","radius": 3 },
+
+        { "_comment": "---- 12. Tall card (background panel) ----",
+          "id": "r12_hdr",  "type": "label",     "x": 0,   "y": 672, "w": 200, "h": 64, "text": "12. Card panel",        "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+          { "id": "r12_desc","type": "label",     "x": 200, "y": 672, "w": 400, "h": 64, "text": "surface2 card — typical background panel for widget groups", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+          { "id": "r12_card","type": "rectangle", "x": 614, "y": 676, "w": 272, "h": 56, "background": "surface2", "radius": 8 },
+          { "id": "r12_icon","type": "label",     "x": 620, "y": 682, "w": 40,  "h": 44, "text": "[mdi:lightning-bolt]", "font_size": 28, "align": "center", "color": "primary", "background": "transparent" },
+          { "id": "r12_val", "type": "label",     "x": 660, "y": 682, "w": 120, "h": 44, "text": "2.4 kW",              "font_size": 28, "align": "left",   "color": "primary", "background": "transparent" },
+          { "id": "r12_lbl", "type": "label",     "x": 780, "y": 690, "w": 100, "h": 28, "text": "SOLAR",               "font_size": 11, "align": "right",  "color": "text_muted", "background": "transparent", "letter_spacing": 2 }
+      ]
+    }
+  ]
+}
