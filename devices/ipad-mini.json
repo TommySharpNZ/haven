@@ -1,0 +1,705 @@
+{
+  "version": "1.0",
+  "ha": {
+    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
+  },
+  "device": {
+    "name": "Example Tablet",
+    "canvas": {
+      "width": 800,
+      "height": 480
+    },
+    "orientation": "landscape",
+    "default_page": 1,
+    "return_to_default": 60
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Energy",
+      "widgets": [
+        {
+          "id": "title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Energy System",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "clock",
+          "type": "clock",
+          "x": 0,
+          "y": 0,
+          "w": 120,
+          "h": 44,
+          "font_size": 22,
+          "align": "left",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "import_box",
+          "type": "rectangle",
+          "x": 0,
+          "y": 48,
+          "w": 390,
+          "h": 130,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "import_icon",
+          "type": "label",
+          "x": 8,
+          "y": 70,
+          "w": 80,
+          "h": 80,
+          "text": "[fa-arrow-circle-down]",
+          "font_size": 64,
+          "align": "center",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_consumption",
+          "states": {
+            "above_zero": {
+              "color": "#D9534F"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "above_zero"
+          }
+        },
+        {
+          "id": "import_title",
+          "type": "label",
+          "x": 10,
+          "y": 52,
+          "w": 160,
+          "h": 36,
+          "text": "Import",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "import_value",
+          "type": "label",
+          "x": 160,
+          "y": 50,
+          "w": 220,
+          "h": 60,
+          "text": "-- w",
+          "font_size": 52,
+          "align": "right",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_current_grid_consumption",
+          "format": "power",
+          "states": {
+            "above_zero": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "above_zero"
+          }
+        },
+        {
+          "id": "import_today_label",
+          "type": "label",
+          "x": 160,
+          "y": 112,
+          "w": 220,
+          "h": 28,
+          "text": "today",
+          "font_size": 18,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "import_today",
+          "type": "label",
+          "x": 160,
+          "y": 138,
+          "w": 220,
+          "h": 32,
+          "text": "-- kWh",
+          "font_size": 22,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.daily_energy_import_total",
+          "format": "kwh"
+        },
+        {
+          "id": "import_p1",
+          "type": "label",
+          "x": 90,
+          "y": 112,
+          "w": 120,
+          "h": 20,
+          "text": "P1: --",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.master_house_phase3_import_power",
+          "format": "power_prefix",
+          "prefix": "P1: "
+        },
+        {
+          "id": "import_p2",
+          "type": "label",
+          "x": 90,
+          "y": 132,
+          "w": 120,
+          "h": 20,
+          "text": "P2: --",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.master_house_phase2_import_power",
+          "format": "power_prefix",
+          "prefix": "P2: "
+        },
+        {
+          "id": "import_p3",
+          "type": "label",
+          "x": 90,
+          "y": 152,
+          "w": 120,
+          "h": 20,
+          "text": "P3: --",
+          "font_size": 14,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.master_house_phase1_import_power",
+          "format": "power_prefix",
+          "prefix": "P3: "
+        },
+        {
+          "id": "export_box",
+          "type": "rectangle",
+          "x": 400,
+          "y": 48,
+          "w": 400,
+          "h": 130,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "export_title",
+          "type": "label",
+          "x": 410,
+          "y": 52,
+          "w": 160,
+          "h": 36,
+          "text": "Export",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "export_value",
+          "type": "label",
+          "x": 560,
+          "y": 50,
+          "w": 230,
+          "h": 60,
+          "text": "-- w",
+          "font_size": 52,
+          "align": "right",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.master_house_total_export_power",
+          "format": "power",
+          "states": {
+            "above_zero": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "above_zero"
+          }
+        },
+        {
+          "id": "export_today_label",
+          "type": "label",
+          "x": 560,
+          "y": 112,
+          "w": 230,
+          "h": 28,
+          "text": "today",
+          "font_size": 18,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "export_today",
+          "type": "label",
+          "x": 560,
+          "y": 138,
+          "w": 230,
+          "h": 32,
+          "text": "-- kWh",
+          "font_size": 22,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.daily_energy_export",
+          "format": "kwh"
+        },
+        {
+          "id": "solar_box",
+          "type": "rectangle",
+          "x": 0,
+          "y": 188,
+          "w": 390,
+          "h": 130,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "solar_title",
+          "type": "label",
+          "x": 10,
+          "y": 192,
+          "w": 160,
+          "h": 36,
+          "text": "Solar",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "solar_value",
+          "type": "label",
+          "x": 160,
+          "y": 190,
+          "w": 220,
+          "h": 60,
+          "text": "-- w",
+          "font_size": 52,
+          "align": "right",
+          "color": "icon_inactive",
+          "background": "surface",
+          "entity": "sensor.pv_power",
+          "format": "power",
+          "states": {
+            "above_zero": {
+              "color": "primary"
+            }
+          },
+          "state_condition": {
+            "type": "above",
+            "value": 0,
+            "state_key": "above_zero"
+          }
+        },
+        {
+          "id": "solar_today_label",
+          "type": "label",
+          "x": 160,
+          "y": 254,
+          "w": 220,
+          "h": 28,
+          "text": "today",
+          "font_size": 18,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "solar_today",
+          "type": "label",
+          "x": 160,
+          "y": 278,
+          "w": 220,
+          "h": 32,
+          "text": "-- kWh",
+          "font_size": 22,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.today_s_pv_generation",
+          "format": "kwh"
+        },
+        {
+          "id": "battery_box",
+          "type": "rectangle",
+          "x": 400,
+          "y": 188,
+          "w": 400,
+          "h": 130,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "battery_title",
+          "type": "label",
+          "x": 410,
+          "y": 192,
+          "w": 160,
+          "h": 36,
+          "text": "Battery",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "background": "surface"
+        },
+        {
+          "id": "battery_value",
+          "type": "label",
+          "x": 570,
+          "y": 190,
+          "w": 220,
+          "h": 60,
+          "text": "--%",
+          "font_size": 52,
+          "align": "right",
+          "color": "primary",
+          "background": "surface",
+          "entity": "sensor.battery_state_of_charge",
+          "format": "percent"
+        },
+        {
+          "id": "battery_status",
+          "type": "label",
+          "x": 570,
+          "y": 255,
+          "w": 220,
+          "h": 28,
+          "text": "--",
+          "font_size": 18,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.battery_mode"
+        },
+        {
+          "id": "battery_power",
+          "type": "label",
+          "x": 570,
+          "y": 280,
+          "w": 220,
+          "h": 30,
+          "text": "--",
+          "font_size": 22,
+          "align": "right",
+          "color": "text_dim",
+          "background": "surface",
+          "entity": "sensor.battery_power",
+          "format": "power_abs"
+        },
+        {
+          "id": "bottom_box",
+          "type": "rectangle",
+          "x": 0,
+          "y": 328,
+          "w": 800,
+          "h": 148,
+          "background": "surface",
+          "radius": 10
+        },
+        {
+          "id": "phase1_label",
+          "type": "label",
+          "x": 10,
+          "y": 338,
+          "w": 140,
+          "h": 26,
+          "text": "Phase 1",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "phase1_bar",
+          "type": "bar",
+          "x": 160,
+          "y": 340,
+          "w": 420,
+          "h": 22,
+          "entity": "sensor.load_l1",
+          "max": 14000,
+          "radius": 2,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "#008000"
+            },
+            {
+              "below": 66,
+              "color": "#cc7a00"
+            },
+            {
+              "default": true,
+              "color": "#cc0000"
+            }
+          ]
+        },
+        {
+          "id": "phase1_value",
+          "type": "label",
+          "x": 590,
+          "y": 338,
+          "w": 200,
+          "h": 26,
+          "text": "--",
+          "font_size": 18,
+          "align": "right",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.load_l1",
+          "format": "power"
+        },
+        {
+          "id": "phase2_label",
+          "type": "label",
+          "x": 10,
+          "y": 374,
+          "w": 140,
+          "h": 26,
+          "text": "Phase 2",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "phase2_bar",
+          "type": "bar",
+          "x": 160,
+          "y": 376,
+          "w": 420,
+          "h": 22,
+          "entity": "sensor.tuya_spm02v2_1_power_b",
+          "max": 14000,
+          "radius": 2,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "#008000"
+            },
+            {
+              "below": 66,
+              "color": "#cc7a00"
+            },
+            {
+              "default": true,
+              "color": "#cc0000"
+            }
+          ]
+        },
+        {
+          "id": "phase2_value",
+          "type": "label",
+          "x": 590,
+          "y": 374,
+          "w": 200,
+          "h": 26,
+          "text": "--",
+          "font_size": 18,
+          "align": "right",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.tuya_spm02v2_1_power_b",
+          "format": "power"
+        },
+        {
+          "id": "phase3_label",
+          "type": "label",
+          "x": 10,
+          "y": 410,
+          "w": 140,
+          "h": 26,
+          "text": "Phase 3",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
+        },
+        {
+          "id": "phase3_bar",
+          "type": "bar",
+          "x": 160,
+          "y": 412,
+          "w": 420,
+          "h": 22,
+          "entity": "sensor.load_l3",
+          "max": 14000,
+          "radius": 2,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "#008000"
+            },
+            {
+              "below": 66,
+              "color": "#cc7a00"
+            },
+            {
+              "default": true,
+              "color": "#cc0000"
+            }
+          ]
+        },
+        {
+          "id": "phase3_value",
+          "type": "label",
+          "x": 590,
+          "y": 410,
+          "w": 200,
+          "h": 26,
+          "text": "--",
+          "font_size": 18,
+          "align": "right",
+          "color": "text",
+          "background": "surface",
+          "entity": "sensor.load_l3",
+          "format": "power"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Lights",
+      "widgets": [
+        {
+          "id": "lights_title",
+          "type": "label",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 44,
+          "text": "Lights & Switches",
+          "font_size": 24,
+          "align": "center",
+          "color": "text",
+          "background": "background"
+        },
+        {
+          "id": "light1_btn",
+          "type": "button",
+          "x": 20,
+          "y": 60,
+          "w": 160,
+          "h": 120,
+          "label": "Kitchen",
+          "entity": "light.kitchen",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "text_muted",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.kitchen"
+          }
+        },
+        {
+          "id": "light2_btn",
+          "type": "button",
+          "x": 200,
+          "y": 60,
+          "w": 160,
+          "h": 120,
+          "label": "Lounge",
+          "entity": "light.lounge",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "text_muted",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.lounge"
+          }
+        },
+        {
+          "id": "switch1_btn",
+          "type": "button",
+          "x": 380,
+          "y": 60,
+          "w": 160,
+          "h": 120,
+          "label": "Workshop",
+          "entity": "switch.ks_602s_01",
+          "icon_on": "[fa-lightbulb-o]",
+          "icon_off": "[fa-lightbulb-o]",
+          "states": {
+            "on": {
+              "background": "#493416",
+              "icon_color": "#e88c03",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "icon_color": "text_muted",
+              "label_color": "text_muted"
+            }
+          },
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.ks_602s_01"
+          }
+        }
+      ]
+    }
+  ]
+}

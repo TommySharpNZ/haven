@@ -19,13 +19,13 @@
     "colors": {
       "background": "#161C23",
       "surface": "#272E36",
-      "surface2": "#363f4a",
+      "surface2": "#2C313B",
       "primary": "#8ADF45",
       "warning": "#F0AD4E",
       "danger": "#D9534F",
       "text": "#FFFFFF",
-      "text_dim": "#e6e6e6",
-      "text_muted": "#9fa5ad",
+      "text_dim": "#464c53",
+      "text_muted": "#363B3E",
       "icon_inactive": "#464c53"
     },
     "font_size": 16
@@ -119,13 +119,13 @@
       "label": "Page1",
       "widgets": [
         {
-          "id": "rectangle_4",
+          "id": "rectangle_5",
           "type": "rectangle",
           "x": 16,
-          "y": 208,
-          "w": 376,
-          "h": 144,
-          "background": "surface2",
+          "y": 368,
+          "w": 768,
+          "h": 216,
+          "background": "background",
           "radius": 6
         },
         {
@@ -154,15 +154,15 @@
         {
           "id": "label_2",
           "type": "label",
-          "x": 20,
-          "y": 88,
-          "w": 160,
+          "x": 24,
+          "y": 84,
+          "w": 104,
           "h": 112,
           "align": "left",
           "valign": "bottom",
           "text": "[mdi:transmission-tower]",
           "font_size": 100,
-          "color": "white",
+          "color": "text",
           "entity": "sensor.master_house_total_import_power",
           "overrides": [
             {
@@ -192,7 +192,7 @@
                 ]
               },
               "set": {
-                "color": "warning",
+                "color": "danger",
                 "text": "[mdi:transmission-tower-export]"
               }
             },
@@ -216,48 +216,33 @@
         {
           "id": "label_3",
           "type": "label",
-          "x": 24,
+          "x": 28,
           "y": 56,
-          "w": 240,
-          "h": 48,
+          "w": 100,
+          "h": 32,
           "align": "left",
           "valign": "top",
           "text": "Import",
           "font_size": 28,
-          "color": "White"
+          "color": "text"
         },
         {
           "id": "label_4",
           "type": "label",
-          "x": 184,
+          "x": 132,
           "y": 56,
-          "w": 200,
-          "h": 48,
+          "w": 248,
+          "h": 72,
           "align": "right",
           "valign": "top",
           "text": "99.99 kW",
-          "font_size": 50,
+          "font_size": 70,
           "font_weight": 600,
-          "letter_spacing": -2,
-          "color": "White",
+          "letter_spacing": 0,
+          "color": "text",
           "entity": "sensor.master_house_total_import_power",
           "format": "power",
           "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "grey"
-              }
-            },
             {
               "when": {
                 "logic": "all",
@@ -270,7 +255,7 @@
                 ]
               },
               "set": {
-                "color": "green"
+                "color": "primary"
               }
             }
           ]
@@ -278,508 +263,36 @@
         {
           "id": "label_5",
           "type": "label",
-          "x": 200,
-          "y": 112,
-          "w": 184,
-          "h": 40,
+          "x": 324,
+          "y": 128,
+          "w": 56,
+          "h": 24,
           "text": "today",
           "font_size": 18,
-          "color": "white",
+          "color": "text",
           "align": "right",
           "valign": "bottom"
         },
         {
           "id": "label_6",
           "type": "label",
-          "x": 184,
-          "y": 136,
-          "w": 200,
-          "h": 48,
+          "x": 268,
+          "y": 152,
+          "w": 112,
+          "h": 32,
           "align": "right",
           "valign": "bottom",
           "text": "99.99 kW",
           "font_size": 32,
-          "color": "White",
-          "entity": "sensor.daily_energy_import_total"
-        },
-        {
-          "id": "rectangle_3",
-          "type": "rectangle",
-          "x": 408,
-          "y": 48,
-          "w": 376,
-          "h": 144,
-          "background": "surface2",
-          "radius": 6
-        },
-        {
-          "id": "label_7",
-          "type": "label",
-          "x": 576,
-          "y": 136,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "bottom",
-          "text": "99.99 kW",
-          "font_size": 32,
-          "color": "White",
-          "entity": "sensor.daily_energy_import_total"
-        },
-        {
-          "id": "label_8",
-          "type": "label",
-          "x": 592,
-          "y": 112,
-          "w": 184,
-          "h": 40,
-          "text": "today",
-          "font_size": 18,
-          "color": "white",
-          "align": "right",
-          "valign": "bottom"
-        },
-        {
-          "id": "label_9",
-          "type": "label",
-          "x": 576,
-          "y": 56,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "top",
-          "text": "99.99 kW",
-          "font_size": 50,
-          "font_weight": 600,
-          "letter_spacing": -2,
-          "color": "White",
-          "entity": "sensor.master_house_total_export_power",
-          "format": "power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "grey"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "green"
-              }
-            }
-          ]
-        },
-        {
-          "id": "label_10",
-          "type": "label",
-          "x": 416,
-          "y": 56,
-          "w": 240,
-          "h": 48,
-          "align": "left",
-          "valign": "top",
-          "text": "Export",
-          "font_size": 28,
-          "color": "White"
-        },
-        {
-          "id": "label_11",
-          "type": "label",
-          "x": 412,
-          "y": 88,
-          "w": 160,
-          "h": 112,
-          "align": "left",
-          "valign": "bottom",
-          "text": "[mdi:transmission-tower]",
-          "font_size": 100,
-          "color": "white",
-          "entity": "sensor.master_house_total_export_power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "icon_inactive"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "warning",
-                "text": "[mdi:transmission-tower-import]"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 10000
-                  }
-                ]
-              },
-              "set": {
-                "color": "danger"
-              }
-            }
-          ]
-        },
-        {
-          "id": "rectangle_1",
-          "type": "rectangle",
-          "x": 408,
-          "y": 208,
-          "w": 376,
-          "h": 144,
-          "background": "surface2",
-          "radius": 6
-        },
-        {
-          "id": "label_12",
-          "type": "label",
-          "x": 576,
-          "y": 296,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "bottom",
-          "text": "99.99 kW",
-          "font_size": 32,
-          "color": "White",
-          "entity": "sensor.daily_energy_import_total"
-        },
-        {
-          "id": "label_13",
-          "type": "label",
-          "x": 592,
-          "y": 272,
-          "w": 184,
-          "h": 40,
-          "text": "today",
-          "font_size": 18,
-          "color": "white",
-          "align": "right",
-          "valign": "bottom"
-        },
-        {
-          "id": "label_14",
-          "type": "label",
-          "x": 576,
-          "y": 216,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "top",
-          "text": "99.99 kW",
-          "font_size": 50,
-          "font_weight": 600,
-          "letter_spacing": -2,
-          "color": "White",
-          "entity": "sensor.master_house_total_export_power",
-          "format": "power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "grey"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "green"
-              }
-            }
-          ]
-        },
-        {
-          "id": "label_15",
-          "type": "label",
-          "x": 416,
-          "y": 216,
-          "w": 240,
-          "h": 48,
-          "align": "left",
-          "valign": "top",
-          "text": "Export",
-          "font_size": 28,
-          "color": "White"
-        },
-        {
-          "id": "label_16",
-          "type": "label",
-          "x": 416,
-          "y": 248,
-          "w": 160,
-          "h": 112,
-          "align": "left",
-          "valign": "bottom",
-          "text": "[mdi:transmission-tower]",
-          "font_size": 100,
-          "color": "white",
-          "entity": "sensor.master_house_total_export_power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "icon_inactive"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "warning",
-                "text": "[mdi:transmission-tower-import]"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 10000
-                  }
-                ]
-              },
-              "set": {
-                "color": "danger"
-              }
-            }
-          ]
-        },
-        {
-          "id": "label_17",
-          "type": "label",
-          "x": 184,
-          "y": 296,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "bottom",
-          "text": "99.99 kW",
-          "font_size": 32,
-          "color": "White",
-          "entity": "sensor.daily_energy_import_total"
-        },
-        {
-          "id": "label_18",
-          "type": "label",
-          "x": 200,
-          "y": 272,
-          "w": 184,
-          "h": 40,
-          "text": "today",
-          "font_size": 18,
-          "color": "white",
-          "align": "right",
-          "valign": "bottom"
-        },
-        {
-          "id": "label_19",
-          "type": "label",
-          "x": 184,
-          "y": 216,
-          "w": 200,
-          "h": 48,
-          "align": "right",
-          "valign": "top",
-          "text": "99.99 kW",
-          "font_size": 50,
-          "font_weight": 600,
-          "letter_spacing": -2,
-          "color": "White",
-          "entity": "sensor.master_house_total_import_power",
-          "format": "power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "grey"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "green"
-              }
-            }
-          ]
-        },
-        {
-          "id": "label_20",
-          "type": "label",
-          "x": 24,
-          "y": 216,
-          "w": 240,
-          "h": 48,
-          "align": "left",
-          "valign": "top",
-          "text": "Import",
-          "font_size": 28,
-          "color": "White"
-        },
-        {
-          "id": "label_21",
-          "type": "label",
-          "x": 16,
-          "y": 248,
-          "w": 160,
-          "h": 112,
-          "align": "left",
-          "valign": "bottom",
-          "text": "[mdi:transmission-tower]",
-          "font_size": 100,
-          "color": "white",
-          "entity": "sensor.master_house_total_import_power",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "below",
-                    "value": 1
-                  }
-                ]
-              },
-              "set": {
-                "color": "icon_inactive"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "warning",
-                "text": "[mdi:transmission-tower-export]"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 10000
-                  }
-                ]
-              },
-              "set": {
-                "color": "danger"
-              }
-            }
-          ]
+          "color": "text",
+          "entity": "sensor.daily_energy_import_total",
+          "format": "kwh"
         },
         {
           "id": "image_floorplan",
           "type": "image",
           "x": 16,
-          "y": 368,
+          "y": 600,
           "w": 768,
           "h": 420,
           "url": "images/floorplan.jpg",
@@ -790,7 +303,7 @@
           "id": "btn_floor_light_1",
           "type": "button",
           "x": 208,
-          "y": 524,
+          "y": 768,
           "w": 64,
           "h": 64,
           "radius": 32,
@@ -817,7 +330,7 @@
           "id": "btn_floor_light_2",
           "type": "button",
           "x": 360,
-          "y": 520,
+          "y": 764,
           "w": 64,
           "h": 64,
           "radius": 32,
@@ -844,7 +357,7 @@
           "id": "btn_floor_light_3",
           "type": "button",
           "x": 572,
-          "y": 472,
+          "y": 716,
           "w": 64,
           "h": 64,
           "radius": 32,
@@ -871,7 +384,7 @@
           "id": "btn_floor_light_4",
           "type": "button",
           "x": 532,
-          "y": 608,
+          "y": 852,
           "w": 64,
           "h": 64,
           "radius": 32,
@@ -898,11 +411,11 @@
           "id": "camera_kitchen",
           "type": "camera",
           "x": 16,
-          "y": 808,
+          "y": 1044,
           "w": 376,
           "h": 220,
           "radius": 6,
-		  "label": "Sec Cam 10",
+          "label": "Sec Cam 10",
           "preview": "poster",
           "entity": "camera.seccam10_fluent",
           "snapshot_entity": "camera.seccam10_snapshots_fluent",
@@ -914,7 +427,7 @@
           "id": "camera_front",
           "type": "camera",
           "x": 408,
-          "y": 808,
+          "y": 1044,
           "w": 376,
           "h": 220,
           "entity": "camera.seccam05_snapshots_fluent",
@@ -923,62 +436,1165 @@
           "radius": 6
         },
         {
-          "id": "rect_scenes",
+          "id": "rectangle_1",
+          "type": "rectangle",
+          "x": 408,
+          "y": 208,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_12",
+          "type": "label",
+          "x": 572,
+          "y": 312,
+          "w": 200,
+          "h": 32,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "text",
+          "entity": "sensor.battery_power",
+          "format": "power_abs",
+          "overrides": []
+        },
+        {
+          "id": "label_13",
+          "type": "label",
+          "x": 28,
+          "y": 484,
+          "w": 92,
+          "h": 24,
+          "text": "Phase&nbsp;&nbsp;[mdi:numeric-3-box]",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center"
+        },
+        {
+          "id": "label_14",
+          "type": "label",
+          "x": 572,
+          "y": 216,
+          "w": 200,
+          "h": 72,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 70,
+          "font_weight": 600,
+          "letter_spacing": 0,
+          "color": "text",
+          "entity": "sensor.battery_state_of_charge",
+          "format": "percent",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_15",
+          "type": "label",
+          "x": 420,
+          "y": 216,
+          "w": 100,
+          "h": 32,
+          "align": "left",
+          "valign": "top",
+          "text": "Battery",
+          "font_size": 28,
+          "color": "text"
+        },
+        {
+          "id": "label_16",
+          "type": "label",
+          "x": 416,
+          "y": 244,
+          "w": 104,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "font_size": 100,
+          "text": "[mdi:battery-outline]",
+          "color": "danger",
+          "entity": "sensor.battery_state_of_charge",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-10]",
+                "color": "danger"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 10
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-20]",
+                "color": "danger"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 20
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-30]",
+                "color": "warning"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 30
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-40]",
+                "color": "warning"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 40
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-50]",
+                "color": "warning"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 50
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-60]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 60
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-70]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 70
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-80]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 80
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery-90]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 90
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:battery]",
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_22",
+          "type": "label",
+          "x": 492,
+          "y": 276,
+          "w": 64,
+          "h": 48,
+          "align": "left",
+          "valign": "center",
+          "font_size": 60,
+          "text": "[mdi:help-circle-outline]",
+          "color": "icon_inactive",
+          "entity": "sensor.battery_mode",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "Charge"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:arrow-left-thick]",
+                "color": "#4FC3F7"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "Discharge"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:arrow-right-thick]",
+                "color": "danger"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rectangle_4",
           "type": "rectangle",
           "x": 16,
-          "y": 1048,
-          "w": 768,
-          "h": 216,
+          "y": 208,
+          "w": 376,
+          "h": 144,
           "background": "surface2",
-          "radius": 8
+          "radius": 6
         },
         {
-          "id": "btn_scene_cook",
-          "type": "button",
-          "x": 32,
-          "y": 1072,
-          "w": 224,
-          "h": 160,
-          "radius": 16,
-          "background": "surface",
-          "icon_off": "[mdi:chef-hat]",
-          "label": "Cooking",
-          "action": {
-            "service": "scene.turn_on",
-            "entity_id": "scene.kitchen_cooking"
-          }
+          "id": "label_17",
+          "type": "label",
+          "x": 180,
+          "y": 312,
+          "w": 200,
+          "h": 32,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "text",
+          "entity": "sensor.today_s_pv_generation",
+          "format": "kwh"
         },
         {
-          "id": "btn_scene_movie",
-          "type": "button",
-          "x": 288,
-          "y": 1072,
-          "w": 224,
-          "h": 160,
-          "radius": 16,
-          "background": "surface",
-          "icon_off": "[mdi:movie-open]",
-          "label": "Movie",
-          "action": {
-            "service": "scene.turn_on",
-            "entity_id": "scene.lounge_movie"
-          }
+          "id": "label_18",
+          "type": "label",
+          "x": 324,
+          "y": 288,
+          "w": 56,
+          "h": 24,
+          "text": "today",
+          "font_size": 18,
+          "color": "text",
+          "align": "right",
+          "valign": "bottom"
         },
         {
-          "id": "btn_scene_all_off",
-          "type": "button",
-          "x": 544,
-          "y": 1072,
-          "w": 224,
-          "h": 160,
-          "radius": 16,
-          "background": "surface",
-          "icon_off": "[mdi:power]",
-          "label": "All Off",
-          "action": {
-            "service": "homeassistant.turn_off",
-            "entity_id": "group.all_lights"
-          }
+          "id": "label_19",
+          "type": "label",
+          "x": 132,
+          "y": 216,
+          "w": 248,
+          "h": 72,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 70,
+          "font_weight": 600,
+          "letter_spacing": 0,
+          "color": "text",
+          "entity": "sensor.pv_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_20",
+          "type": "label",
+          "x": 28,
+          "y": 216,
+          "w": 100,
+          "h": 32,
+          "align": "left",
+          "valign": "top",
+          "text": "Solar",
+          "font_size": 28,
+          "color": "text"
+        },
+        {
+          "id": "label_21",
+          "type": "label",
+          "x": 24,
+          "y": 244,
+          "w": 104,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:solar-power]",
+          "font_size": 100,
+          "color": "icon_inactive",
+          "entity": "sensor.pv_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:solar-power]",
+                "color": "icon_inactive"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:solar-power]",
+                "color": "warning"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rectangle_3",
+          "type": "rectangle",
+          "x": 408,
+          "y": 48,
+          "w": 376,
+          "h": 144,
+          "background": "surface2",
+          "radius": 6
+        },
+        {
+          "id": "label_7",
+          "type": "label",
+          "x": 572,
+          "y": 148,
+          "w": 200,
+          "h": 32,
+          "align": "right",
+          "valign": "bottom",
+          "text": "99.99 kW",
+          "font_size": 32,
+          "color": "text",
+          "entity": "sensor.daily_energy_export",
+          "format": "kwh"
+        },
+        {
+          "id": "label_8",
+          "type": "label",
+          "x": 716,
+          "y": 124,
+          "w": 56,
+          "h": 24,
+          "text": "today",
+          "font_size": 18,
+          "color": "text",
+          "align": "right",
+          "valign": "bottom"
+        },
+        {
+          "id": "label_9",
+          "type": "label",
+          "x": 524,
+          "y": 52,
+          "w": 248,
+          "h": 72,
+          "align": "right",
+          "valign": "top",
+          "text": "99.99 kW",
+          "font_size": 70,
+          "font_weight": 600,
+          "letter_spacing": 0,
+          "color": "text",
+          "entity": "sensor.master_house_total_export_power",
+          "format": "power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_10",
+          "type": "label",
+          "x": 420,
+          "y": 52,
+          "w": 100,
+          "h": 32,
+          "align": "left",
+          "valign": "top",
+          "text": "Export",
+          "font_size": 28,
+          "color": "text"
+        },
+        {
+          "id": "label_11",
+          "type": "label",
+          "x": 416,
+          "y": 80,
+          "w": 104,
+          "h": 112,
+          "align": "left",
+          "valign": "bottom",
+          "text": "[mdi:transmission-tower]",
+          "font_size": 100,
+          "color": "text",
+          "entity": "sensor.master_house_total_export_power",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "below",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "color": "icon_inactive",
+                "text": "[mdi:transmission-tower-import]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "text": "[mdi:transmission-tower-import]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 1000
+                  }
+                ]
+              },
+              "set": {
+                "color": "danger",
+                "text": "[mdi:transmission-tower-import]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_23",
+          "type": "label",
+          "x": 136,
+          "y": 164,
+          "w": 128,
+          "h": 24,
+          "font_size": 18,
+          "color": "text",
+          "align": "left",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_3_power",
+          "text": "[mdi:numeric-3-box]&nbsp;&nbsp;{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_24",
+          "type": "label",
+          "x": 136,
+          "y": 140,
+          "w": 128,
+          "h": 24,
+          "font_size": 18,
+          "color": "text",
+          "align": "left",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_2_power",
+          "text": "[mdi:numeric-2-box]&nbsp;&nbsp;{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_25",
+          "type": "label",
+          "x": 136,
+          "y": 116,
+          "w": 128,
+          "h": 24,
+          "font_size": 18,
+          "color": "text",
+          "align": "left",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_1_power",
+          "text": "[mdi:numeric-1-box]&nbsp;&nbsp;{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "arc_1",
+          "type": "arc",
+          "x": 584,
+          "y": 376,
+          "w": 188,
+          "h": 188,
+          "entity": "sensor.master_house_total_power",
+          "min": 0,
+          "max": 15000,
+          "label": "Whole House",
+          "start_angle": 270,
+          "end_angle": 450,
+          "line_width": 16,
+          "color": "orange",
+          "format": "power",
+          "track_color": "surface",
+          "label_color": "text",
+          "thresholds": [
+            {
+              "below": 20,
+              "color": "primary"
+            },
+            {
+              "below": 70,
+              "color": "warning"
+            },
+            {
+              "default": true,
+              "color": "danger"
+            }
+          ]
+        },
+        {
+          "id": "label_26",
+          "type": "label",
+          "x": 28,
+          "y": 376,
+          "w": 280,
+          "h": 32,
+          "align": "left",
+          "valign": "top",
+          "text": "Power Consumption",
+          "font_size": 28,
+          "color": "text"
+        },
+        {
+          "id": "bar_3",
+          "type": "bar",
+          "x": 132,
+          "y": 484,
+          "w": 176,
+          "h": 24,
+          "entity": "sensor.master_house_phase_3_power",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "primary"
+            },
+            {
+              "default": true,
+              "color": "#F9DA44"
+            }
+          ],
+          "color": "warning",
+          "track_color": "surface"
+        },
+        {
+          "id": "label_27",
+          "type": "label",
+          "x": 24,
+          "y": 524,
+          "w": 168,
+          "h": 24,
+          "text": "[mdi:car] Charger",
+          "font_size": 20,
+          "color": "text",
+          "entity": "binary_sensor.openevse_vehicle_connected",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "off"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:car]&nbsp;&nbsp;EV Charger"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:car]&nbsp;&nbsp;EV Charger&nbsp;&nbsp;[mdi:ev-plug-type2]"
+              }
+            }
+          ],
+          "valign": "center"
+        },
+        {
+          "id": "bar_1",
+          "type": "bar",
+          "x": 132,
+          "y": 420,
+          "w": 176,
+          "h": 24,
+          "entity": "sensor.master_house_phase_1_power",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "primary"
+            },
+            {
+              "default": true,
+              "color": "#F9DA44"
+            }
+          ],
+          "color": "warning",
+          "track_color": "surface"
+        },
+        {
+          "id": "bar_2",
+          "type": "bar",
+          "x": 132,
+          "y": 452,
+          "w": 176,
+          "h": 24,
+          "entity": "sensor.master_house_phase_2_power",
+          "max": 14000,
+          "radius": 4,
+          "thresholds": [
+            {
+              "below": 33,
+              "color": "primary"
+            },
+            {
+              "below": 66,
+              "color": "primary"
+            },
+            {
+              "default": true,
+              "color": "#F9DA44"
+            }
+          ],
+          "color": "warning",
+          "track_color": "surface"
+        },
+        {
+          "id": "label_28",
+          "type": "label",
+          "x": 208,
+          "y": 524,
+          "w": 136,
+          "h": 24,
+          "text": "3.5 kW  |  29.9 kWh",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.openevse_current_power_usage_actual",
+          "entity2": "sensor.openevse_usage_today",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_29",
+          "type": "label",
+          "x": 24,
+          "y": 552,
+          "w": 168,
+          "h": 24,
+          "text": "[mdi:shower]&nbsp;&nbsp;Boiler {{ Math.round(state) }} °C",
+          "font_size": 20,
+          "color": "text",
+          "entity": "sensor.tank_temperature",
+          "overrides": [],
+          "valign": "center"
+        },
+        {
+          "id": "label_31",
+          "type": "label",
+          "x": 28,
+          "y": 452,
+          "w": 92,
+          "h": 24,
+          "text": "Phase&nbsp;&nbsp;[mdi:numeric-2-box]",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center"
+        },
+        {
+          "id": "label_32",
+          "type": "label",
+          "x": 28,
+          "y": 420,
+          "w": 92,
+          "h": 24,
+          "text": "Phase&nbsp;&nbsp;[mdi:numeric-1-box]",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center"
+        },
+        {
+          "id": "label_33",
+          "type": "label",
+          "x": 636,
+          "y": 524,
+          "w": 136,
+          "h": 24,
+          "text": "3.5 kW  |  29.9 kWh",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.esphome_emporia_circuit_3_power",
+          "entity2": "sensor.esphome_emporia_circuit_3_daily_energy",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_35",
+          "type": "label",
+          "x": 464,
+          "y": 552,
+          "w": 168,
+          "h": 24,
+          "text": "[mdi:air-conditioner]&nbsp;&nbsp;Bedrooms",
+          "font_size": 20,
+          "color": "text",
+          "overrides": [],
+          "valign": "center"
+        },
+        {
+          "id": "label_36",
+          "type": "label",
+          "x": 464,
+          "y": 524,
+          "w": 168,
+          "h": 24,
+          "text": "[mdi:air-conditioner]&nbsp;&nbsp;Living",
+          "font_size": 20,
+          "color": "text",
+          "overrides": [],
+          "valign": "center"
+        },
+        {
+          "id": "label_37",
+          "type": "label",
+          "x": 660,
+          "y": 288,
+          "w": 112,
+          "h": 24,
+          "text": "today",
+          "font_size": 18,
+          "color": "text",
+          "align": "right",
+          "valign": "bottom",
+          "entity": "sensor.battery_mode"
+        },
+        {
+          "type": "history_chart",
+          "id": "chart_power_7d",
+          "x": 320,
+          "y": 376,
+          "w": 256,
+          "h": 132,
+          "entity": "sensor.house_water_daily",
+          "stat_type": "change",
+          "period": "day",
+          "count": 7,
+          "fullscreen_on_tap": true,
+          "fullscreen_views": [
+            {
+              "label": "24h",
+              "period": "hour",
+              "count": 24,
+              "stat_type": "change"
+            },
+            {
+              "label": "7d",
+              "period": "day",
+              "count": 7,
+              "stat_type": "change"
+            },
+            {
+              "label": "30d",
+              "period": "day",
+              "count": 30,
+              "stat_type": "change"
+            },
+            {
+              "label": "12m",
+              "period": "month",
+              "count": 12,
+              "stat_type": "change"
+            },
+            {
+              "label": "3y",
+              "period": "year",
+              "count": 3,
+              "stat_type": "change"
+            }
+          ],
+          "color": "#80C5D1",
+          "today_color": "#489BE8",
+          "radius": 2,
+          "show_values": true,
+          "show_labels": true
+        },
+        {
+          "id": "label_34",
+          "type": "label",
+          "x": 636,
+          "y": 552,
+          "w": 136,
+          "h": 24,
+          "text": "3.5 kW  |  29.9 kWh",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.esphome_emporia_circuit_2_power",
+          "entity2": "sensor.esphome_emporia_circuit_2_daily_energy",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_30",
+          "type": "label",
+          "x": 208,
+          "y": 552,
+          "w": 136,
+          "h": 24,
+          "text": "3.5 kW  |  29.9 kWh",
+          "font_size": 20,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.esphome_emporia_circuit_1_power",
+          "entity2": "sensor.esphome_emporia_circuit_1_daily_energy",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "green"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
+              }
+            }
+          ]
         }
       ]
     }
@@ -987,9 +1603,9 @@
     "guides": {
       "1": [
         {
-          "id": "g1772174325750",
-          "type": "h",
-          "pos": 24
+          "id": "g1772359263467",
+          "type": "v",
+          "pos": 450
         }
       ]
     }

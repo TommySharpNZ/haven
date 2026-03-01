@@ -322,7 +322,7 @@ function renderPage() {
   uiLayer.draw();
 
   renderTree(treeEl, widgets, selectedIds, hidden, onSelectTree, onToggleHide);
-  updateProps(propsEl, getSelectedWidgets(), onPropChange, onDeleteSelected, onDuplicateSelected, onAlignSelected);
+  updateProps(propsEl, getSelectedWidgets(), onPropChange, onDeleteSelected, onDuplicateSelected, onAlignSelected, config.theme);
   updateHistoryButtons();
   syncPreviewTransform();
   if (previewActive) refreshPreview();
@@ -344,7 +344,7 @@ function wireDrag(group, w) {
     pushHistory();
     w.x = Math.round(group.x());
     w.y = Math.round(group.y());
-    updateProps(propsEl, w, onPropChange, onDeleteSelected, onDuplicateSelected);
+    updateProps(propsEl, w, onPropChange, onDeleteSelected, onDuplicateSelected, undefined, config.theme);
   });
 }
 
@@ -380,7 +380,7 @@ function wireSelect(group, w) {
 
     w.w = Math.round(newW);
     w.h = Math.round(newH);
-    updateProps(propsEl, w, onPropChange, onDeleteSelected, onDuplicateSelected);
+    updateProps(propsEl, w, onPropChange, onDeleteSelected, onDuplicateSelected, undefined, config.theme);
     renderPage();
   });
 }

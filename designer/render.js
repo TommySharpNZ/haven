@@ -19,9 +19,12 @@ export function createWidgetGroup(w, theme) {
   var label = new Konva.Text({
     x: 6,
     y: 6,
+    width: Math.max(0, (w.w || 10) - 12),
     text: (w.id || '') + ' (' + (w.type || 'unknown') + ')',
     fontSize: 12,
-    fill: '#cfd6dd'
+    fill: '#cfd6dd',
+    wrap: 'none',
+    ellipsis: true
   });
 
   // For label widgets, show their text preview
@@ -29,8 +32,57 @@ export function createWidgetGroup(w, theme) {
     label.text(String(w.text));
   }
 
+  // bg is added first so subsequent shapes render on top
   group.add(bg);
   group.add(label);
+
+  // For arc widgets, draw a visual track + value arc preview on top of bg
+  if (w.type === 'arc') {
+    label.visible(false);
+    // Make bg transparent so the arc shows through cleanly
+    bg.fill('transparent');
+    var arcW = w.w || 10;
+    var arcH = w.h || 10;
+    var arcSize = Math.min(arcW, arcH);
+    var arcLineWidth = w.line_width || 12;
+    var arcR = (arcSize / 2) - (arcLineWidth / 2) - 2;
+    var startAngle = w.start_angle !== undefined ? w.start_angle : 135;
+    var endAngle = w.end_angle !== undefined ? w.end_angle : 405;
+    var totalAngle = endAngle - startAngle;
+    var arcCx = arcW / 2;
+    var arcCy = arcH / 2;
+    if (arcR > 4) {
+      group.add(new Konva.Arc({
+        x: arcCx, y: arcCy,
+        innerRadius: Math.max(0, arcR - arcLineWidth / 2),
+        outerRadius: arcR + arcLineWidth / 2,
+        angle: totalAngle,
+        rotation: startAngle - 90,
+        fill: resolveColor(w.track_color, theme) || '#363f4a',
+        listening: false
+      }));
+      group.add(new Konva.Arc({
+        x: arcCx, y: arcCy,
+        innerRadius: Math.max(0, arcR - arcLineWidth / 2),
+        outerRadius: arcR + arcLineWidth / 2,
+        angle: totalAngle * 0.65,
+        rotation: startAngle - 90,
+        fill: resolveColor(w.color, theme) || '#8ADF45',
+        listening: false
+      }));
+      // ID label centred in the arc
+      group.add(new Konva.Text({
+        x: arcCx - 40,
+        y: arcCy - 7,
+        width: 80,
+        text: w.id || '',
+        fontSize: 11,
+        fill: '#cfd6dd',
+        align: 'center',
+        listening: false
+      }));
+    }
+  }
   group._rect = bg;
   group._label = label;
   group._data = w;

@@ -32,127 +32,233 @@
         {
           "id": "hdr_case",
           "type": "label",
-          "x": 0, "y": 0, "w": 200, "h": 32,
+          "x": 0,
+          "y": 0,
+          "w": 200,
+          "h": 32,
           "text": "Case",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface2"
         },
         {
           "id": "hdr_config",
           "type": "label",
-          "x": 200, "y": 0, "w": 400, "h": 32,
+          "x": 200,
+          "y": 0,
+          "w": 400,
+          "h": 32,
           "text": "Config / Intent",
-          "font_size": 13, "align": "left", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface2"
         },
         {
           "id": "hdr_render",
           "type": "label",
-          "x": 600, "y": 0, "w": 300, "h": 32,
+          "x": 600,
+          "y": 0,
+          "w": 300,
+          "h": 32,
           "text": "Rendered",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface2"
         },
-
         {
           "id": "b1_hdr",
           "type": "label",
-          "x": 0, "y": 40, "w": 200, "h": 64,
+          "x": 0,
+          "y": 40,
+          "w": 200,
+          "h": 64,
           "text": "1. Icon + label",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b1_desc",
           "type": "label",
-          "x": 200, "y": 40, "w": 400, "h": 64,
+          "x": 200,
+          "y": 40,
+          "w": 400,
+          "h": 64,
           "text": "icon_on/off + label; auto-sized icon/label",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b1",
           "type": "button",
-          "x": 650, "y": 48, "w": 200, "h": 48,
+          "x": 650,
+          "y": 48,
+          "w": 200,
+          "h": 48,
           "label": "Kitchen",
           "entity": "switch.test_button_1",
           "icon_on": "[mdi:lightbulb]",
           "icon_off": "[mdi:lightbulb-outline]",
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
           },
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_button_1" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_button_1"
+          }
         },
-
         {
           "id": "b2_hdr",
           "type": "label",
-          "x": 0, "y": 112, "w": 200, "h": 64,
+          "x": 0,
+          "y": 112,
+          "w": 200,
+          "h": 64,
           "text": "2. Icon only",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b2_desc",
           "type": "label",
-          "x": 200, "y": 112, "w": 400, "h": 64,
+          "x": 200,
+          "y": 112,
+          "w": 400,
+          "h": 64,
           "text": "no label; icon scales up (60% of min dimension)",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b2",
           "type": "button",
-          "x": 650, "y": 120, "w": 200, "h": 48,
+          "x": 650,
+          "y": 120,
+          "w": 200,
+          "h": 48,
           "entity": "switch.test_button_2",
           "icon_on": "[mdi:power]",
           "icon_off": "[mdi:power-off]",
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive"
+            }
           },
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_button_2" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_button_2"
+          }
         },
-
         {
           "id": "b3_hdr",
           "type": "label",
-          "x": 0, "y": 184, "w": 200, "h": 64,
+          "x": 0,
+          "y": 184,
+          "w": 200,
+          "h": 64,
           "text": "3. Label only",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b3_desc",
           "type": "label",
-          "x": 200, "y": 184, "w": 400, "h": 64,
+          "x": 200,
+          "y": 184,
+          "w": 400,
+          "h": 64,
           "text": "no icon; label scales up (20% of min dimension)",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b3",
           "type": "button",
-          "x": 650, "y": 192, "w": 200, "h": 48,
+          "x": 650,
+          "y": 192,
+          "w": 200,
+          "h": 48,
           "label": "All Off",
           "entity": "switch.test_button_3",
           "states": {
-            "on":  { "background": "warning", "label_color": "text" },
-            "off": { "background": "surface2", "label_color": "text_muted" }
+            "on": {
+              "background": "warning",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface2",
+              "label_color": "text_muted"
+            }
           },
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_button_3" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_button_3"
+          }
         },
-
         {
           "id": "b4_hdr",
           "type": "label",
-          "x": 0, "y": 256, "w": 200, "h": 64,
+          "x": 0,
+          "y": 256,
+          "w": 200,
+          "h": 64,
           "text": "4. Size overrides",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b4_desc",
           "type": "label",
-          "x": 200, "y": 256, "w": 400, "h": 64,
+          "x": 200,
+          "y": 256,
+          "w": 400,
+          "h": 64,
           "text": "icon_size: 36, label_size: 12 (explicit, not auto)",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b4",
           "type": "button",
-          "x": 650, "y": 264, "w": 200, "h": 48,
+          "x": 650,
+          "y": 264,
+          "w": 200,
+          "h": 48,
           "label": "Large Icon",
           "entity": "switch.test_button_4",
           "icon_on": "[mdi:lightning-bolt]",
@@ -160,29 +266,51 @@
           "icon_size": 36,
           "label_size": 12,
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary",
+              "label_color": "text"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted"
+            }
           }
         },
-
         {
           "id": "b5_hdr",
           "type": "label",
-          "x": 0, "y": 328, "w": 200, "h": 72,
+          "x": 0,
+          "y": 328,
+          "w": 200,
+          "h": 72,
           "text": "5. Radius + border",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b5_desc",
           "type": "label",
-          "x": 200, "y": 328, "w": 400, "h": 72,
+          "x": 200,
+          "y": 328,
+          "w": 400,
+          "h": 72,
           "text": "radius: 18, gap: 2, padding: 6\nborder_width: 2, border_color in states",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b5",
           "type": "button",
-          "x": 650, "y": 336, "w": 200, "h": 56,
+          "x": 650,
+          "y": 336,
+          "w": 200,
+          "h": 56,
           "label": "Garage",
           "entity": "switch.test_button_5",
           "icon_on": "[mdi:garage-open]",
@@ -193,148 +321,265 @@
           "border_width": 2,
           "border_color": "surface2",
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text",     "border_color": "primary" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted", "border_color": "surface2" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary",
+              "label_color": "text",
+              "border_color": "primary"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted",
+              "border_color": "surface2"
+            }
           }
         },
-
         {
           "id": "b6_hdr",
           "type": "label",
-          "x": 0, "y": 416, "w": 200, "h": 64,
+          "x": 0,
+          "y": 416,
+          "w": 200,
+          "h": 64,
           "text": "6. State text",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b6_desc",
           "type": "label",
-          "x": 200, "y": 416, "w": 400, "h": 64,
+          "x": 200,
+          "y": 416,
+          "w": 400,
+          "h": 64,
           "text": "states.on/off.text overrides the label string",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b6",
           "type": "button",
-          "x": 650, "y": 424, "w": 200, "h": 48,
+          "x": 650,
+          "y": 424,
+          "w": 200,
+          "h": 48,
           "label": "Default",
           "entity": "switch.test_button_6",
           "icon_on": "[mdi:fan]",
           "icon_off": "[mdi:fan-off]",
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text",     "text": "Fan On" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted", "text": "Fan Off" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary",
+              "label_color": "text",
+              "text": "Fan On"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive",
+              "label_color": "text_muted",
+              "text": "Fan Off"
+            }
           }
         },
-
         {
           "id": "b7_hdr",
           "type": "label",
-          "x": 0, "y": 488, "w": 200, "h": 64,
+          "x": 0,
+          "y": 488,
+          "w": 200,
+          "h": 64,
           "text": "7. Template label",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b7_desc",
           "type": "label",
-          "x": 200, "y": 488, "w": 400, "h": 64,
+          "x": 200,
+          "y": 488,
+          "w": 400,
+          "h": 64,
           "text": "label: \"State: {{ state_str }}\"; multi-state via states keys",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b7",
           "type": "button",
-          "x": 650, "y": 496, "w": 200, "h": 48,
+          "x": 650,
+          "y": 496,
+          "w": 200,
+          "h": 48,
           "label": "State: {{ state_str }}",
           "entity": "internal.connectionstatus",
           "icon_on": "[mdi:wifi-check]",
           "icon_off": "[mdi:wifi-off]",
           "states": {
-            "connected":    { "background": "surface2", "icon_color": "primary", "label_color": "text" },
-            "connecting":   { "background": "surface2", "icon_color": "warning", "label_color": "text" },
-            "disconnected": { "background": "surface2", "icon_color": "danger",  "label_color": "text" }
+            "connected": {
+              "background": "surface2",
+              "icon_color": "primary",
+              "label_color": "text"
+            },
+            "connecting": {
+              "background": "surface2",
+              "icon_color": "warning",
+              "label_color": "text"
+            },
+            "disconnected": {
+              "background": "surface2",
+              "icon_color": "danger",
+              "label_color": "text"
+            }
           }
         },
-
         {
           "id": "b8_hdr",
           "type": "label",
-          "x": 0, "y": 560, "w": 200, "h": 64,
+          "x": 0,
+          "y": 560,
+          "w": 200,
+          "h": 64,
           "text": "8. Small square",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b8_desc",
           "type": "label",
-          "x": 200, "y": 560, "w": 400, "h": 64,
+          "x": 200,
+          "y": 560,
+          "w": 400,
+          "h": 64,
           "text": "compact 60x60 icon-only button",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b8",
           "type": "button",
-          "x": 720, "y": 568, "w": 60, "h": 60,
+          "x": 720,
+          "y": 568,
+          "w": 60,
+          "h": 60,
           "entity": "switch.test_button_8",
           "icon_on": "[mdi:lock-open]",
           "icon_off": "[mdi:lock]",
           "states": {
-            "on":  { "background": "surface2", "icon_color": "primary" },
-            "off": { "background": "surface",  "icon_color": "icon_inactive" }
+            "on": {
+              "background": "surface2",
+              "icon_color": "primary"
+            },
+            "off": {
+              "background": "surface",
+              "icon_color": "icon_inactive"
+            }
           }
         },
-
         {
           "id": "b9_hdr",
           "type": "label",
-          "x": 0, "y": 632, "w": 200, "h": 72,
+          "x": 0,
+          "y": 632,
+          "w": 200,
+          "h": 72,
           "text": "9. Big card",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b9_desc",
           "type": "label",
-          "x": 200, "y": 632, "w": 400, "h": 72,
+          "x": 200,
+          "y": 632,
+          "w": 400,
+          "h": 72,
           "text": "large label-only button; states.on uses literal hex color",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b9",
           "type": "button",
-          "x": 600, "y": 640, "w": 280, "h": 64,
+          "x": 600,
+          "y": 640,
+          "w": 280,
+          "h": 64,
           "label": "Scene: Evening",
           "entity": "switch.test_button_9",
           "states": {
-            "on":  { "background": "primary",  "label_color": "#0b1a05" },
-            "off": { "background": "surface2", "label_color": "text" }
+            "on": {
+              "background": "primary",
+              "label_color": "#0b1a05"
+            },
+            "off": {
+              "background": "surface2",
+              "label_color": "text"
+            }
           }
         },
-
         {
           "id": "b10_hdr",
           "type": "label",
-          "x": 0, "y": 712, "w": 200, "h": 64,
+          "x": 0,
+          "y": 712,
+          "w": 200,
+          "h": 64,
           "text": "10. states.default",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "b10_desc",
           "type": "label",
-          "x": 200, "y": 712, "w": 400, "h": 64,
+          "x": 200,
+          "y": 712,
+          "w": 400,
+          "h": 64,
           "text": "states.default catches any state; internal.currentdtm + template",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "b10",
           "type": "button",
-          "x": 650, "y": 720, "w": 200, "h": 48,
+          "x": 650,
+          "y": 720,
+          "w": 200,
+          "h": 48,
           "label": "[mdi:clock-outline]&nbsp;{{ state_str }}",
           "entity": "internal.currentdtm",
           "states": {
-            "default": { "background": "surface2", "label_color": "text", "icon_color": "primary" }
+            "default": {
+              "background": "surface2",
+              "label_color": "text",
+              "icon_color": "primary"
+            }
           }
         }
       ]
     },
-
     {
       "id": 2,
       "label": "Overrides",
@@ -342,291 +587,612 @@
         {
           "id": "o_hdr_case",
           "type": "label",
-          "x": 0, "y": 0, "w": 200, "h": 32,
+          "x": 0,
+          "y": 0,
+          "w": 200,
+          "h": 32,
           "text": "Case",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface2"
         },
         {
           "id": "o_hdr_config",
           "type": "label",
-          "x": 200, "y": 0, "w": 400, "h": 32,
+          "x": 200,
+          "y": 0,
+          "w": 400,
+          "h": 32,
           "text": "Config / Intent",
-          "font_size": 13, "align": "left", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_muted",
+          "background": "surface2"
         },
         {
           "id": "o_hdr_render",
           "type": "label",
-          "x": 600, "y": 0, "w": 300, "h": 32,
+          "x": 600,
+          "y": 0,
+          "w": 300,
+          "h": 32,
           "text": "Rendered",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface2"
         },
-
         {
           "id": "o1_hdr",
           "type": "label",
-          "x": 0, "y": 40, "w": 200, "h": 72,
+          "x": 0,
+          "y": 40,
+          "w": 200,
+          "h": 72,
           "text": "1. Basic overrides\n(live entity)",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o1_desc",
           "type": "label",
-          "x": 200, "y": 40, "w": 400, "h": 72,
+          "x": 200,
+          "y": 40,
+          "w": 400,
+          "h": 72,
           "text": "connectionstatus: 3 equals rules, each sets background + icon_color + label_color. Base = disconnected styling.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o1",
           "type": "button",
-          "x": 650, "y": 48, "w": 200, "h": 56,
+          "x": 650,
+          "y": 48,
+          "w": 200,
+          "h": 56,
           "label": "Connection",
           "entity": "internal.connectionstatus",
-          "background": "surface", "icon_color": "danger", "label_color": "text_muted",
+          "background": "surface",
+          "icon_color": "danger",
+          "label_color": "text_muted",
           "icon_off": "[mdi:wifi-off]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "connected" }] },
-              "set": { "background": "surface2", "icon_color": "primary", "label_color": "text", "icon": "[mdi:wifi]" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "connected"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "primary",
+                "label_color": "text",
+                "icon": "[mdi:wifi]"
+              }
             },
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "connecting" }] },
-              "set": { "background": "surface2", "icon_color": "warning", "label_color": "text", "icon": "[mdi:wifi-alert]" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "connecting"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "warning",
+                "label_color": "text",
+                "icon": "[mdi:wifi-alert]"
+              }
             }
           ]
         },
-
         {
           "id": "o2_hdr",
           "type": "label",
-          "x": 0, "y": 112, "w": 200, "h": 72,
+          "x": 0,
+          "y": 112,
+          "w": 200,
+          "h": 72,
           "text": "2. icon in set",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o2_desc",
           "type": "label",
-          "x": 200, "y": 112, "w": 400, "h": 72,
+          "x": 200,
+          "y": 112,
+          "w": 400,
+          "h": 72,
           "text": "set.icon replaces icon_on/icon_off keying. icon_off used as fallback when no rule matches.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o2",
           "type": "button",
-          "x": 650, "y": 120, "w": 200, "h": 56,
+          "x": 650,
+          "y": 120,
+          "w": 200,
+          "h": 56,
           "label": "Light",
           "entity": "switch.test_ovr_2",
-          "background": "surface", "icon_color": "icon_inactive", "label_color": "text_muted",
+          "background": "surface",
+          "icon_color": "icon_inactive",
+          "label_color": "text_muted",
           "icon_off": "[mdi:lightbulb-outline]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
-              "set": { "background": "surface2", "icon_color": "primary", "label_color": "text", "icon": "[mdi:lightbulb]" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "primary",
+                "label_color": "text",
+                "icon": "[mdi:lightbulb]"
+              }
             }
           ],
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_ovr_2" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_ovr_2"
+          }
         },
-
         {
           "id": "o3_hdr",
           "type": "label",
-          "x": 0, "y": 184, "w": 200, "h": 72,
+          "x": 0,
+          "y": 184,
+          "w": 200,
+          "h": 72,
           "text": "3. label in set",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o3_desc",
           "type": "label",
-          "x": 200, "y": 184, "w": 400, "h": 72,
+          "x": 200,
+          "y": 184,
+          "w": 400,
+          "h": 72,
           "text": "set.label overrides the button label text. Base label shown when no rule matches.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o3",
           "type": "button",
-          "x": 650, "y": 192, "w": 200, "h": 56,
+          "x": 650,
+          "y": 192,
+          "w": 200,
+          "h": 56,
           "label": "Standby",
           "entity": "switch.test_ovr_3",
-          "background": "surface", "icon_color": "icon_inactive", "label_color": "text_muted",
+          "background": "surface",
+          "icon_color": "icon_inactive",
+          "label_color": "text_muted",
           "icon_off": "[mdi:power-standby]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
-              "set": { "background": "surface2", "icon_color": "primary", "label_color": "text", "label": "Active" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "primary",
+                "label_color": "text",
+                "label": "Active"
+              }
             }
           ],
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_ovr_3" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_ovr_3"
+          }
         },
-
         {
           "id": "o4_hdr",
           "type": "label",
-          "x": 0, "y": 256, "w": 200, "h": 72,
+          "x": 0,
+          "y": 256,
+          "w": 200,
+          "h": 72,
           "text": "4. opacity in set",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o4_desc",
           "type": "label",
-          "x": 200, "y": 256, "w": 400, "h": 72,
+          "x": 200,
+          "y": 256,
+          "w": 400,
+          "h": 72,
           "text": "not_equals \"on\" dims to 0.3 opacity. Matches \"off\", \"unavailable\", any non-on state.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o4",
           "type": "button",
-          "x": 650, "y": 264, "w": 200, "h": 56,
+          "x": 650,
+          "y": 264,
+          "w": 200,
+          "h": 56,
           "label": "Ceiling",
           "entity": "switch.test_ovr_4",
-          "background": "surface2", "icon_color": "primary", "label_color": "text",
+          "background": "surface2",
+          "icon_color": "primary",
+          "label_color": "text",
           "icon_off": "[mdi:ceiling-light]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "not_equals", "value": "on" }] },
-              "set": { "opacity": 0.3, "icon_color": "icon_inactive", "label_color": "text_muted" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "not_equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "opacity": 0.3,
+                "icon_color": "icon_inactive",
+                "label_color": "text_muted"
+              }
             }
           ],
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_ovr_4" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_ovr_4"
+          }
         },
-
         {
           "id": "o5_hdr",
           "type": "label",
-          "x": 0, "y": 328, "w": 200, "h": 72,
+          "x": 0,
+          "y": 328,
+          "w": 200,
+          "h": 72,
           "text": "5. border in set",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o5_desc",
           "type": "label",
-          "x": 200, "y": 328, "w": 400, "h": 72,
+          "x": 200,
+          "y": 328,
+          "w": 400,
+          "h": 72,
           "text": "set.border_color + set.border_width appear when \"on\". No border in base (off) styles.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o5",
           "type": "button",
-          "x": 650, "y": 336, "w": 200, "h": 56,
+          "x": 650,
+          "y": 336,
+          "w": 200,
+          "h": 56,
           "label": "Door",
           "entity": "switch.test_ovr_5",
-          "background": "surface", "icon_color": "icon_inactive", "label_color": "text_muted",
+          "background": "surface",
+          "icon_color": "icon_inactive",
+          "label_color": "text_muted",
           "icon_off": "[mdi:lock]",
           "radius": 10,
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
-              "set": { "background": "surface2", "icon_color": "primary", "label_color": "text",
-                       "icon": "[mdi:lock-open]", "border_color": "primary", "border_width": 2 }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "primary",
+                "label_color": "text",
+                "icon": "[mdi:lock-open]",
+                "border_color": "primary",
+                "border_width": 2
+              }
             }
           ],
-          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.test_ovr_5" }
+          "action": {
+            "type": "service",
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.test_ovr_5"
+          }
         },
-
         {
           "id": "o6_hdr",
           "type": "label",
-          "x": 0, "y": 400, "w": 200, "h": 72,
+          "x": 0,
+          "y": 400,
+          "w": 200,
+          "h": 72,
           "text": "6. above/below\n(numeric)",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o6_desc",
           "type": "label",
-          "x": 200, "y": 400, "w": 400, "h": 72,
+          "x": 200,
+          "y": 400,
+          "w": 400,
+          "h": 72,
           "text": "below 20 → danger, below 50 → warning, else primary. Rules evaluated in order, all matches merged.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o6",
           "type": "button",
-          "x": 650, "y": 408, "w": 200, "h": 56,
+          "x": 650,
+          "y": 408,
+          "w": 200,
+          "h": 56,
           "label": "Battery",
           "entity": "sensor.test_battery",
-          "background": "surface2", "icon_color": "primary", "label_color": "text",
+          "background": "surface2",
+          "icon_color": "primary",
+          "label_color": "text",
           "icon_off": "[mdi:battery]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "below", "value": 20 }] },
-              "set": { "icon_color": "danger", "icon": "[mdi:battery-alert]" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 20
+                  }
+                ]
+              },
+              "set": {
+                "icon_color": "danger",
+                "icon": "[mdi:battery-alert]"
+              }
             },
             {
-              "when": { "logic": "all", "conditions": [{ "type": "below", "value": 50 }] },
-              "set": { "icon_color": "warning", "icon": "[mdi:battery-medium]" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 50
+                  }
+                ]
+              },
+              "set": {
+                "icon_color": "warning",
+                "icon": "[mdi:battery-medium]"
+              }
             }
           ]
         },
-
         {
           "id": "o7_hdr",
           "type": "label",
-          "x": 0, "y": 472, "w": 200, "h": 72,
+          "x": 0,
+          "y": 472,
+          "w": 200,
+          "h": 72,
           "text": "7. logic: any\n(multi-equals)",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o7_desc",
           "type": "label",
-          "x": 200, "y": 472, "w": 400, "h": 72,
+          "x": 200,
+          "y": 472,
+          "w": 400,
+          "h": 72,
           "text": "Rule 1 fires if connecting OR disconnected (logic:any). Rule 2 fires if connected.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o7",
           "type": "button",
-          "x": 650, "y": 480, "w": 200, "h": 56,
+          "x": 650,
+          "y": 480,
+          "w": 200,
+          "h": 56,
           "label": "Network",
           "entity": "internal.connectionstatus",
-          "background": "surface", "icon_color": "text_muted", "label_color": "text_muted",
+          "background": "surface",
+          "icon_color": "text_muted",
+          "label_color": "text_muted",
           "icon_off": "[mdi:cloud-off-outline]",
           "overrides": [
             {
-              "when": { "logic": "any", "conditions": [
-                { "type": "equals", "value": "connecting" },
-                { "type": "equals", "value": "disconnected" }
-              ]},
-              "set": { "icon_color": "danger", "background": "surface" }
+              "when": {
+                "logic": "any",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "connecting"
+                  },
+                  {
+                    "type": "equals",
+                    "value": "disconnected"
+                  }
+                ]
+              },
+              "set": {
+                "icon_color": "danger",
+                "background": "surface"
+              }
             },
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "connected" }] },
-              "set": { "background": "surface2", "icon_color": "primary", "label_color": "text",
-                       "icon": "[mdi:cloud-check-outline]", "label": "Online" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "connected"
+                  }
+                ]
+              },
+              "set": {
+                "background": "surface2",
+                "icon_color": "primary",
+                "label_color": "text",
+                "icon": "[mdi:cloud-check-outline]",
+                "label": "Online"
+              }
             }
           ]
         },
-
         {
           "id": "o8_hdr",
           "type": "label",
-          "x": 0, "y": 544, "w": 200, "h": 72,
+          "x": 0,
+          "y": 544,
+          "w": 200,
+          "h": 72,
           "text": "8. Template +\noverrides",
-          "font_size": 13, "align": "center", "color": "text_muted", "background": "surface"
+          "font_size": 13,
+          "align": "center",
+          "color": "text_muted",
+          "background": "surface"
         },
         {
           "id": "o8_desc",
           "type": "label",
-          "x": 200, "y": 544, "w": 400, "h": 72,
+          "x": 200,
+          "y": 544,
+          "w": 400,
+          "h": 72,
           "text": "w.label uses {{ state_str }} template; overrides control icon + icon_color. Both paths work together.",
-          "font_size": 13, "align": "left", "color": "text_dim", "background": "surface"
+          "font_size": 13,
+          "align": "left",
+          "color": "text_dim",
+          "background": "surface"
         },
         {
           "id": "o8",
           "type": "button",
-          "x": 650, "y": 552, "w": 200, "h": 56,
+          "x": 650,
+          "y": 552,
+          "w": 200,
+          "h": 56,
           "label": "{{ state_str }}",
           "entity": "internal.connectionstatus",
-          "background": "surface2", "icon_color": "text_muted", "label_color": "text_muted",
+          "background": "surface2",
+          "icon_color": "text_muted",
+          "label_color": "text_muted",
           "icon_off": "[mdi:connection]",
           "overrides": [
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "connected" }] },
-              "set": { "icon": "[mdi:check-circle]", "icon_color": "primary", "label_color": "text" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "connected"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:check-circle]",
+                "icon_color": "primary",
+                "label_color": "text"
+              }
             },
             {
-              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "disconnected" }] },
-              "set": { "icon": "[mdi:alert-circle]", "icon_color": "danger" }
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "disconnected"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:alert-circle]",
+                "icon_color": "danger"
+              }
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "designer": {
+    "guides": {
+      "1": [
+        {
+          "id": "g1772359263467",
+          "type": "v",
+          "pos": 450
+        }
+      ]
+    }
+  }
 }

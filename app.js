@@ -597,13 +597,16 @@
       case 'image':        renderImage(el, w);        break;
       case 'camera':       renderCamera(el, w);       break;
       case 'arc':          renderArc(el, w);          break;
+      case 'history_chart': renderHistoryChart(el, w); break;
       default:
         el.style.background = 'rgba(255,0,0,0.3)';
         el.textContent = 'Unknown: ' + w.type;
     }
 
     // Visibility condition - hide widget based on entity state
-    if (w.visible) {
+    if (w.visible === false) {
+      el.style.display = 'none';
+    } else if (w.visible && typeof w.visible === 'object') {
       applyVisibility(el, w);
       if (w.visible.entity) {
         registerEntityCallback(w.visible.entity, function(state) {
@@ -677,23 +680,50 @@
       el.style.pointerEvents = 'none';
     }
 
-    if (w.entity) {
-      registerEntityCallback(w.entity, function (state) {
-        updateLabelFromState(el, w, state);
-      });
+    if (w.entity || w.entity2) {
+      // Cache both states so whichever entity fires last can pass both to the update.
+      // entity  = primary: drives format, overrides, and state/state_str/attr in templates.
+      // entity2 = secondary: triggers re-renders and exposes state2/state_str2/attr2.
+      var stateCache  = null;
+      var state2Cache = null;
+
+      // Use var expression, not function declaration — declarations inside if blocks
+      // are illegal in ES5 strict mode and behave inconsistently across browsers.
+      var doLabelUpdate = function() {
+        updateLabelFromState(el, w, stateCache, state2Cache);
+      };
+
+      if (w.entity) {
+        registerEntityCallback(w.entity, function (state) {
+          stateCache = state;
+          doLabelUpdate();
+        });
+      }
+
+      if (w.entity2) {
+        registerEntityCallback(w.entity2, function (state) {
+          state2Cache = state;
+          doLabelUpdate();
+        });
+      }
     }
   }
 
-  function updateLabelFromState(el, w, state) {
+  // updateLabelFromState(el, w, state, state2)
+  //   state  - primary entity HA state object (may be null on first render)
+  //   state2 - secondary entity HA state object (null when entity2 not configured)
+  //   Passes state2 through to resolveOverrides and applyTemplate so both the
+  //   condition system and template expressions can reference the secondary entity.
+  function updateLabelFromState(el, w, state, state2) {
     var val = state ? state.state : null;
 
-    // Apply text - handles plain text and [fa-name] icon tokens
-    var overrides = resolveOverrides(w, state);
+    // Apply text - handles plain text and [mdi:name] / [small:x] icon tokens
+    var overrides = resolveOverrides(w, state, state2);
     var s = overrides || {};
     var textOverride = (s.text !== undefined) ? String(s.text) : null;
     var useTemplateText = (w.text && hasTemplate(w.text));
     var baseText = useTemplateText ? String(w.text) : (textOverride !== null ? textOverride : formatValue(val, w));
-    var formatted = applyTemplate(baseText, state);
+    var formatted = applyTemplate(baseText, state, state2);
     if (formatted.length === 1 && formatted.charCodeAt(0) >= 0xF000 && formatted.charCodeAt(0) <= 0xF8FF) {
       el.style.fontFamily = 'FontAwesome';
       setContent(el, formatted);
@@ -704,11 +734,13 @@
 
     // Apply state-based styles
     var colorToken = s.color || w.color || 'text';
-    colorToken = applyTemplate(colorToken, state);
+    colorToken = applyTemplate(colorToken, state, state2);
     el.style.color   = resolveColor(colorToken);
     if (s.background !== undefined) el.style.background = resolveColor(s.background);
     if (s.opacity   !== undefined) el.style.opacity       = s.opacity;
     if (s.letter_spacing !== undefined) el.style.letterSpacing = s.letter_spacing + 'px';
+    if (s.font_size !== undefined) el.style.fontSize = s.font_size + 'px';
+    else el.style.fontSize = (w.font_size || config.theme.font_size || 16) + 'px';
   }
 
   // -- Rectangle --
@@ -798,16 +830,16 @@
     var pct      = Math.max(0, Math.min(100, (val / max) * 100));
     fill.style.width = pct + '%';
 
-    // Threshold color
-    var color = '#008000';
+    // Threshold color: overrides w.color base, then fallback to legacy green
+    var color = resolveColor(w.color) || '#008000';
     if (w.thresholds) {
       var normalizedPct = pct;
       for (var i = 0; i < w.thresholds.length; i++) {
         var t = w.thresholds[i];
         if (t['default']) {
-          color = t.color;
+          color = resolveColor(t.color);
         } else if (t.below !== undefined && normalizedPct <= t.below) {
-          color = t.color;
+          color = resolveColor(t.color);
           break;
         }
       }
@@ -995,6 +1027,7 @@
   function renderArc(el, w) {
     el.className += ' widget-arc';
     el.style.overflow = 'visible';
+    if (w.background !== undefined) el.style.background = resolveColor(w.background);
 
     var min        = w.min !== undefined ? w.min : 0;
     var max        = w.max !== undefined ? w.max : 100;
@@ -1055,8 +1088,9 @@
     numEl.textContent = '--';
     valueEl.appendChild(numEl);
 
+    var lblEl = null;
     if (w.label) {
-      var lblEl = document.createElement('div');
+      lblEl = document.createElement('div');
       lblEl.style.cssText = 'font-size:' + Math.round(size * 0.11) + 'px;margin-top:4px;color:' + resolveColor(w.label_color || 'text_muted') + ';';
       setContent(lblEl, w.label);
       valueEl.appendChild(lblEl);
@@ -1074,9 +1108,12 @@
       var pct     = (val - min) / (max - min);
       var fillEnd = startAngle + pct * (endAngle - startAngle);
 
-      // Determine color from thresholds
-      var arcColor = resolveColor(w.color || 'primary');
-      if (w.thresholds) {
+      // Resolve overrides - they win over thresholds for color
+      var s = resolveOverrides(w, state) || {};
+
+      // Arc color: overrides → thresholds → base
+      var arcColor = resolveColor(s.color || w.color || 'primary');
+      if (!s.color && w.thresholds) {
         var pctInt = Math.round(pct * 100);
         for (var t = 0; t < w.thresholds.length; t++) {
           var th = w.thresholds[t];
@@ -1097,8 +1134,18 @@
         valuePath.setAttribute('d', describeArc(cx, cy, r, startAngle, fillEnd));
       }
 
-      numEl.textContent = formatValue(state.state, w);
+      setContent(numEl, formatValue(state.state, w));
       numEl.style.color = arcColor;
+
+      // Apply remaining overrideable properties
+      var tColor = s.track_color !== undefined ? s.track_color : (w.track_color || 'surface2');
+      trackPath.setAttribute('stroke', resolveColor(tColor));
+      if (s.opacity !== undefined) el.style.opacity = s.opacity;
+      else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+      if (lblEl) {
+        setContent(lblEl, s.label !== undefined ? String(s.label) : (w.label || ''));
+        lblEl.style.color = resolveColor(s.label_color !== undefined ? s.label_color : (w.label_color || 'text_muted'));
+      }
     }
 
     if (w.entity) {
@@ -1497,6 +1544,308 @@
     wsSend({ id: id, type: 'auth/sign_path', path: path, expires: expires || 20 });
     return id;
   }
+  // -- History Chart --
+  // Fetches HA long-term statistics via recorder/statistics_during_period and
+  // renders a vertical bar chart. One WS request on page load, then periodic refresh.
+  //
+  // Config properties:
+  //   entity          - HA entity ID (must have long-term statistics enabled in recorder)
+  //   period          - "hour" | "day" | "month" | "year"  (default "day")
+  //   count           - number of bars to show                (default 7)
+  //   stat_type       - "mean" for power/temp sensors, "change" for energy totals (kWh accumulators) (default "mean")
+  //   max             - fixed y-axis ceiling; omit to auto-scale from data
+  //   color           - bar fill color (theme token or hex,   default "primary")
+  //   today_color     - current-period bar color               (default "warning")
+  //   track_color     - empty bar background                   (default "surface2")
+  //   background      - widget background                      (default "surface")
+  //   radius          - bar corner radius px                   (default 2)
+  //   show_values     - value labels above bars                (default true)
+  //   show_labels     - period labels below bars               (default true)
+  //   refresh_interval - seconds between auto-refetch          (default 3600 for day, 300 for hour)
+  //   fullscreen_on_tap - true to open enlarged modal on tap   (default false)
+
+  function renderHistoryChart(el, w) {
+    el.className += ' widget-history-chart';
+    el.style.background   = resolveColor(w.background || 'surface');
+    el.style.borderRadius = (w.radius !== undefined ? w.radius : 4) + 'px';
+    el.style.overflow     = 'hidden';
+
+    if (w.fullscreen_on_tap) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function() { openFullscreenChart(w); });
+    }
+
+    // SVG element fills the widget — redrawn in-place on each data refresh
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width',  w.w || 200);
+    svg.setAttribute('height', w.h || 100);
+    svg.style.display = 'block';
+    el.appendChild(svg);
+
+    // Show a placeholder until data arrives (page renders before WS connects)
+    var svgH = w.h || 100;
+    svg.innerHTML = '<text x="50%" y="' + Math.round(svgH / 2) + '" text-anchor="middle"' +
+      ' font-size="11" fill="' + resolveColor('text_muted') + '">loading\u2026</text>';
+
+    // fetchHistoryStats will retry until WS is ready; no immediate bail on page render
+    fetchHistoryStats(w, svg, 20);
+
+    // Periodic refresh registered in activePageTimers so it's cancelled on page navigation
+    var defaultInterval = (w.period === 'hour') ? 300 : 3600;
+    var intervalMs = (w.refresh_interval || defaultInterval) * 1000;
+    var timer = setInterval(function() { fetchHistoryStats(w, svg, 0); }, intervalMs);
+    activePageTimers.push(timer);
+  }
+
+  function openFullscreenChart(w) {
+    var overlay  = buildFullscreenOverlay(w.label || w.entity || 'Chart');
+    var content  = overlay.content;
+    var views    = w.fullscreen_views;  // optional [{label, period, count, stat_type}, ...]
+
+    content.style.background    = resolveColor(w.background || 'surface');
+    content.style.display       = 'flex';
+    content.style.flexDirection = 'column';
+
+    // Button bar — only built when there are multiple views to switch between
+    var btnBar   = null;
+    var activeBtn = null;
+    if (views && views.length > 1) {
+      btnBar = document.createElement('div');
+      btnBar.style.flexShrink     = '0';
+      btnBar.style.display        = 'flex';
+      btnBar.style.flexWrap       = 'wrap';
+      btnBar.style.justifyContent = 'center';
+      btnBar.style.padding        = '10px 16px 6px';
+      content.appendChild(btnBar);
+    }
+
+    // Chart area — flex:1 so it fills remaining space after the button bar
+    var chartArea = document.createElement('div');
+    chartArea.style.flex           = '1';
+    chartArea.style.display        = 'flex';
+    chartArea.style.alignItems     = 'center';
+    chartArea.style.justifyContent = 'center';
+    content.appendChild(chartArea);
+
+    document.body.appendChild(overlay.el);
+
+    var activeSvg = null;
+
+    function loadView(view, btn) {
+      // Swap active button highlight
+      if (btnBar && activeBtn) {
+        activeBtn.style.background = resolveColor('surface2');
+        activeBtn.style.color      = resolveColor('text_muted');
+      }
+      if (btnBar && btn) {
+        btn.style.background = resolveColor('primary');
+        btn.style.color      = resolveColor(w.background || 'surface');
+      }
+      activeBtn = btn;
+
+      // Remove the previous SVG
+      if (activeSvg && activeSvg.parentNode) { activeSvg.parentNode.removeChild(activeSvg); }
+
+      // Dimensions: preserve original aspect ratio, cap to 90% screen width,
+      // clamp height so chart never overflows a portrait viewport.
+      var margin = 24;
+      var availW = chartArea.clientWidth  - margin * 2;
+      var availH = chartArea.clientHeight - margin * 2;
+      if (availW < 50 || availH < 50) return;
+
+      var ratio = (w.w || 200) / (w.h || 100);
+      var cw    = Math.min(availW, Math.round(window.innerWidth * 0.9));
+      var ch    = Math.round(cw / ratio);
+      if (ch > availH) { ch = availH; cw = Math.round(ch * ratio); }
+
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width',  cw);
+      svg.setAttribute('height', ch);
+      svg.style.display      = 'block';
+      svg.style.borderRadius = (w.radius !== undefined ? w.radius : 4) + 'px';
+      svg.style.background   = resolveColor(w.background || 'surface');
+      svg.innerHTML = '<text x="50%" y="' + Math.round(ch / 2) + '" text-anchor="middle"' +
+        ' font-size="14" fill="' + resolveColor('text_muted') + '">loading\u2026</text>';
+      chartArea.appendChild(svg);
+      activeSvg = svg;
+
+      // Merge base widget config with view overrides + modal dimensions
+      var viewW = {};
+      for (var k in w) { if (w.hasOwnProperty(k)) viewW[k] = w[k]; }
+      viewW.w = cw;
+      viewW.h = ch;
+      if (view.period)    viewW.period    = view.period;
+      if (view.count)     viewW.count     = view.count;
+      if (view.stat_type) viewW.stat_type = view.stat_type;
+
+      fetchHistoryStats(viewW, svg, 5);
+    }
+
+    // Build after layout so chartArea dimensions are measurable
+    setTimeout(function() {
+      var initialView = (views && views.length) ? views[0] : {};
+
+      if (views && views.length > 1) {
+        for (var i = 0; i < views.length; i++) {
+          (function(view, idx) {
+            var btn = document.createElement('button');
+            btn.textContent          = view.label || (view.count + ' ' + view.period);
+            btn.style.background     = resolveColor('surface2');
+            btn.style.color          = resolveColor('text_muted');
+            btn.style.border         = 'none';
+            btn.style.borderRadius   = '20px';
+            btn.style.padding        = '6px 16px';
+            btn.style.margin         = '0 4px 4px';
+            btn.style.fontSize       = '13px';
+            btn.style.cursor         = 'pointer';
+            btn.style.fontFamily     = 'inherit';
+            btn.addEventListener('click', function() { loadView(view, btn); });
+            btnBar.appendChild(btn);
+            if (idx === 0) { loadView(view, btn); }
+          })(views[i], i);
+        }
+      } else {
+        loadView(initialView, null);
+      }
+    }, 50);
+  }
+
+  function fetchHistoryStats(w, svg, retries) {
+    // Page renders before WS connects - retry up to retries times at 2s intervals
+    if (!ws || ws.readyState !== 1) {
+      if (retries > 0) {
+        setTimeout(function() { fetchHistoryStats(w, svg, retries - 1); }, 2000);
+      }
+      return;
+    }
+
+    var count  = w.count  || 7;
+    var period = w.period || 'day';
+
+    // Calculate start timestamp - go back `count` periods from now.
+    // Use local midnight for day/month/year so HA aligns to the user's timezone.
+    var now = new Date();
+    var start;
+    if (period === 'hour') {
+      start = new Date(now.getTime() - count * 3600 * 1000);
+    } else if (period === 'month') {
+      start = new Date(now.getFullYear(), now.getMonth() - count, 1);
+    } else if (period === 'year') {
+      start = new Date(now.getFullYear() - count, 0, 1);
+    } else {
+      // day - back from local midnight today
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - count);
+    }
+
+    // One-off WS request - response routed via pendingStreamRequests by message ID
+    var id = msgId++;
+    pendingStreamRequests[id] = function(result) {
+      if (!result) return;
+      var stats = result[w.entity];
+      if (!stats || !stats.length) return;
+      updateHistoryChart(svg, w, stats);
+    };
+    wsSend({
+      id:            id,
+      type:          'recorder/statistics_during_period',
+      start_time:    start.toISOString(),
+      period:        period,
+      statistic_ids: [w.entity],
+      types:         [w.stat_type || 'mean']
+    });
+  }
+
+  function updateHistoryChart(svg, w, stats) {
+    var count      = w.count    || 7;
+    var statType   = w.stat_type || 'mean';
+    var svgW       = w.w        || 200;
+    var svgH       = w.h        || 100;
+    var showLabels = (w.show_labels  !== false);
+    var showValues = (w.show_values  !== false);
+    var barRadius  = (w.radius !== undefined ? w.radius : 2);
+    var wPeriod    = w.period   || 'day';
+
+    var color      = resolveColor(w.color       || 'primary');
+    var todayColor = resolveColor(w.today_color || 'warning');
+    var trackColor = resolveColor(w.track_color || 'surface2');
+    var textColor  = resolveColor(w.label_color || 'text_muted');
+
+    // Take the last `count` entries (today/current period is always the last entry)
+    var data = stats.slice(-count);
+    if (!data.length) return;
+
+    // Extract numeric values; null/undefined stat (wrong stat_type for sensor class) → 0
+    var values = [];
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i][statType];
+      values.push((v !== null && v !== undefined && !isNaN(v)) ? Math.max(0, v) : 0);
+    }
+
+    // Y-axis ceiling: use configured max or auto-scale (min 1 to avoid divide-by-zero)
+    var maxVal = w.max || Math.max.apply(null, values);
+    if (!maxVal || maxVal <= 0) maxVal = 1;
+
+    // Layout
+    var padX    = 2;
+    var gap     = 3;
+    var labelH  = showLabels ? 14 : 0;
+    var valueH  = showValues ? 13 : 0;
+    var topPad  = 2;
+    var barsH   = svgH - labelH - valueH - topPad;
+    var n       = data.length;
+    var barW    = Math.max(4, Math.floor((svgW - padX * 2 - gap * (n - 1)) / n));
+
+    var DAY_LTR   = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    var MONTH_LTR = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+
+    var parts = [];
+    for (var j = 0; j < n; j++) {
+      var val     = values[j];
+      var pct     = Math.min(1, val / maxVal);
+      var barH    = Math.max((val > 0 ? 2 : 0), Math.round(pct * barsH));
+      var x       = padX + j * (barW + gap);
+      var isToday = (j === n - 1);  // last entry = current period
+      var bColor  = isToday ? todayColor : color;
+
+      // Track (full-height background)
+      var trackY = topPad + valueH;
+      parts.push('<rect x="' + x + '" y="' + trackY + '" width="' + barW +
+        '" height="' + barsH + '" fill="' + trackColor + '" rx="' + barRadius + '"/>');
+
+      // Value bar (bottom-anchored inside track)
+      if (barH > 0) {
+        var barY = topPad + valueH + (barsH - barH);
+        parts.push('<rect x="' + x + '" y="' + barY + '" width="' + barW +
+          '" height="' + barH + '" fill="' + bColor + '" rx="' + barRadius + '"/>');
+      }
+
+      // Value label above bar
+      if (showValues) {
+        var dv = val >= 10 ? String(Math.round(val)) : (val > 0 ? val.toFixed(1) : '');
+        if (dv) {
+          parts.push('<text x="' + (x + barW / 2) + '" y="' + (topPad + valueH - 2) +
+            '" text-anchor="middle" font-size="10" fill="' + bColor + '">' + dv + '</text>');
+        }
+      }
+
+      // Period label below bars
+      if (showLabels) {
+        var lbl = '?';
+        try {
+          var dt = new Date(data[j].start);
+          if (wPeriod === 'day' || wPeriod === 'hour') { lbl = DAY_LTR[dt.getDay()]; }
+          else if (wPeriod === 'month')                 { lbl = MONTH_LTR[dt.getMonth()]; }
+          else                                          { lbl = String(dt.getFullYear()).slice(-2); }
+        } catch(e) {}
+        var lColor = isToday ? todayColor : textColor;
+        parts.push('<text x="' + (x + barW / 2) + '" y="' + (svgH - 2) +
+          '" text-anchor="middle" font-size="11" fill="' + lColor + '">' + lbl + '</text>');
+      }
+    }
+
+    svg.innerHTML = parts.join('');
+  }
+
   // -- Clock --
   function renderClock(el, w) {
     el.className += ' widget-clock';
@@ -1530,29 +1879,29 @@
         if (isNaN(num)) return '--';
         if (num < 0) num = Math.abs(num);
         return num < 1000
-          ? Math.round(num) + ' w'
-          : (num / 1000).toFixed(2) + ' kW';
+          ? Math.round(num) + ' [small:w]'
+          : (num / 1000).toFixed(1) + ' [small:kW]';
 
       case 'power_abs':
         if (isNaN(num)) return '--';
         num = Math.abs(num);
         return num < 1000
-          ? Math.round(num) + ' w'
-          : (num / 1000).toFixed(2) + ' kW';
+          ? Math.round(num) + ' [small:w]'
+          : (num / 1000).toFixed(1) + ' [small:kW]';
 
       case 'power_prefix':
         if (isNaN(num)) return prefix + '--';
         return prefix + (num < 1000
-          ? Math.round(num) + ' w'
-          : (num / 1000).toFixed(2) + ' kW');
+          ? Math.round(num) + ' [small:w]'
+          : (num / 1000).toFixed(1) + ' [small:kW]');
 
       case 'kwh':
         if (isNaN(num)) return '--';
-        return num.toFixed(1) + ' kWh';
+        return num.toFixed(1) + ' [small:kWh]';
 
       case 'percent':
         if (isNaN(num)) return '--%';
-        return Math.round(num) + '%';
+        return Math.round(num) + '[small:%]';
 
       default:
         return prefix + val;
@@ -1569,19 +1918,26 @@
     return (str && String(str).indexOf('{{') !== -1);
   }
 
-  function applyTemplate(str, state) {
+  // applyTemplate(str, state, state2)
+  //   Replaces {{ expr }} blocks. state2 is optional - passed through to evaluateExpression
+  //   so templates on entity2-aware labels can reference state2/state_str2/attr2.
+  function applyTemplate(str, state, state2) {
     if (!str) return '';
     var s = String(str);
     if (s.indexOf('{{') === -1) return s;
 
     return s.replace(/\{\{([\s\S]*?)\}\}/g, function(_, expr) {
-      var val = evaluateExpression(expr, state);
+      var val = evaluateExpression(expr, state, state2);
       if (val === null || val === undefined) return '';
       return String(val);
     });
   }
 
-  function evaluateExpression(expr, state) {
+  // evaluateExpression(expr, state, state2)
+  //   state  - primary entity HA state object  → available as: state, state_str, attr
+  //   state2 - secondary entity HA state object → available as: state2, state_str2, attr2
+  // All parameters to the compiled function must match the call below exactly.
+  function evaluateExpression(expr, state, state2) {
     var key = String(expr).trim();
     if (!key) return '';
 
@@ -1590,6 +1946,7 @@
       try {
         fn = new Function(
           'state', 'state_str', 'attr', 'round', 'min', 'max', 'abs', 'floor', 'ceil',
+          'state2', 'state_str2', 'attr2',
           '"use strict"; return (' + key + ');'
         );
       } catch (e) {
@@ -1600,14 +1957,23 @@
     }
     if (!fn) return '';
 
+    // Primary entity bindings
     var raw = state ? state.state : null;
     var num = parseFloat(raw);
     var stateVal = (!isNaN(num) ? num : raw);
     var stateStr = (raw !== null && raw !== undefined) ? String(raw) : '';
     var attrs = state && state.attributes ? state.attributes : {};
 
+    // Secondary entity bindings (entity2) - undefined/null when entity2 not configured
+    var raw2 = state2 ? state2.state : null;
+    var num2 = parseFloat(raw2);
+    var stateVal2 = (raw2 !== null && !isNaN(num2) ? num2 : raw2);
+    var stateStr2 = (raw2 !== null && raw2 !== undefined) ? String(raw2) : '';
+    var attrs2 = state2 && state2.attributes ? state2.attributes : {};
+
     try {
-      return fn(stateVal, stateStr, attrs, tmplRound, Math.min, Math.max, Math.abs, Math.floor, Math.ceil);
+      return fn(stateVal, stateStr, attrs, tmplRound, Math.min, Math.max, Math.abs, Math.floor, Math.ceil,
+                stateVal2, stateStr2, attrs2);
     } catch (e2) {
       return '';
     }
@@ -1699,13 +2065,17 @@
   // overrides: [{ when: { logic: 'all'|'any', conditions: [...] }, set: { ... } }, ...]
   // conditions can be nested groups with their own logic/conditions.
   // Each condition may specify source (default: 'state').
-  function resolveOverrides(w, haState) {
+  // resolveOverrides(w, haState, haState2)
+  //   Evaluates all override rules for a widget, merging matching rule.set objects.
+  //   haState2 is the secondary entity state (entity2) - optional, pass null if unused.
+  //   All matching rules are merged (last-wins per property), so rule order matters.
+  function resolveOverrides(w, haState, haState2) {
     if (!w.overrides || !w.overrides.length || !haState) return null;
     var out = {};
     for (var i = 0; i < w.overrides.length; i++) {
       var rule = w.overrides[i];
       if (!rule || !rule.when || !rule.set) continue;
-      if (evalWhen(rule.when, haState)) {
+      if (evalWhen(rule.when, haState, haState2)) {
         mergeOverride(out, rule.set);
       }
     }
@@ -1718,38 +2088,51 @@
     }
   }
 
-  function evalWhen(when, haState) {
+  // evalWhen / evalConditionGroupOrLeaf / evalCondition all receive haState2 so that
+  // conditions can test the secondary entity using source: "state2" or "attribute2".
+  function evalWhen(when, haState, haState2) {
     if (!when || !when.conditions || !when.conditions.length) return false;
     var logic = when.logic === 'any' ? 'any' : 'all';
     var conds = when.conditions;
     for (var i = 0; i < conds.length; i++) {
-      var ok = evalConditionGroupOrLeaf(conds[i], haState);
+      var ok = evalConditionGroupOrLeaf(conds[i], haState, haState2);
       if (logic === 'all' && !ok) return false;
       if (logic === 'any' && ok) return true;
     }
     return logic === 'all';
   }
 
-  function evalConditionGroupOrLeaf(cond, haState) {
+  function evalConditionGroupOrLeaf(cond, haState, haState2) {
     if (!cond) return false;
     if (cond.conditions && cond.logic) {
-      return evalWhen(cond, haState);
+      return evalWhen(cond, haState, haState2);
     }
-    return evalCondition(cond, haState);
+    return evalCondition(cond, haState, haState2);
   }
 
-  function evalCondition(cond, haState) {
+  // Condition source values:
+  //   "state"      (default) - haState.state          (primary entity)
+  //   "attribute"            - haState.attributes[x]  (primary entity attribute)
+  //   "state2"               - haState2.state          (secondary entity, requires entity2)
+  //   "attribute2"           - haState2.attributes[x]  (secondary entity attribute)
+  function evalCondition(cond, haState, haState2) {
     if (!cond || !haState) return false;
     var src = cond.source || 'state';
+
+    // Determine which state object to test against
+    var useSecondary = (src === 'state2' || src === 'attribute2');
+    var targetState = useSecondary ? haState2 : haState;
+    if (!targetState) return false;  // entity2 not configured or not yet received
+
     var val;
-    if (src === 'attribute') {
-      val = (haState.attributes && cond.attribute !== undefined)
-        ? haState.attributes[cond.attribute]
+    if (src === 'attribute' || src === 'attribute2') {
+      val = (targetState.attributes && cond.attribute !== undefined)
+        ? targetState.attributes[cond.attribute]
         : undefined;
       if (val === undefined || val === null) return false;
       val = String(val);
     } else {
-      val = haState.state;
+      val = targetState.state;
     }
     var num = parseFloat(val);
     var str = String(val);
@@ -1783,11 +2166,11 @@
   function setContent(el, str) {
     if (!str) { el.textContent = ''; return; }
 
-    var re = /\[mdi:([\w-]+)\]/g;
+    var re = /\[mdi:([\w-]+)\]|\[small:([^\]]+)\]/g;
     var m  = re.exec(str);
     if (!m) { el.textContent = decodeEntities(str); return; }  // plain text - fast path
 
-    // Split string into text and icon segments, preserving all whitespace.
+    // Split string into text, icon, and small-unit segments, preserving all whitespace.
     // Spacing is entirely the user's responsibility - put spaces in the
     // config text where you want them e.g. "[mdi:home] Living Room"
     el.textContent = '';
@@ -1796,9 +2179,17 @@
       if (m.index > last) {
         el.appendChild(document.createTextNode(decodeEntities(str.slice(last, m.index))));
       }
-      var span = document.createElement('span');
-      span.className = 'mdi mdi-' + m[1];
-      el.appendChild(span);
+      if (m[1] !== undefined) {
+        var span = document.createElement('span');
+        span.className = 'mdi mdi-' + m[1];
+        el.appendChild(span);
+      } else {
+        var small = document.createElement('span');
+        small.style.fontSize = '0.6em';
+        small.style.alignSelf = 'flex-start';
+        small.textContent = m[2];
+        el.appendChild(small);
+      }
       last = m.index + m[0].length;
     } while ((m = re.exec(str)) !== null);
 
@@ -1860,6 +2251,7 @@
     for (var i = 0; i < pageConfig.widgets.length; i++) {
       var w = pageConfig.widgets[i];
       if (w.entity)          entities[w.entity]          = true;
+      if (w.entity2)         entities[w.entity2]         = true;  // secondary entity
       if (w.snapshot_entity) entities[w.snapshot_entity] = true;
       if (w.stream_entity)   entities[w.stream_entity]   = true;
       if (w.visible && w.visible.entity) entities[w.visible.entity] = true;
