@@ -1,8 +1,11 @@
-# WebHASP
+## HAven
+### *A lightweight Home Assistant dashboard for screens that Lovelace left behind*
 
-A lightweight, config-driven Home Assistant dashboard that runs in any browser. Designed as a browser-based equivalent of [OpenHASP](https://openhasp.com) - pixel-perfect fixed-canvas layouts, driven entirely by JSON config files, with no addons, and no server-side code required.
+That old iPad gathering dust. The Android tablet mounted on the kitchen wall. The Fire HD you picked up for $30. HAven gives them a second life as always-on Home Assistant displays — no addons, no server-side code, no install. Just static files dropped into your HA `www/` folder and a browser that can open a URL.
 
-Aims really hard to work on tablets, iPads, old Android devices, smart TVs, or any device with a browser on your local network.
+Inspired by the pixel-perfect philosophy of [OpenHASP](https://openhasp.com) — itself built on [LVGL](https://lvgl.io), the embedded graphics library that brought beautiful UIs to microcontrollers. HAven borrows the same core idea: a fixed canvas, absolute widget placement, and JSON-driven config files. But instead of flashing firmware onto an ESP32, you point a browser at a URL.
+
+Written in vanilla ES5 JavaScript with no framework dependencies, HAven tries really hard to work on even the oldest browsers — ancient iPad Safaris, budget Android WebViews, smart TV browsers from 2016. No guarantees, but if it has a browser and can reach your HA instance, there's a good chance it'll run.
 
 ---
 
@@ -142,7 +145,7 @@ Common colors are defined as named tokens in the `theme.colors` block. Any widge
 | `text_muted` | `#9fa5ad` | Inactive/hint text |
 | `icon_inactive` | `#464c53` | Icons in off state |
 
-You can add your own tokens and reference them in widget configs.
+**Change the hex values freely.** The token names above are reserved — the app uses them internally as defaults (e.g. labels default to `text`, arc labels default to `text_muted`). Removing or renaming them will break those defaults. You can add extra tokens (e.g. `"solar": "#FFD700"`) and reference them anywhere a color is accepted.
 
 ### Page background images
 
@@ -495,7 +498,7 @@ A horizontal progress bar driven by a numeric entity value.
 | `entity` | HA entity providing the numeric value |
 | `max` | Value that represents 100% fill |
 | `radius` | Corner radius in px |
-| `track_color` | Background track color (token or hex, default `surface2`) |
+| `background` | Track background color (token or hex, default `surface2`) |
 | `thresholds` | Array of color rules. First matching `below` (as % of max) wins. `default` applies when no `below` matches. |
 
 ---
@@ -693,7 +696,7 @@ An SVG-based circular gauge driven by a numeric entity value.
   "start_angle": 135,
   "end_angle": 405,
   "line_width": 14,
-  "track_color": "surface2",
+  "background": "surface2",
   "color": "primary",
   "thresholds": [
     { "below": 20, "color": "danger" },
@@ -714,8 +717,8 @@ An SVG-based circular gauge driven by a numeric entity value.
 | `start_angle` | Start angle in degrees (default `135`) |
 | `end_angle` | End angle in degrees (default `405`) |
 | `line_width` | Arc stroke width in px (default `12`) |
-| `track_color` | Background arc color (token or hex, default `surface2`) |
-| `color` | Arc color when no thresholds match (token or hex) |
+| `background` | Background ring color (token or hex, default `surface2`) |
+| `color` | Arc fill color when no thresholds match (token or hex) |
 | `thresholds` | Array of color rules; first matching `below` (as % of range) wins |
 | `label` | Optional label shown under the value |
 | `label_color` | Label color (token or hex, default `text_muted`) |
@@ -738,7 +741,6 @@ Fetches HA long-term statistics and renders a vertical bar chart. Useful for ene
   "stat_type": "change",
   "color": "primary",
   "today_color": "warning",
-  "track_color": "surface2",
   "background": "surface",
   "radius": 8,
   "show_values": true,
@@ -755,7 +757,6 @@ Fetches HA long-term statistics and renders a vertical bar chart. Useful for ene
 | `stat_type` | `change` for energy accumulators (kWh totals), `mean` for averaged sensors (power, temperature). Default: `mean` |
 | `color` | Bar color - token or hex |
 | `today_color` | Color for the current/latest bar (today, this hour, etc.) |
-| `track_color` | Background bar track color |
 | `background` | Widget background color |
 | `radius` | Corner radius of the widget background in px |
 | `max` | Fixed y-axis ceiling. Omit to auto-scale from data. |

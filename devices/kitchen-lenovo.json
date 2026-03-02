@@ -1122,7 +1122,7 @@
           "line_width": 16,
           "color": "orange",
           "format": "power",
-          "track_color": "surface",
+          "background": "surface",
           "label_color": "text",
           "thresholds": [
             {
@@ -1177,7 +1177,7 @@
             }
           ],
           "color": "warning",
-          "track_color": "surface"
+          "background": "surface"
         },
         {
           "id": "label_27",
@@ -1249,7 +1249,7 @@
             }
           ],
           "color": "warning",
-          "track_color": "surface"
+          "background": "surface"
         },
         {
           "id": "bar_2",
@@ -1276,7 +1276,7 @@
             }
           ],
           "color": "warning",
-          "track_color": "surface"
+          "background": "surface"
         },
         {
           "id": "label_28",

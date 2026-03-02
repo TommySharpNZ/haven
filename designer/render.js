@@ -58,7 +58,7 @@ export function createWidgetGroup(w, theme) {
         outerRadius: arcR + arcLineWidth / 2,
         angle: totalAngle,
         rotation: startAngle - 90,
-        fill: resolveColor(w.track_color, theme) || '#363f4a',
+        fill: resolveColor(w.background, theme) || '#363f4a',
         listening: false
       }));
       group.add(new Konva.Arc({

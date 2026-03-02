@@ -141,11 +141,10 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
 
     addSectionHeader(container, 'Appearance');
     addPairRow(container,
-      'color',       makeTextInput(w.color,       function(v) { onChange('color', v); }),
-      'track_color', makeTextInput(w.track_color, function(v) { onChange('track_color', v); })
+      'color',      makeTextInput(w.color,      function(v) { onChange('color', v); }),
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); })
     );
     addNumber(container, 'radius', w.radius, onChange);
-    addText(container, 'background', w.background, onChange);
 
     addThresholdsButton(container, w, onChange);
   }
@@ -171,14 +170,13 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
 
     addSectionHeader(container, 'Appearance');
     addPairRow(container,
-      'color',       makeTextInput(w.color,       function(v) { onChange('color', v); }),
-      'track_color', makeTextInput(w.track_color, function(v) { onChange('track_color', v); })
+      'color',      makeTextInput(w.color,      function(v) { onChange('color', v); }),
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); })
     );
     addPairRow(container,
       'label',       makeTextInput(w.label,       function(v) { onChange('label', v); }),
       'label_color', makeTextInput(w.label_color, function(v) { onChange('label_color', v); })
     );
-    addText(container, 'background', w.background, onChange);
 
     addThresholdsButton(container, w, onChange);
     addOverridesButton(container, w, onChange);

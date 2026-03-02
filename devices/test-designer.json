@@ -111,8 +111,7 @@
           "y": 182,
           "w": 380,
           "h": 18,
-          "background": "surface",
-          "track_color": "surface"
+          "background": "surface"
         }
       ]
     },

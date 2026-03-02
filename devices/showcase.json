@@ -1008,7 +1008,7 @@
           "y": 284,
           "w": 736,
           "h": 22,
-          "text": "Optional: add \"track_color\" to override the default grey track. Thresholds color the fill.",
+          "text": "Optional: add \"background\" to override the default grey track. Thresholds color the fill.",
           "font_size": 13,
           "align": "left",
           "color": "text_muted",

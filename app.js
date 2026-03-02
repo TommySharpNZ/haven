@@ -805,7 +805,7 @@
     var radius = (w.radius !== undefined ? w.radius : 0) + 'px';
 
     // Track (background) - built into the widget, no separate rect needed
-    el.style.background   = resolveColor(w.track_color || 'surface2');
+    el.style.background   = resolveColor(w.background || 'surface2');
     el.style.borderRadius = radius;
     el.style.overflow     = 'hidden';
 
@@ -1006,7 +1006,7 @@
   //   start_angle   - degrees, 0 = top, clockwise (default 135)
   //   end_angle     - degrees (default 405, i.e. 135 + 270)
   //   line_width    - arc stroke width in px (default 12)
-  //   track_color   - background arc color (default surface2 token)
+  //   background    - background arc ring color (default surface2 token)
   //   label         - static text shown below the value (optional)
   //   format        - value format (same as label widget)
   //   thresholds    - same format as bar widget, color changes by % of range
@@ -1027,14 +1027,13 @@
   function renderArc(el, w) {
     el.className += ' widget-arc';
     el.style.overflow = 'visible';
-    if (w.background !== undefined) el.style.background = resolveColor(w.background);
 
     var min        = w.min !== undefined ? w.min : 0;
     var max        = w.max !== undefined ? w.max : 100;
     var startAngle = w.start_angle !== undefined ? w.start_angle : 135;
     var endAngle   = w.end_angle   !== undefined ? w.end_angle   : 405;
     var lineWidth  = w.line_width  !== undefined ? w.line_width  : 12;
-    var trackColor = resolveColor(w.track_color || 'surface2');
+    var trackColor = resolveColor(w.background || 'surface2');
 
     // SVG coordinate system: cx/cy at centre, r fits inside widget
     var size = Math.min(w.w, w.h);
@@ -1138,7 +1137,7 @@
       numEl.style.color = arcColor;
 
       // Apply remaining overrideable properties
-      var tColor = s.track_color !== undefined ? s.track_color : (w.track_color || 'surface2');
+      var tColor = s.background !== undefined ? s.background : (w.background || 'surface2');
       trackPath.setAttribute('stroke', resolveColor(tColor));
       if (s.opacity !== undefined) el.style.opacity = s.opacity;
       else if (w.opacity !== undefined) el.style.opacity = w.opacity;
@@ -1556,7 +1555,6 @@
   //   max             - fixed y-axis ceiling; omit to auto-scale from data
   //   color           - bar fill color (theme token or hex,   default "primary")
   //   today_color     - current-period bar color               (default "warning")
-  //   track_color     - empty bar background                   (default "surface2")
   //   background      - widget background                      (default "surface")
   //   radius          - bar corner radius px                   (default 2)
   //   show_values     - value labels above bars                (default true)
@@ -1767,7 +1765,7 @@
 
     var color      = resolveColor(w.color       || 'primary');
     var todayColor = resolveColor(w.today_color || 'warning');
-    var trackColor = resolveColor(w.track_color || 'surface2');
+    var trackColor = resolveColor('surface2');
     var textColor  = resolveColor(w.label_color || 'text_muted');
 
     // Take the last `count` entries (today/current period is always the last entry)
