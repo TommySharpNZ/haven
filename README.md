@@ -1,8 +1,8 @@
 # WebHASP
 
-A lightweight, config-driven Home Assistant dashboard that runs in any browser. Designed as a browser-based equivalent of [OpenHASP](https://openhasp.com) - pixel-perfect fixed-canvas layouts, driven entirely by JSON config files, with no addons, no HACS, and no server-side code required.
+A lightweight, config-driven Home Assistant dashboard that runs in any browser. Designed as a browser-based equivalent of [OpenHASP](https://openhasp.com) - pixel-perfect fixed-canvas layouts, driven entirely by JSON config files, with no addons, and no server-side code required.
 
-Works on tablets, iPads, old Android devices, smart TVs, or any device with a browser on your local network.
+Aims really hard to work on tablets, iPads, old Android devices, smart TVs, or any device with a browser on your local network.
 
 ---
 
@@ -24,10 +24,12 @@ Works on tablets, iPads, old Android devices, smart TVs, or any device with a br
   - [image](#image)
   - [camera](#camera)
   - [arc](#arc)
+  - [history\_chart](#history_chart)
 - [Pages & Navigation](#pages--navigation)
 - [Credentials & Security](#credentials--security)
 - [Connection Status](#connection-status)
 - [Internal Entities](#internal-entities)
+- [Visual Designer](#visual-designer)
 - [Roadmap](#roadmap)
 
 ---
@@ -37,7 +39,7 @@ Works on tablets, iPads, old Android devices, smart TVs, or any device with a br
 1. Copy the `webhasp/` folder into your Home Assistant `config/www/` directory
 2. Navigate to `http://your-ha-ip:8123/local/webhasp/index.html?device=example`
 3. On first load, enter your HA URL and a Long-Lived Access Token when prompted
-4. Edit `devices/example.json` or create your own device config
+4. Edit `devices/example.json` or create your own device config files
 
 ```
 config/
@@ -64,7 +66,7 @@ config/
 ## How It Works
 
 - Each tablet/device has its own JSON config file in `devices/`
-- `?device=name` in the URL loads `devices/name.json`
+- `?device=ipad` in the URL loads `devices/ipad.json`
 - Omit `?device=` to load `devices/default.json` (if missing, a landing/help page is shown)
 - The config defines a fixed canvas size (e.g. 1024x768) and all widgets are placed at absolute pixel positions within that canvas
 - The canvas scales uniformly to fill whatever screen it is displayed on - like a retro game emulator
@@ -81,6 +83,7 @@ config/
   "device": {
     "name": "Kitchen Tablet",
     "canvas": { "width": 1024, "height": 768 },
+    "orientation": "portrait",    
     "default_page": 1,
     "return_to_default": 60
   },
@@ -116,6 +119,7 @@ config/
 | `name` | Human readable label for this device |
 | `canvas.width` | Design width in pixels |
 | `canvas.height` | Design height in pixels |
+| `orientation` | portrait or landscape |
 | `default_page` | Page ID to show on load and return to after inactivity |
 | `return_to_default` | Seconds of inactivity before returning to default page |
 
@@ -277,9 +281,9 @@ The widget updates live as the entity state changes.
 
 ---
 
-## Conditional Overrides (Label)
+## Conditional Overrides
 
-Labels support ordered conditional overrides via `overrides`. Each rule has a `when` block (logic + conditions) and a `set` block (attributes to override). Rules are evaluated in order; later rules win.
+Labels and buttons support ordered conditional overrides via an `overrides` array. Each rule has a `when` block (logic + conditions) and a `set` block (attributes to override). Rules are evaluated in order and all matching rules are applied — later rules win.
 
 ```json
 "overrides": [
@@ -288,7 +292,7 @@ Labels support ordered conditional overrides via `overrides`. Each rule has a `w
       "logic": "all",
       "conditions": [ { "source": "state", "type": "above", "value": 0 } ]
     },
-    "set": { "text": "[mdi:transmission-tower-import]", "color": "warning" }
+    "set": { "color": "primary" }
   },
   {
     "when": {
@@ -303,9 +307,27 @@ Labels support ordered conditional overrides via `overrides`. Each rule has a `w
 **Condition logic**
 - `logic`: `all` (AND) or `any` (OR)
 - `conditions`: array of condition objects
-- `source`: currently only `state` (future: variables, attributes)
 - Condition types: `above`, `below`, `equals`, `not_equals`
 - Conditions can be nested using groups with their own `logic`/`conditions`
+
+**Condition sources**
+
+The `source` field controls what value a condition tests against:
+
+| Source | Tests against | Notes |
+|--------|---------------|-------|
+| `state` | Primary entity state string/number | Default when `source` is omitted |
+| `attribute` | A specific attribute of the primary entity | Requires an `"attribute"` key. Returns false if attribute is missing. |
+| `state2` | Secondary entity (`entity2`) state value | Returns false if `entity2` not configured |
+| `attribute2` | An attribute of `entity2` | Requires an `"attribute"` key. Returns false if attribute is missing. |
+
+```json
+{ "source": "state",      "type": "equals", "value": "on" }
+{ "source": "attribute",  "attribute": "hvac_action",   "type": "equals", "value": "heating" }
+{ "source": "attribute",  "attribute": "brightness",    "type": "above",  "value": 128 }
+{ "source": "state2",     "type": "above",  "value": 0 }
+{ "source": "attribute2", "attribute": "battery_level", "type": "below",  "value": 20 }
+```
 
 ---
 
@@ -355,18 +377,19 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 
 | Property | Description |
 |----------|-------------|
-| `text` | Static text. Supports `[mdi:icon-name]` icons. Used as placeholder before entity loads. |
+| `text` | Static text. Supports `[mdi:icon-name]` icons and `{{ ... }}` templates. Used as placeholder before entity loads. |
 | `font_size` | Size in pixels |
 | `align` | `left`, `center`, or `right` |
 | `valign` | Vertical alignment: `top`, `center` (default), or `bottom` |
-| `color` | Text color - token or hex |
+| `color` | Text color - token or hex. Supports `{{ ... }}` templates. |
 | `background` | Background color - token or hex |
 | `letter_spacing` | Letter spacing in px |
 | `font_weight` | CSS font-weight value (e.g. `400`, `600`, `bold`) |
-| `entity` | HA entity ID for live value |
+| `entity` | Primary HA entity ID for live value |
+| `entity2` | Secondary HA entity ID. Label re-renders when either entity changes. |
 | `format` | How to format the entity value (see below) |
 | `prefix` | Text prefix for `power_prefix` format |
-| `overrides` | Conditional attribute overrides (ordered) |
+| `overrides` | Conditional attribute overrides (ordered). See [Conditional Overrides](#conditional-overrides). |
 
 **Format values:**
 
@@ -385,43 +408,45 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `datetime_12` | `2026-02-27 2:05 PM` |
 | *(none)* | Raw entity state string |
 
-**Conditional overrides (replaces states/state_condition):**
+**entity2 — secondary entity binding**
 
-Use `overrides` to apply ordered attribute overrides when conditions match. Later rules win.
+Labels can subscribe to a second entity with `entity2`. The label re-renders whenever either entity changes. `entity` remains the primary (drives `format`, default override tests, and template variables `state`/`state_str`/`attr`). `entity2` adds `state2`/`state_str2`/`attr2` template variables and the `state2`/`attribute2` condition sources.
 
 ```json
-"overrides": [
-  {
-    "when": {
-      "logic": "all",
-      "conditions": [ { "source": "state", "type": "above", "value": 0 } ]
-    },
-    "set": { "text": "[mdi:transmission-tower-export]", "color": "warning" }
-  },
-  {
-    "when": {
-      "logic": "all",
-      "conditions": [ { "source": "state", "type": "above", "value": 5000 } ]
-    },
-    "set": { "color": "danger" }
-  }
-]
+{
+  "type": "label",
+  "entity": "sensor.total_kwh",
+  "entity2": "sensor.current_power",
+  "format": "kwh",
+  "color": "text_muted",
+  "overrides": [
+    {
+      "when": { "logic": "all", "conditions": [ { "source": "state2", "type": "above", "value": 0 } ] },
+      "set": { "color": "primary" }
+    }
+  ]
+}
 ```
 
-`logic`: `all` (AND) or `any` (OR).  
-`conditions` can include nested groups with their own `logic`/`conditions`.  
-`source` is currently only `state` (future: variables, attributes).
+**Conditional overrides — label-specific `set` properties:**
+
+`text`, `color`, `background`, `font_size`, `opacity`, `border_color`, `border_width`.
+
+See [Conditional Overrides](#conditional-overrides) for full condition syntax including `attribute`, `state2`, and `attribute2` sources.
 
 ---
 
 ### Template expressions
 
-Labels can include `{{ ... }}` expressions in their `text` field (and in `states.*.text` or `color`). Expressions are evaluated locally against the bound entity state.
+Labels can include `{{ ... }}` expressions in their `text` and `color` fields. Expressions are evaluated locally against the bound entity state.
 
 **Variables**
-- `state` (numeric if possible, otherwise string)
-- `state_str` (always string)
-- `attr.<name>` (entity attributes)
+- `state` — primary entity value (numeric if possible, otherwise string)
+- `state_str` — primary entity state (always string)
+- `attr.<name>` — primary entity attribute
+- `state2` — secondary entity value (requires `entity2`)
+- `state_str2` — secondary entity state string
+- `attr2.<name>` — secondary entity attribute
 
 **Functions**
 - `round(x, n)`, `min(a,b)`, `max(a,b)`, `abs(x)`, `floor(x)`, `ceil(x)`
@@ -516,12 +541,17 @@ A tappable button that reflects entity state visually and calls a HA service on 
   "x": 20, "y": 60, "w": 180, "h": 140,
   "label": "Kitchen",
   "entity": "light.kitchen",
-  "icon_on":  "[mdi:lightbulb]",
+  "background": "surface",
+  "icon_color": "icon_inactive",
+  "label_color": "text_muted",
   "icon_off": "[mdi:lightbulb-outline]",
-  "states": {
-    "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text" },
-    "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted" }
-  },
+  "overrides": [
+    {
+      "when": { "logic": "all", "conditions": [ { "type": "equals", "value": "on" } ] },
+      "set": { "background": "surface2", "icon_color": "primary", "label_color": "text",
+               "icon": "[mdi:lightbulb]" }
+    }
+  ],
   "action": { "type": "service", "service": "light.toggle", "entity_id": "light.kitchen" }
 }
 ```
@@ -529,9 +559,12 @@ A tappable button that reflects entity state visually and calls a HA service on 
 | Property | Description |
 |----------|-------------|
 | `label` | Text shown below the icon. Supports `[mdi:icon-name]` and `{{ ... }}` templates |
-| `entity` | HA entity to watch for on/off state |
-| `icon_on` | Icon shown when entity is `on`. Supports `[mdi:icon-name]`. |
-| `icon_off` | Icon shown when entity is `off`. Supports `[mdi:icon-name]`. |
+| `entity` | HA entity to watch for state |
+| `background` | Default button background (token or hex) |
+| `icon_color` | Default icon color (token or hex) |
+| `label_color` | Default label text color (token or hex) |
+| `icon_off` | Default icon (used when no override matches). Supports `[mdi:icon-name]`. |
+| `icon_on` | Legacy: icon shown when entity is `on` (use `overrides` instead) |
 | `icon_size` | Icon size in px (optional). If omitted, auto-scales based on button size |
 | `label_size` | Label font size in px (optional). If omitted, auto-scales based on button size |
 | `radius` | Corner radius in px (optional) |
@@ -539,9 +572,40 @@ A tappable button that reflects entity state visually and calls a HA service on 
 | `padding` | Padding inside the button in px (optional) |
 | `border_width` | Border thickness in px (optional) |
 | `border_color` | Border color - token or hex (optional) |
-| `states.on` | Style when entity state is `on`: `background`, `icon_color`, `label_color`, `border_width`, `border_color`, `text` |
-| `states.off` | Style when entity state is `off` |
+| `overrides` | Ordered conditional style overrides. **Preferred over `states`.** See below. |
+| `states` | Legacy on/off state map. Ignored when `overrides` is present. |
 | `action` | Action to perform on tap |
+
+**Button overrides**
+
+`overrides` applies the same ordered condition system as labels. The `set` block for buttons supports: `background`, `icon_color`, `label_color`, `icon`, `label`, `opacity`, `border_color`, `border_width`.
+
+```json
+"overrides": [
+  {
+    "when": { "logic": "all", "conditions": [ { "source": "state", "type": "equals", "value": "on" } ] },
+    "set": { "background": "surface2", "icon_color": "primary", "label_color": "text",
+             "icon": "[mdi:lightbulb]" }
+  },
+  {
+    "when": { "logic": "all", "conditions": [ { "source": "attribute", "attribute": "brightness", "type": "above", "value": 200 } ] },
+    "set": { "icon_color": "warning" }
+  }
+]
+```
+
+See [Conditional Overrides](#conditional-overrides) for full condition syntax.
+
+**Legacy states (still supported)**
+
+```json
+"states": {
+  "on":  { "background": "surface2", "icon_color": "primary",      "label_color": "text" },
+  "off": { "background": "surface",  "icon_color": "icon_inactive", "label_color": "text_muted" }
+}
+```
+
+The `states` map keys are raw entity state strings. Use `overrides` for new configs — it supports more conditions and attribute testing.
 
 ---
 
@@ -689,6 +753,59 @@ An SVG-based circular gauge driven by a numeric entity value.
 
 ---
 
+### history_chart
+
+Fetches HA long-term statistics and renders a vertical bar chart. Useful for energy totals, power averages, temperature history, and any sensor with long-term statistics enabled.
+
+```json
+{
+  "id": "energy_week",
+  "type": "history_chart",
+  "x": 10, "y": 130, "w": 380, "h": 120,
+  "entity": "sensor.daily_energy_total",
+  "period": "day",
+  "count": 7,
+  "stat_type": "change",
+  "color": "primary",
+  "today_color": "warning",
+  "track_color": "surface2",
+  "background": "surface",
+  "radius": 8,
+  "show_values": true,
+  "show_labels": true,
+  "refresh_interval": 3600
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `entity` | HA entity with long-term statistics enabled |
+| `period` | Bar period: `day`, `hour`, `month`, or `year` |
+| `count` | Number of bars to show |
+| `stat_type` | `change` for energy accumulators (kWh totals), `mean` for averaged sensors (power, temperature). Default: `mean` |
+| `color` | Bar color - token or hex |
+| `today_color` | Color for the current/latest bar (today, this hour, etc.) |
+| `track_color` | Background bar track color |
+| `background` | Widget background color |
+| `radius` | Corner radius of the widget background in px |
+| `max` | Fixed y-axis ceiling. Omit to auto-scale from data. |
+| `show_values` | `true` to show a numeric value above each bar |
+| `show_labels` | `true` to show period labels below each bar (M T W T F S S, J F M... etc.) |
+| `refresh_interval` | Seconds between data refreshes. Default: `3600` |
+
+**Which `stat_type` to use:**
+
+| Sensor type | stat_type | Example |
+|-------------|-----------|---------|
+| Energy accumulator (total_increasing) | `change` | Daily kWh consumed |
+| Power / temperature / averaged measurement | `mean` | Average watts over the period |
+
+> **Requirement:** The entity must have long-term statistics enabled in HA (`state_class: total_increasing`, `total`, or `measurement`). Statistics are separate from the standard state history.
+
+> **Initial load:** The chart shows a "loading…" placeholder until the WebSocket connection is established and data is fetched. On slow connections this may take a moment.
+
+---
+
 ## Pages & Navigation
 
 Pages are defined in the `pages` array. Navigate between them by swiping left/right or tapping the dot indicators at the bottom of the screen.
@@ -769,6 +886,80 @@ Example (icon + time):
 
 ---
 
+## Visual Designer
+
+WebHASP includes a drag-and-drop visual designer at `designer.html` for building device configs without hand-editing JSON.
+
+### Opening a config
+
+Open `designer.html` in your browser. From the welcome screen you can:
+
+- **Open existing file** — pick a `devices/*.json` file from disk using the browser's file picker. The designer opens the directory so it can save changes back to the same file and access the `images/` folder for background uploads.
+- **New device** — enter a name and pick a canvas size from presets (1024×768, 1280×800, 1920×1080, 800×480, 480×320) or enter a custom size.
+
+### Toolbar
+
+| Button | Action |
+|--------|--------|
+| **New…** | Create a new device config |
+| **Open** | Open an existing device JSON file |
+| **Save** | Save back to disk (File System Access API). Creates a timestamped backup before overwriting. |
+| **Download** | Save as a downloaded file (fallback if File System Access is not available) |
+| **↩ / ↪** | Undo / Redo (50 levels deep) |
+| **Snap** | Toggle grid snap. Active state shown highlighted. |
+| **Pan** | Toggle pan mode (right-click to pan is always available). |
+| **Preview** | Toggle a live preview iframe showing the dashboard with the current config injected. |
+| **Pages…** | Open page management modal |
+| **Device…** | Edit device properties (name, canvas size, default page, return timer, file location) |
+| **Close** | Close the current device and return to the welcome screen |
+
+### Canvas
+
+Widgets are placed at absolute pixel positions on the canvas — the same coordinate space as the runtime app. You can:
+
+- **Click** to select a widget
+- **Shift+click** to add/remove from a multi-selection
+- **Drag** to move selected widgets
+- **Arrow keys** to nudge by 1px (or 10px with Shift)
+- **Right-click drag** to pan the canvas
+- **Scroll** to zoom in/out
+
+### Widget tree (left sidebar)
+
+The sidebar lists all widgets on the current page in z-order. Each row shows:
+- **Eye button** — toggle widget visibility on canvas (hidden widgets still export to JSON)
+- **Lock button** — lock a widget so it can't be accidentally moved or selected on canvas
+- **Type badge** — coloured letter indicating widget type
+- **Name / ID** — widget name if set, otherwise ID + type
+- **Z-index** — position in the stacking order
+
+Drag rows to reorder widgets (changes z-order). Use the search box to filter by name, ID, or type.
+
+### Properties panel (right sidebar)
+
+Select a widget to edit its properties:
+- **Position/size** — X, Y, W, H fields
+- **Common properties** — label text, entity, format, color, background, etc. (fields vary by widget type)
+- **Overrides editor** — add, edit, and remove conditional override rules visually
+
+### Page management
+
+Click **Pages…** to open the page manager:
+- **Left column** — page list with drag-to-reorder, widget count, delete button
+- **Right column** — page properties: label, background image (upload to `images/` folder), opacity, fit mode, default page selector
+
+### Alignment tools
+
+With multiple widgets selected, the toolbar shows alignment buttons: align left/right/top/bottom edges, distribute horizontally/vertically.
+
+### Preview
+
+Click **Preview** to open a live preview iframe next to the canvas. The preview runs the full runtime app with your current config injected — no save or reload needed. It updates automatically when you make changes.
+
+> **Browser compatibility:** The designer uses the File System Access API for save-to-disk. This requires Chrome or Edge. Firefox can open and download files but cannot save directly back to disk.
+
+---
+
 ## Roadmap
 
 **Done**
@@ -779,7 +970,10 @@ Example (icon + time):
 - [x] Swipe gesture navigation
 - [x] Material Design Icons (MDI) bundled locally - works offline
 - [x] `[mdi:icon-name]` icon syntax - mix icons and text in any label or button
-- [x] State-based styling (color, opacity, border, letter-spacing)
+- [x] Conditional overrides for labels and buttons (ordered rules, all/any logic)
+- [x] Condition sources: state, attribute, state2, attribute2
+- [x] `entity2` secondary entity binding on labels
+- [x] `{{ ... }}` template expressions in label text and color
 - [x] Typed actions (navigate, automation, service with data payload)
 - [x] Visibility conditions (above, below, equals, not_equals)
 - [x] Page background images with opacity and fit
@@ -787,9 +981,10 @@ Example (icon + time):
 - [x] Version-based cache busting
 - [x] Page 0 persistent overlay
 - [x] Arc / gauge widget
+- [x] History chart widget (long-term statistics bar chart)
+- [x] Visual drag-and-drop designer with undo/redo, preview, page management, and image upload
 
 **Coming**
 - [ ] HA event-triggered page navigation (fire `webhasp_command` from automations)
 - [ ] Screensaver / idle screen dimming
-- [ ] Visual drag-and-drop designer
 - [ ] HACS frontend distribution

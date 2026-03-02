@@ -74,6 +74,10 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
   header.innerHTML = '<strong>' + (w.id || '(no id)') + '</strong> <span class="meta">' + (w.type || 'unknown') + '</span>';
   container.appendChild(header);
 
+  // Friendly display name — designer-only hint, stored as w.name in JSON.
+  // Shown in the widget tree as the primary label instead of the bare ID.
+  addText(container, 'name', w.name, onChange);
+
   var actions = document.createElement('div');
   actions.className = 'prop';
   var delBtn = document.createElement('button');

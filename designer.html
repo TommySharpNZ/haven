@@ -28,18 +28,43 @@
       height: 48px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
       padding: 0 12px;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
     }
-    .toolbar .title { font-weight: 600; }
+    .toolbar .title { font-weight: 600; margin-right: 4px; }
     .toolbar select, .toolbar button {
       background: var(--panel2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 6px 8px;
+      padding: 5px 8px;
       border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .toolbar button:hover { border-color: var(--accent); }
+    /* Active state for toggle buttons (Snap, Pan, Preview) */
+    .toolbar button.active {
+      background: #1c2e16;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    /* Icon-only buttons */
+    .toolbar button.icon-btn {
+      padding: 5px 7px;
+      font-size: 15px;
+      line-height: 1;
+    }
+    /* Disabled state */
+    .toolbar button:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    /* Visual group separator */
+    .toolbar-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex-shrink: 0;
+      margin: 0 3px;
     }
     .toolbar .spacer { flex: 1; }
     .layout {
@@ -74,18 +99,57 @@
       position: absolute;
       inset: 0;
     }
+    .tree-controls { margin-bottom: 8px; }
+    .tree-search {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .tree-search::placeholder { color: var(--muted); }
+    .tree-bulk { display: flex; gap: 4px; margin-top: 6px; }
     .tree-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 6px;
+      gap: 6px;
+      padding: 5px 4px;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 13px;
     }
     .tree-item:hover { background: #1f2832; }
     .tree-item.active { background: #2a3440; }
-    .tree-item .meta { color: var(--muted); font-size: 12px; }
-    .tree-item input[type=checkbox] { margin: 0; }
+    .tree-item.locked { opacity: 0.55; cursor: default; }
+    .tree-item .meta { color: var(--muted); font-size: 11px; }
+    .tree-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 13px;
+      flex-shrink: 0;
+      color: inherit;
+      line-height: 1;
+    }
+    .tree-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .tree-main { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    /* treePanel stretches to fill the layout row; tree scrolls within remaining space */
+    #treePanel { display: flex; flex-direction: column; overflow: hidden; }
+    #tree { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 4px; }
     .prop { font-size: 13px; margin: 6px 0; color: var(--muted); }
     .prop strong { color: var(--text); }
     .prop-row { display: flex; gap: 6px; align-items: center; }
@@ -94,16 +158,264 @@
     .prop-labels div { flex: 1; }
     .btn-small { padding: 4px 6px; font-size: 12px; }
     .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .tree-item.drag-over-above { border-top: 2px solid var(--accent); }
+    .tree-item.drag-over-below { border-bottom: 2px solid var(--accent); }
+    .tree-item.dragging { opacity: 0.4; }
+
+    /* ── Welcome overlay (shown when no config is loaded) ────── */
+    .welcome-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0b0f14;
+      z-index: 10;
+    }
+    .welcome-overlay.hidden { display: none; }
+    .welcome-box { text-align: center; max-width: 420px; padding: 40px 32px; }
+    .welcome-logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+    .welcome-actions { display: flex; gap: 12px; justify-content: center; }
+    .welcome-actions button {
+      padding: 10px 22px;
+      font-size: 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .welcome-actions button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f141a;
+      font-weight: 600;
+    }
+    .welcome-actions button:hover { border-color: var(--accent); }
+    .welcome-actions button.primary:hover { opacity: 0.88; }
+
+    /* ── New Device modal ─────────────────────────────────────── */
+    .ndm-row { margin-bottom: 14px; }
+    .ndm-row label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .ndm-row input[type=text], .ndm-row select, .ndm-row input[type=number] {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+    .ndm-row input:focus, .ndm-row select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .ndm-custom { display: none; gap: 8px; margin-top: 8px; }
+    .ndm-custom.visible { display: flex; }
+    .ndm-custom input { flex: 1; }
+    .ndm-custom span { line-height: 34px; color: var(--muted); font-size: 13px; }
+
+    /* ── Pages modal ─────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 680px;
+      max-width: 95vw;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .modal-header .spacer { flex: 1; }
+    .modal-header button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .modal-header button:hover { color: var(--text); }
+    .modal-body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    /* Left: page list */
+    .modal-list-col {
+      width: 220px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .modal-list-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-list-toolbar button {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .modal-list-toolbar button:hover { border-color: var(--accent); }
+    #pageModalList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    .page-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+    }
+    .page-item:hover { background: #1f2832; }
+    .page-item.active { background: #2a3440; }
+    .page-item.drag-over-above { border-top: 2px solid var(--accent); }
+    .page-item.drag-over-below { border-bottom: 2px solid var(--accent); }
+    .page-item.dragging { opacity: 0.4; }
+    .page-item-id {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 22px;
+      text-align: right;
+    }
+    .page-item-label { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .page-item-count { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    /* Right: page properties */
+    .modal-props-col {
+      flex: 1;
+      padding: 14px 18px;
+      overflow-y: auto;
+    }
+    .modal-props-col h4 {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .mprop { margin-bottom: 12px; font-size: 13px; }
+    .mprop label { display: block; color: var(--muted); margin-bottom: 4px; font-size: 12px; }
+    .mprop input[type=text], .mprop input[type=number], .mprop select {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .mprop input[type=text]:focus, .mprop input[type=number]:focus, .mprop select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .mprop-readonly {
+      font-size: 13px;
+      color: var(--text);
+      padding: 5px 0;
+    }
+    .modal-empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+    .modal-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .modal-footer button {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .modal-footer button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f141a;
+      font-weight: 600;
+    }
+    .modal-footer button:hover { border-color: var(--accent); }
+    .modal-footer button.primary:hover { opacity: 0.88; }
+    .modal-footer button.danger {
+      background: #3a1212;
+      border-color: #D9534F;
+      color: #D9534F;
+    }
+    .modal-footer button.danger:hover { background: #D9534F; color: #fff; }
   </style>
 </head>
 <body>
-    <div class="toolbar">
-      <div class="title">WebHASP Designer (PoC)</div>
-      <button id="pickDeviceBtn">Pick File…</button>
-      <label>Page:
-        <select id="pageSelect"></select>
-      </label>
-    <label>Grid:
+  <div class="toolbar">
+    <div class="title">WebHASP Designer</div>
+    <div class="toolbar-sep"></div>
+    <button id="pickDeviceBtn" title="Open existing device file">Open…</button>
+    <button id="newDeviceBtn" title="Create a new device">New…</button>
+    <button id="closeDeviceBtn" title="Close current file and return to start">Close</button>
+    <button id="devicePropsBtn" title="Edit device properties and view file location">Device…</button>
+    <div class="toolbar-sep"></div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:13px;">Page:
+      <select id="pageSelect"></select>
+    </label>
+    <button id="pagesBtn" title="Add, rename, or delete pages">Pages…</button>
+    <div class="toolbar-sep"></div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:13px;">Grid:
       <select id="gridSelect">
         <option value="1">1px</option>
         <option value="2">2px</option>
@@ -113,40 +425,200 @@
         <option value="32">32px</option>
       </select>
     </label>
-    <button id="saveBtn">Save</button>
-    <button id="previewBtn">Preview: Off</button>
-    <button id="undoBtn">Undo</button>
-    <button id="redoBtn">Redo</button>
-    <button id="toggleSnap">Snap: On</button>
-    <button id="togglePan">Pan: Off</button>
+    <div class="toolbar-sep"></div>
+    <button id="saveBtn" title="Save to disk (Ctrl+S)">Save</button>
+    <button id="undoBtn" class="icon-btn" title="Undo (Ctrl+Z)">↩</button>
+    <button id="redoBtn" class="icon-btn" title="Redo (Ctrl+Y)">↪</button>
+    <div class="toolbar-sep"></div>
+    <button id="previewBtn" title="Toggle live preview overlay">Preview</button>
+    <button id="toggleSnap" class="active" title="Toggle grid snapping">Snap</button>
+    <button id="togglePan" title="Toggle canvas pan mode (right-click always pans)">Pan</button>
     <div class="spacer"></div>
-    <div id="status" class="meta"></div>
+    <div id="status" style="font-size:12px;color:var(--muted);"></div>
   </div>
 
   <div class="layout">
     <div class="panel" id="treePanel">
       <h3>Widgets</h3>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
         <button id="addLabelBtn">Add Label</button>
         <button id="addRectBtn">Add Rect</button>
       </div>
+      <div class="tree-controls">
+        <input id="treeSearch" class="tree-search" type="text" placeholder="Search widgets…">
+        <div class="tree-bulk">
+          <button id="showAllBtn" class="btn-small">Show All</button>
+          <button id="hideAllBtn" class="btn-small">Hide All</button>
+          <button id="unlockAllBtn" class="btn-small">Unlock All</button>
+        </div>
+      </div>
+      <div id="tree"></div>
       <h3>Guides</h3>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
         <button id="addHGuideBtn">Add H</button>
         <button id="addVGuideBtn">Add V</button>
         <button id="clearGuidesBtn">Clear</button>
       </div>
-      <div id="tree"></div>
     </div>
 
     <div id="stage-wrap">
       <div id="stage"></div>
+      <div class="welcome-overlay" id="welcome">
+        <div class="welcome-box">
+          <div class="welcome-logo">WebHASP Designer</div>
+          <div class="welcome-sub">Build WebHASP device layouts visually.<br>Open an existing config file or start a new one.</div>
+          <div class="welcome-actions">
+            <button id="welcomeOpenBtn">Open File…</button>
+            <button id="welcomeNewBtn" class="primary">New Device…</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="panel right" id="propsPanel">
       <h3>Selection</h3>
       <div id="props"></div>
       <div class="note">PoC: drag to move, wheel to zoom, toggle Pan to drag the stage.</div>
+    </div>
+  </div>
+
+  <!-- Pages modal -->
+  <div class="modal-overlay" id="pagesModal">
+    <div class="modal">
+      <div class="modal-header">
+        Pages
+        <div class="spacer"></div>
+        <button id="pagesModalCloseBtn" title="Close">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-list-col">
+          <div class="modal-list-toolbar">
+            <button id="addPageBtn">+ Add Page</button>
+          </div>
+          <div id="pageModalList"></div>
+        </div>
+        <div class="modal-props-col" id="pageModalProps"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="pagesModalDoneBtn" class="primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal (replaces browser confirm()) -->
+  <div class="modal-overlay" id="confirmModal" style="z-index:600;">
+    <div class="modal" style="width:380px;">
+      <div class="modal-header">
+        <span id="confirmTitle">Confirm</span>
+        <div class="spacer"></div>
+      </div>
+      <div style="padding:16px 20px 8px;">
+        <p id="confirmMessage" style="margin:0;font-size:14px;line-height:1.6;color:var(--text);"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="confirmCancelBtn">Cancel</button>
+        <button id="confirmOkBtn" class="danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Properties modal -->
+  <div class="modal-overlay" id="devicePropsModal">
+    <div class="modal" style="width:460px;">
+      <div class="modal-header">
+        Device Properties
+        <div class="spacer"></div>
+        <button id="devicePropsCloseBtn" title="Cancel">&#x2715;</button>
+      </div>
+      <div style="padding:20px 24px 4px;">
+
+        <!-- File info (read-only) -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:18px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">File on Disk</div>
+          <div style="display:grid;grid-template-columns:80px 1fr;gap:5px 10px;font-size:13px;">
+            <span style="color:var(--muted);">Filename</span>
+            <span id="dpFilename" style="color:var(--text);font-family:monospace;font-size:12px;word-break:break-all;"></span>
+            <span style="color:var(--muted);">Folder</span>
+            <span id="dpFolder" style="color:var(--text);font-family:monospace;font-size:12px;word-break:break-all;"></span>
+          </div>
+        </div>
+
+        <!-- Editable settings -->
+        <div class="ndm-row">
+          <label>Device Name</label>
+          <input type="text" id="dpName" autocomplete="off">
+        </div>
+        <div class="ndm-row">
+          <label>Canvas Size</label>
+          <select id="dpPreset">
+            <option value="1024x768">1024 × 768 — iPad Air / landscape tablet</option>
+            <option value="1280x800">1280 × 800 — Lenovo / wide tablet</option>
+            <option value="1920x1080">1920 × 1080 — Full HD</option>
+            <option value="1366x768">1366 × 768 — Laptop / HD TV</option>
+            <option value="800x480">800 × 480 — Small touch panel</option>
+            <option value="800x600">800 × 600 — Classic panel</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <div class="ndm-custom" id="dpCustomRow">
+            <input type="number" id="dpW" placeholder="Width"  min="100" max="7680">
+            <span>×</span>
+            <input type="number" id="dpH" placeholder="Height" min="100" max="4320">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+          <div class="ndm-row">
+            <label>Default Page</label>
+            <select id="dpDefaultPage"></select>
+          </div>
+          <div class="ndm-row">
+            <label>Return to Default (seconds, 0 = off)</label>
+            <input type="number" id="dpReturnDefault" min="0" max="3600" step="1">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="devicePropsCancelBtn">Cancel</button>
+        <button id="devicePropsSaveBtn" class="primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Device modal -->
+  <div class="modal-overlay" id="newDeviceModal">
+    <div class="modal" style="width:400px;">
+      <div class="modal-header">
+        New Device
+        <div class="spacer"></div>
+        <button id="newDeviceCloseBtn" title="Cancel">&#x2715;</button>
+      </div>
+      <div style="padding:20px 24px 8px;">
+        <div class="ndm-row">
+          <label>Device Name</label>
+          <input type="text" id="ndmName" placeholder="e.g. My Dashboard" autocomplete="off">
+        </div>
+        <div class="ndm-row">
+          <label>Canvas Size</label>
+          <select id="ndmPreset">
+            <option value="1024x768">1024 × 768 — iPad Air / landscape tablet</option>
+            <option value="1280x800">1280 × 800 — Lenovo / wide tablet</option>
+            <option value="1920x1080">1920 × 1080 — Full HD</option>
+            <option value="1366x768">1366 × 768 — Laptop / HD TV</option>
+            <option value="800x480">800 × 480 — Small touch panel</option>
+            <option value="800x600">800 × 600 — Classic panel</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <div class="ndm-custom" id="ndmCustomRow">
+            <input type="number" id="ndmW" placeholder="Width" min="100" max="7680" value="1024">
+            <span>×</span>
+            <input type="number" id="ndmH" placeholder="Height" min="100" max="4320" value="768">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="newDeviceCancelBtn">Cancel</button>
+        <button id="newDeviceCreateBtn" class="primary">Create Device</button>
+      </div>
     </div>
   </div>
 
