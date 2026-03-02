@@ -83,7 +83,6 @@ config/
   "device": {
     "name": "Kitchen Tablet",
     "canvas": { "width": 1024, "height": 768 },
-    "orientation": "portrait",    
     "default_page": 1,
     "return_to_default": 60
   },
@@ -119,7 +118,6 @@ config/
 | `name` | Human readable label for this device |
 | `canvas.width` | Design width in pixels |
 | `canvas.height` | Design height in pixels |
-| `orientation` | portrait or landscape |
 | `default_page` | Page ID to show on load and return to after inactivity |
 | `return_to_default` | Seconds of inactivity before returning to default page |
 
@@ -127,7 +125,7 @@ config/
 
 ## Theming
 
-Colors are defined as named tokens in the `theme.colors` block. Any widget property that accepts a color can use either a token name (`"primary"`) or a literal hex value (`"#8ADF45"`). Tokens are resolved at render time.
+Common colors are defined as named tokens in the `theme.colors` block. Any widget property that accepts a color can use either a token name (`"primary"`) or a literal hex value (`"#8ADF45"`). Tokens are resolved at render time.
 
 **Default tokens:**
 
@@ -177,43 +175,13 @@ Use `[mdi:icon-name]` syntax anywhere in label `text` or button `icon_on`/`icon_
 
 ```json
 "text":     "[mdi:fire] Heating"
-"text":     "[mdi:lightbulb-outline] Living Room  •  3 lights on"
+"text":     "[mdi:lightbulb-outline] Living Room : 3 lights on"
 "text":     "[mdi:solar-panel] 1.4 kW"
 "icon_off": "[mdi:lightbulb-outline]"
 "icon_on":  "[mdi:lightbulb]"
 ```
 
 Icons and text can be freely mixed in a single string. The icon name matches the MDI name exactly - the same name you'd use in a HA entity `icon:` field.
-
-**Common home automation icons:**
-
-| Name | Use |
-|------|-----|
-| `mdi:lightbulb` / `mdi:lightbulb-outline` | Light on / off |
-| `mdi:lightning-bolt` | Power / electricity |
-| `mdi:solar-panel` / `mdi:solar-power` | Solar |
-| `mdi:home-battery` | Battery storage |
-| `mdi:battery` / `mdi:battery-outline` | Battery level |
-| `mdi:thermometer` | Temperature |
-| `mdi:fire` / `mdi:fireplace` | Heating |
-| `mdi:heat-pump` | Heat pump |
-| `mdi:snowflake` / `mdi:air-conditioner` | Cooling |
-| `mdi:fan` / `mdi:fan-off` | Fan |
-| `mdi:water-percent` | Humidity |
-| `mdi:weather-sunny` / `mdi:weather-night` | Sun / moon |
-| `mdi:transmission-tower` | Grid import/export |
-| `mdi:power-plug` / `mdi:power-plug-off` | Smart plug |
-| `mdi:cctv` | Camera |
-| `mdi:motion-sensor` | Motion sensor |
-| `mdi:door-open` / `mdi:door-closed` | Door sensor |
-| `mdi:lock` / `mdi:lock-open` | Lock |
-| `mdi:garage` / `mdi:garage-open` | Garage door |
-| `mdi:car-electric` / `mdi:ev-station` | EV / charger |
-| `mdi:robot-vacuum` | Robot vacuum |
-| `mdi:smoke-detector` | Smoke detector |
-| `mdi:bell` / `mdi:bell-off` | Notifications |
-| `mdi:power` | Power toggle |
-| `mdi:cog` / `mdi:tune` | Settings |
 
 Full icon library: https://pictogrammers.com/library/mdi/
 
@@ -231,21 +199,21 @@ Regular spaces work fine in plain text. However flex rendering collapses spaces 
 
 `&amp;`, `&lt;`, `&gt;`, and `&quot;` are also supported.
 
-## Actions
+## Actions : Still to be tested!!!
 
 Any tappable widget can have an `action` property. Three types are supported:
 
-### Navigate to a page
+### Navigate to a page : Still to be tested!!!
 ```json
 "action": { "type": "navigate", "page": 2 }
 ```
 
-### Trigger an automation
+### Trigger an automation : Still to be tested!!!
 ```json
 "action": { "type": "automation", "entity_id": "automation.good_night" }
 ```
 
-### Call a service
+### Call a service : Still to be tested!!!
 ```json
 "action": { "type": "service", "service": "light.turn_on", "entity_id": "light.kitchen" }
 ```
@@ -262,7 +230,7 @@ With optional service data:
 
 ---
 
-## Visibility Conditions
+## Visibility Conditions : Still to be tested!!!!
 
 Any widget can be shown or hidden based on an entity's state:
 
@@ -270,14 +238,16 @@ Any widget can be shown or hidden based on an entity's state:
 "visible": { "entity": "sensor.solar_power", "type": "above", "value": 0 }
 ```
 
-| Type | Behaviour |
-|------|-----------|
-| `above` | Show when entity state > value |
-| `below` | Show when entity state < value |
-| `equals` | Show when entity state == value |
-| `not_equals` | Show when entity state != value |
+| Type | Behaviour | Note |
+|------|-----------|------|
+| `above` | Show when entity state > value | Numeric Comparison |
+| `below` | Show when entity state < value | Numeric Comparison |
+| `equals` | Show when entity state == value | Text Comparison |
+| `not_equals` | Show when entity state != value | Text Comparison |
 
 The widget updates live as the entity state changes.
+The entity is entirely separate from the widget's own entity. You can show/hide a solar label based on a switch state, or hide a heating widget based on a completely unrelated temperature sensor. No relationship required.
+Note : Attributes are not currently supported.
 
 ---
 
