@@ -19,7 +19,7 @@ var locked = {};
 var treeFilter = '';
 var snapEnabled = true;
 var panEnabled = false;
-var gridSize = 8;
+var gridSize = 4;
 var undoStack = [];
 var redoStack = [];
 var MAX_UNDO = 50;
@@ -385,7 +385,23 @@ function setupStage() {
     borderStroke: '#8ADF45',
     borderStrokeWidth: 1,
     anchorFill: '#8ADF45',
-    anchorStroke: '#0b1a05'
+    anchorStroke: '#0b1a05',
+    boundBoxFunc: function (oldBox, newBox) {
+      // boundBoxFunc operates in absolute stage coordinates (includes zoom/pan).
+      // Convert to canvas coords, snap to grid, convert back.
+      if (!snapEnabled) return newBox;
+      var sc = stage.scaleX();
+      var ox = stage.x();
+      var oy = stage.y();
+      var s  = gridSize * sc;
+      return {
+        x:        Math.round((newBox.x - ox) / s) * s + ox,
+        y:        Math.round((newBox.y - oy) / s) * s + oy,
+        width:    Math.max(s, Math.round(newBox.width  / s) * s),
+        height:   Math.max(s, Math.round(newBox.height / s) * s),
+        rotation: newBox.rotation
+      };
+    }
   });
   uiLayer.add(transformer);
 
@@ -494,12 +510,14 @@ function wireSelect(group, w) {
     pushHistory();
     var scaleX = group.scaleX();
     var scaleY = group.scaleY();
-    var newW = rect.width() * scaleX;
+    var newW = rect.width()  * scaleX;
     var newH = rect.height() * scaleY;
 
+    // boundBoxFunc already snapped during drag; snap here too as a safety net
+    // when snap is enabled (catches any floating-point residuals).
     if (snapEnabled) {
-      newW = Math.max(4, Math.round(newW / gridSize) * gridSize);
-      newH = Math.max(4, Math.round(newH / gridSize) * gridSize);
+      newW = Math.max(gridSize, Math.round(newW / gridSize) * gridSize);
+      newH = Math.max(gridSize, Math.round(newH / gridSize) * gridSize);
     }
 
     rect.width(newW);
@@ -510,6 +528,12 @@ function wireSelect(group, w) {
       group._label.width(Math.max(0, newW - 12));
     }
 
+    // Konva repositions the group for non-bottom-right anchors (e.g. top and
+    // left handles move group.x / group.y to keep the opposite edge fixed).
+    // Always sync position back to the widget config so renderPage() restores
+    // the correct location.
+    w.x = Math.round(group.x());
+    w.y = Math.round(group.y());
     w.w = Math.round(newW);
     w.h = Math.round(newH);
     updateProps(propsEl, w, onPropChange, onDeleteSelected, onDuplicateSelected, undefined, config.theme);
