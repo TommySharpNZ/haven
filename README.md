@@ -39,15 +39,15 @@ Written in vanilla ES5 JavaScript with no framework dependencies, HAven tries re
 
 ## Installation
 
-1. Copy the `webhasp/` folder into your Home Assistant `config/www/` directory
-2. Navigate to `http://your-ha-ip:8123/local/webhasp/index.html?device=example`
+1. Copy the `haven/` folder into your Home Assistant `config/www/` directory
+2. Navigate to `http://your-ha-ip:8123/local/haven/index.html?device=example`
 3. On first load, enter your HA URL and a Long-Lived Access Token when prompted
 4. Edit `devices/example.json` or create your own device config files
 
 ```
 config/
   www/
-    webhasp/
+    haven/
       index.html
       app.js
       style.css
@@ -164,7 +164,7 @@ Pages can have a background image:
 
 | Property | Values | Description |
 |----------|--------|-------------|
-| `background_image` | path or URL | Relative paths resolve from the webhasp folder |
+| `background_image` | path or URL | Relative paths resolve from the haven folder |
 | `background_image_opacity` | 0.0–1.0 | 1.0 = full brightness, 0.1 = very subtle |
 | `background_image_fit` | `cover` (default), `contain` | How the image fills the canvas |
 
@@ -172,7 +172,7 @@ Pages can have a background image:
 
 ## Icons
 
-WebHASP uses [Material Design Icons](https://pictogrammers.com/library/mdi/) (MDI), bundled locally - no internet required. MDI is the same icon set used by Home Assistant's own UI, so names are already familiar if you've written HA config YAML.
+HAven uses [Material Design Icons](https://pictogrammers.com/library/mdi/) (MDI), bundled locally - no internet required. MDI is the same icon set used by Home Assistant's own UI, so names are already familiar if you've written HA config YAML.
 
 Use `[mdi:icon-name]` syntax anywhere in label `text` or button `icon_on`/`icon_off` fields:
 
@@ -617,7 +617,7 @@ Displays a static image from a URL or local path. Optionally opens fullscreen on
 
 | Property | Description |
 |----------|-------------|
-| `url` | Image URL or path relative to webhasp folder |
+| `url` | Image URL or path relative to haven folder |
 | `fit` | `cover` (default, may crop) or `contain` (letterbox) |
 | `fullscreen_on_tap` | `true` to open fullscreen overlay on tap |
 | `radius` | Corner radius in px |
@@ -671,7 +671,7 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
 {
   "type": "camera",
   "preview": "url",
-  "url": "https://192.168.1.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=webhasp&user=guest&password=yourpassword",
+  "url": "https://192.168.1.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=haven&user=guest&password=yourpassword",
   "refresh_interval": 5000,
   "stream_entity": "camera.front_door"
 }
@@ -801,7 +801,7 @@ If you define a page with `"id": 0`, it renders once as a persistent overlay and
 
 ## Credentials & Security
 
-WebHASP looks for HA credentials in this order:
+HAven looks for HA credentials in this order:
 
 1. **localStorage** (per device) - set via the setup screen on first run, persists across reloads
 2. **Device config file** - `ha.url` and `ha.token` in the device JSON (convenient for initial setup)
@@ -821,8 +821,8 @@ WebHASP looks for HA credentials in this order:
 
 **Resetting credentials** - open the browser console on the device and run:
 ```javascript
-localStorage.removeItem('webhasp_url');
-localStorage.removeItem('webhasp_token');
+localStorage.removeItem('haven_url');
+localStorage.removeItem('haven_token');
 location.reload();
 ```
 
@@ -840,7 +840,7 @@ A small dot in the bottom-right corner of the screen shows WebSocket state:
 
 ## Internal Entities
 
-WebHASP exposes a few internal entities you can bind to widgets just like HA entities:
+HAven exposes a few internal entities you can bind to widgets just like HA entities:
 
 - `internal.connectionstatus` - `connected`, `connecting`, `disconnected`
 - `internal.currentdtm` - current datetime (ISO string), updates once per minute
@@ -859,7 +859,7 @@ Example (icon + time):
 
 ## Visual Designer
 
-WebHASP includes a drag-and-drop visual designer at `designer.html` for building device configs without hand-editing JSON.
+HAven includes a drag-and-drop visual designer at `designer.html` for building device configs without hand-editing JSON.
 
 ### Opening a config
 
@@ -956,6 +956,6 @@ Click **Preview** to open a live preview iframe next to the canvas. The preview 
 - [x] Visual drag-and-drop designer with undo/redo, preview, page management, and image upload
 
 **Coming**
-- [ ] HA event-triggered page navigation (fire `webhasp_command` from automations)
+- [ ] HA event-triggered page navigation (fire `haven_command` from automations)
 - [ ] Screensaver / idle screen dimming
 - [ ] HACS frontend distribution

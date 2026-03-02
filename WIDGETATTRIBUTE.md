@@ -1,4 +1,4 @@
-# WebHASP — Widget Attribute Matrix
+# HAven — Widget Attribute Matrix
 
 Quick reference for which attributes apply to each widget type, and which can be set via **conditional overrides**.
 

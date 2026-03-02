@@ -110,7 +110,7 @@ init();
 
 function init() {
   var device = getDeviceFromQuery();
-  var last = localStorage.getItem('webhasp_designer_last_device');
+  var last = localStorage.getItem('haven_designer_last_device');
   if (device && device !== 'test-designer') {
     loadDevice(device);
   } else if (last) {
@@ -288,7 +288,7 @@ async function pickDeviceFile() {
 
     var name = file.name.replace(/\.json$/i, '');
     currentDevice = name;
-    try { localStorage.setItem('webhasp_designer_last_device', name); } catch (e) {}
+    try { localStorage.setItem('haven_designer_last_device', name); } catch (e) {}
 
     config = data;
     currentPageId = config.device.default_page || 1;
@@ -923,7 +923,7 @@ async function pickBackgroundImage(page, inputEl, thumbEl) {
         setStatus('Set to images/' + file.name + ' — copy the file to your images/ folder manually', true);
         return;
       }
-      setStatus('Select your webhasp images/ folder…', false);
+      setStatus('Select your haven images/ folder…', false);
       try {
         imagesDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       } catch (err) {
@@ -1695,10 +1695,10 @@ function buildPreviewHtml() {
     '<html><head>',
     '<meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
-    '<title>WebHASP Preview</title>',
-    '<script>window.WEBHASP_PREVIEW = true;</script>',
-    '<script>window.WEBHASP_OVERRIDE_CONFIG = ' + payload + ';</script>',
-    '<script>window.WEBHASP_OVERRIDE_PAGE = ' + Number(currentPageId) + ';</script>',
+    '<title>HAven Preview</title>',
+    '<script>window.HAVEN_PREVIEW = true;</script>',
+    '<script>window.HAVEN_OVERRIDE_CONFIG = ' + payload + ';</script>',
+    '<script>window.HAVEN_OVERRIDE_PAGE = ' + Number(currentPageId) + ';</script>',
     '<link rel="stylesheet" href="style.css?v=' + v + '">',
     '<link rel="stylesheet" href="fonts/materialdesignicons.css?v=' + v + '">',
     '</head><body>',

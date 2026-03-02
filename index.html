@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>WebHASP</title>
+  <title>HAven</title>
 
   <!-- Version stamp - bump this to bust browser cache on all devices -->
-  <script>var WEBHASP_VERSION = '0.6.8';</script>
+  <script>var HAVEN_VERSION = '0.6.8';</script>
 
   <!-- Assets loaded with version query string for cache busting -->
   <script>
     (function() {
-      var v = '?v=' + WEBHASP_VERSION;
+      var v = '?v=' + HAVEN_VERSION;
       var css = document.createElement('link');
       css.rel = 'stylesheet';
       css.href = 'style.css' + v;
@@ -31,7 +31,7 @@
   <!-- Setup overlay - shown when no credentials are stored -->
   <div id="setup-overlay" class="hidden">
     <div id="setup-box">
-      <div id="setup-logo">WebHASP</div>
+      <div id="setup-logo">HAven</div>
       <p>Enter your Home Assistant details to get started.</p>
       <label>Home Assistant URL
         <input type="text" id="setup-url" placeholder="http://homeassistant.local:8123" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -61,7 +61,7 @@
   <script>
     (function() {
       var s = document.createElement('script');
-      s.src = 'app.js?v=' + WEBHASP_VERSION;
+      s.src = 'app.js?v=' + HAVEN_VERSION;
       document.body.appendChild(s);
     })();
   </script>

@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   WebHASP - app.js
+   HAven - app.js
    Pure vanilla JS, ES5-compatible for maximum browser support.
    No frameworks, no build tools, no dependencies.
    ============================================================ */
@@ -30,27 +30,27 @@
 
   // ---- Init -------------------------------------------------
   function init() {
-    if (window.WEBHASP_OVERRIDE_CONFIG) {
-      console.log('WebHASP preview: override config detected');
-      console.log('WebHASP preview: override page =', window.WEBHASP_OVERRIDE_PAGE);
-      config = window.WEBHASP_OVERRIDE_CONFIG;
+    if (window.HAVEN_OVERRIDE_CONFIG) {
+      console.log('HAven preview: override config detected');
+      console.log('HAven preview: override page =', window.HAVEN_OVERRIDE_PAGE);
+      config = window.HAVEN_OVERRIDE_CONFIG;
       applyConfig(config, true);
       return;
     }
-    haUrl   = localStorage.getItem('webhasp_url')   || '';
-    haToken = localStorage.getItem('webhasp_token') || '';
+    haUrl   = localStorage.getItem('haven_url')   || '';
+    haToken = localStorage.getItem('haven_token') || '';
 
-    console.log('WebHASP init: url=' + haUrl + ' tokenLength=' + haToken.length);
+    console.log('HAven init: url=' + haUrl + ' tokenLength=' + haToken.length);
 
     if (!haUrl || !haToken) {
       // No localStorage credentials - try loading config file anyway
       // in case it has ha.url and ha.token defined
-      console.log('WebHASP init: no localStorage credentials, checking device config');
+      console.log('HAven init: no localStorage credentials, checking device config');
       loadConfigForCredentials();
       return;
     }
 
-    console.log('WebHASP init: credentials found, loading config');
+    console.log('HAven init: credentials found, loading config');
     loadConfig();
   }
 
@@ -63,12 +63,12 @@
 
     fetchJson(configUrl, function(err, data) {
       if (err) {
-        console.log('WebHASP init: config fetch error: ' + err);
+        console.log('HAven init: config fetch error: ' + err);
         showSetup();
         return;
       }
       if (!data) {
-        console.log('WebHASP init: config fetch returned no data');
+        console.log('HAven init: config fetch returned no data');
         showSetup();
         return;
       }
@@ -76,17 +76,17 @@
       var credUrl   = (data.ha && data.ha.url)     || (data.device && data.device.ha_url)   || '';
       var credToken = (data.ha && data.ha.token)   || (data.device && data.device.ha_token) || '';
 
-      console.log('WebHASP init: config loaded, credUrl=' + credUrl + ' credTokenLength=' + credToken.length);
+      console.log('HAven init: config loaded, credUrl=' + credUrl + ' credTokenLength=' + credToken.length);
 
       if (credUrl && credToken) {
-        console.log('WebHASP init: credentials found in device config');
+        console.log('HAven init: credentials found in device config');
         haUrl   = credUrl;
         haToken = credToken;
-        localStorage.setItem('webhasp_url',   haUrl);
-        localStorage.setItem('webhasp_token', haToken);
+        localStorage.setItem('haven_url',   haUrl);
+        localStorage.setItem('haven_token', haToken);
         loadConfig();
       } else {
-        console.log('WebHASP init: no credentials in config, showing setup');
+        console.log('HAven init: no credentials in config, showing setup');
         showSetup();
       }
     });
@@ -113,8 +113,8 @@
       if (!url) { errorEl.textContent = 'Please enter your Home Assistant URL.'; return; }
       if (!token) { errorEl.textContent = 'Please enter your access token.'; return; }
 
-      localStorage.setItem('webhasp_url', url);
-      localStorage.setItem('webhasp_token', token);
+      localStorage.setItem('haven_url', url);
+      localStorage.setItem('haven_token', token);
 
       // Hard reload for cleanest possible startup with new credentials
       window.location.reload();
@@ -131,13 +131,13 @@
       loadConfigFromUrl(base + 'devices/' + deviceParam + '.json?v=' + getConfigCacheBuster(), deviceParam);
     } else {
       // No device specified - try default.json, fall back to landing page
-      console.log('WebHASP: no device specified, trying default.json');
+      console.log('HAven: no device specified, trying default.json');
       fetchJson(base + 'devices/default.json?v=' + getConfigCacheBuster(), function(err, data) {
         if (!err && data) {
-          console.log('WebHASP: default.json found, loading');
+          console.log('HAven: default.json found, loading');
           applyConfig(data);
         } else {
-          console.log('WebHASP: no default.json found, showing landing page');
+          console.log('HAven: no default.json found, showing landing page');
           showLandingPage(base);
         }
       });
@@ -145,7 +145,7 @@
   }
 
   function loadConfigFromUrl(configUrl, deviceParam) {
-    console.log('WebHASP loadConfig: fetching ' + configUrl);
+    console.log('HAven loadConfig: fetching ' + configUrl);
     fetchJson(configUrl, function (err, data) {
       if (err) {
         showFatalError('Could not load device config: devices/' + deviceParam + '.json\n' + err);
@@ -156,7 +156,7 @@
   }
 
   function applyConfig(data, isPreview) {
-    console.log('WebHASP loadConfig: success, hiding setup overlay');
+    console.log('HAven loadConfig: success, hiding setup overlay');
     var overlay = document.getElementById('setup-overlay');
     if (overlay) overlay.classList.add('hidden');
     config = data;
@@ -165,9 +165,9 @@
     renderPage0();   // persistent overlay - renders once, never cleared
     var startPage = config.device.default_page || 1;
     var pageParam = parseInt(getUrlParam('page'), 10);
-    if (window.WEBHASP_OVERRIDE_PAGE !== undefined && window.WEBHASP_OVERRIDE_PAGE !== null) {
-      console.log('WebHASP preview: using override page', window.WEBHASP_OVERRIDE_PAGE);
-      pageParam = parseInt(window.WEBHASP_OVERRIDE_PAGE, 10);
+    if (window.HAVEN_OVERRIDE_PAGE !== undefined && window.HAVEN_OVERRIDE_PAGE !== null) {
+      console.log('HAven preview: using override page', window.HAVEN_OVERRIDE_PAGE);
+      pageParam = parseInt(window.HAVEN_OVERRIDE_PAGE, 10);
     }
     if (pageParam) {
       for (var pi = 0; pi < config.pages.length; pi++) {
@@ -195,7 +195,7 @@
     landing.id = 'landing';
     landing.innerHTML = [
       '<div class="landing-inner">',
-      '  <div class="landing-logo">WebHASP</div>',
+      '  <div class="landing-logo">HAven</div>',
       '  <div class="landing-tagline">Browser-based Home Assistant Dashboard</div>',
       '  <div class="landing-divider"></div>',
       '  <div class="landing-section">',
@@ -205,7 +205,7 @@
       '  </div>',
       '  <div class="landing-section">',
       '    <div class="landing-label">Device configs live here</div>',
-      '    <div class="landing-hint"><code>config/www/webhasp/devices/your-device-name.json</code></div>',
+      '    <div class="landing-hint"><code>config/www/haven/devices/your-device-name.json</code></div>',
       '  </div>',
       '  <div class="landing-section">',
       '    <div class="landing-label">Shortcut</div>',
@@ -365,7 +365,7 @@
     }
     if (pageConfig && pageConfig.background_image) {
       var imgUrl = pageConfig.background_image;
-      // Relative paths resolved against webhasp root
+      // Relative paths resolved against haven root
       if (imgUrl.indexOf('http') !== 0) {
         var base = window.location.pathname.replace(/\/[^\/]*$/, '/');
         imgUrl = base + imgUrl;
@@ -2329,15 +2329,15 @@
         ws.send(JSON.stringify(payload));
       }
     } catch(e) {
-      console.warn('WebHASP: wsSend failed:', e.message);
+      console.warn('HAven: wsSend failed:', e.message);
     }
   }
 
   function handleWsMessage(msg) {
-    console.log('WebHASP WS:', msg.type);
+    console.log('HAven WS:', msg.type);
     switch (msg.type) {
       case 'auth_required':
-        console.log('WebHASP: authenticating, token length:', haToken.length);
+        console.log('HAven: authenticating, token length:', haToken.length);
         wsSend({ type: 'auth', access_token: haToken });
         break;
 
@@ -2350,7 +2350,7 @@
       case 'auth_invalid':
         // Do NOT clear the token - it may be a stale socket issue
         // Just log and show setup so user can retry
-        console.warn('WebHASP: auth_invalid received');
+        console.warn('HAven: auth_invalid received');
         setConnStatus('disconnected');
         showSetup();
         break;
@@ -2507,7 +2507,7 @@
     canvas.style.background = '#1a0a0a';
     var err = document.createElement('div');
     err.style.cssText = 'color:#D9534F;padding:20px;font-size:14px;white-space:pre-wrap;';
-    err.textContent = '⚠ WebHASP Error\n\n' + msg;
+    err.textContent = '⚠ HAven Error\n\n' + msg;
     canvas.appendChild(err);
   }
 

@@ -1,6 +1,6 @@
-# WebHASP Designer
+# HAven Designer
 
-A visual drag-and-drop editor for WebHASP device configs. Lives in `designer.html` alongside the main dashboard files - no separate install, no build tools, same static file philosophy as the rest of WebHASP.
+A visual drag-and-drop editor for HAven device configs. Lives in `designer.html` alongside the main dashboard files - no separate install, no build tools, same static file philosophy as the rest of HAven.
 
 ---
 
