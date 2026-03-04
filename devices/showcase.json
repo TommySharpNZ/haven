@@ -6,7 +6,7 @@
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
   },
   "device": {
-    "name": "HAven Showcase",
+    "name": "WebHASP Showcase",
     "canvas": {
       "width": 800,
       "height": 480
@@ -42,7 +42,7 @@
           "y": 60,
           "w": 800,
           "h": 80,
-          "text": "HAven",
+          "text": "WebHASP",
           "font_size": 72,
           "align": "center",
           "color": "primary",
@@ -210,7 +210,7 @@
           "y": 118,
           "w": 340,
           "h": 40,
-          "text": "Hello, HAven!",
+          "text": "Hello, WebHASP!",
           "font_size": 28,
           "align": "left",
           "color": "text",
@@ -1008,7 +1008,7 @@
           "y": 284,
           "w": 736,
           "h": 22,
-          "text": "Optional: add \"background\" to override the default grey track. Thresholds color the fill.",
+          "text": "Optional: add \"track_color\" to override the default grey track. Thresholds color the fill.",
           "font_size": 13,
           "align": "left",
           "color": "text_muted",

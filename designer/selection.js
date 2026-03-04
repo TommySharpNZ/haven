@@ -69,6 +69,8 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
   }
 
   var w = selection[0];
+  addRawJsonButton(container, w, onChange);
+
   var header = document.createElement('div');
   header.className = 'prop';
   header.innerHTML = '<strong>' + (w.id || '(no id)') + '</strong> <span class="meta">' + (w.type || 'unknown') + '</span>';
@@ -94,13 +96,10 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
   addXYWHRow(container, w, onChange);
 
   if (w.type === 'label') {
-    addCheckbox(container, 'visible', w.visible !== false, function(checked) {
-      onChange('visible', checked ? undefined : false);
-    });
-
     addSectionHeader(container, 'Content');
     addText(container, 'text', w.text, onChange);
     addText(container, 'entity', w.entity, onChange);
+    addText(container, 'entity_attribute', w.entity_attribute, onChange);
     addText(container, 'entity2', w.entity2, onChange);
     addSelect(container, 'format', w.format,
       ['', 'power', 'power_abs', 'power_prefix', 'kwh', 'percent',
@@ -129,9 +128,60 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addOverridesButton(container, w, onChange);
   }
 
-  if (w.type === 'rectangle' || w.type === 'button') {
+  if (w.type === 'rectangle') {
+    addSectionHeader(container, 'Content');
     addText(container, 'background', w.background, onChange);
     addNumber(container, 'radius', w.radius, onChange);
+    addJsonObjectButton(container, 'Gradient', w, 'gradient', onChange);
+    addSectionHeader(container, 'Action');
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
+    addOverridesButton(container, w, onChange);
+  }
+
+  if (w.type === 'button') {
+    addSectionHeader(container, 'Content');
+    addText(container, 'label', w.label, onChange);
+    addText(container, 'icon', w.icon, onChange);
+    addText(container, 'entity', w.entity, onChange);
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); }),
+      'radius',     makeNumberInput(w.radius,    function(v) { onChange('radius', v); })
+    );
+    addPairRow(container,
+      'icon_color',  makeTextInput(w.icon_color,  function(v) { onChange('icon_color', v); }),
+      'label_color', makeTextInput(w.label_color, function(v) { onChange('label_color', v); })
+    );
+    addPairRow(container,
+      'icon_size',  makeNumberInput(w.icon_size,  function(v) { onChange('icon_size', v); }),
+      'label_size', makeNumberInput(w.label_size, function(v) { onChange('label_size', v); })
+    );
+    addPairRow(container,
+      'gap',     makeNumberInput(w.gap,     function(v) { onChange('gap', v); }),
+      'padding', makeNumberInput(w.padding, function(v) { onChange('padding', v); })
+    );
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Action');
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
+    addOverridesButton(container, w, onChange);
+  }
+
+  if (w.type === 'image') {
+    addSectionHeader(container, 'Source');
+    addText(container, 'url', w.url, onChange);
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'entity_attribute', w.entity_attribute, onChange);
+    addSelect(container, 'fit', w.fit, ['cover', 'contain', 'stretch'], onChange);
+    addCheckbox(container, 'fullscreen_on_tap', !!w.fullscreen_on_tap, function(checked) {
+      onChange('fullscreen_on_tap', checked ? true : undefined);
+    });
+
+    addSectionHeader(container, 'Appearance');
+    addNumber(container, 'radius', w.radius, onChange);
+    addJsonObjectButton(container, 'Gradient', w, 'gradient', onChange);
+    addNumber(container, 'opacity', w.opacity, onChange);
   }
 
   if (w.type === 'bar') {
@@ -179,6 +229,71 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     );
 
     addThresholdsButton(container, w, onChange);
+    addOverridesButton(container, w, onChange);
+  }
+
+  if (w.type === 'slider') {
+    addSectionHeader(container, 'Data');
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'value_attribute', w.value_attribute, onChange);
+    addPairRow(container,
+      'min', makeNumberInput(w.min, function(v) { onChange('min', v); }),
+      'max', makeNumberInput(w.max, function(v) { onChange('max', v); })
+    );
+    addPairRow(container,
+      'step', makeNumberInput(w.step, function(v) { onChange('step', v); }),
+      'orientation', makeSelectInput(w.orientation, ['horizontal', 'vertical'], function(v) { onChange('orientation', v); })
+    );
+    addSelect(container, 'update_mode', w.update_mode, ['release', 'drag'], onChange);
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'color', makeTextInput(w.color, function(v) { onChange('color', v); }),
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); })
+    );
+    addPairRow(container,
+      'thumb_color', makeTextInput(w.thumb_color, function(v) { onChange('thumb_color', v); }),
+      'thumb_size', makeNumberInput(w.thumb_size, function(v) { onChange('thumb_size', v); })
+    );
+    addNumber(container, 'radius', w.radius, onChange);
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
+    addOverridesButton(container, w, onChange);
+  }
+
+  if (w.type === 'scene') {
+    addSectionHeader(container, 'Data');
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'value_attribute', w.value_attribute, onChange);
+    addSelect(container, 'layout', w.layout, ['buttons', 'dropdown', 'picker'], onChange);
+    addJsonArrayButton(container, 'Options', w, 'options', onChange);
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); }),
+      'option_background', makeTextInput(w.option_background, function(v) { onChange('option_background', v); })
+    );
+    addPairRow(container,
+      'option_color', makeTextInput(w.option_color, function(v) { onChange('option_color', v); }),
+      'selected_background', makeTextInput(w.selected_background, function(v) { onChange('selected_background', v); })
+    );
+    addPairRow(container,
+      'selected_color', makeTextInput(w.selected_color, function(v) { onChange('selected_color', v); }),
+      'option_radius', makeNumberInput(w.option_radius, function(v) { onChange('option_radius', v); })
+    );
+    addPairRow(container,
+      'option_size', makeNumberInput(w.option_size, function(v) { onChange('option_size', v); }),
+      'option_gap', makeNumberInput(w.option_gap, function(v) { onChange('option_gap', v); })
+    );
+    addPairRow(container,
+      'padding', makeNumberInput(w.padding, function(v) { onChange('padding', v); }),
+      'placeholder', makeTextInput(w.placeholder, function(v) { onChange('placeholder', v); })
+    );
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Action');
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
   }
 }
@@ -399,6 +514,52 @@ function addThresholdsButton(container, w, onChange) {
   container.appendChild(row);
 }
 
+function addJsonObjectButton(container, label, w, key, onChange) {
+  var row = document.createElement('div');
+  row.className = 'prop';
+  var btn = document.createElement('button');
+  btn.textContent = w[key] ? ('Edit ' + label) : ('Add ' + label);
+  btn.style.width = '100%';
+  btn.addEventListener('click', function() {
+    openJsonObjectModal(label, w, key, onChange);
+  });
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+
+function addJsonArrayButton(container, label, w, key, onChange) {
+  var row = document.createElement('div');
+  row.className = 'prop';
+  var count = (w[key] && w[key].length) ? w[key].length : 0;
+  var btn = document.createElement('button');
+  btn.textContent = count ? ('Edit ' + label + ' (' + count + ')') : ('Add ' + label);
+  btn.style.width = '100%';
+  btn.addEventListener('click', function() {
+    openJsonArrayModal(label, w, key, onChange);
+  });
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+
+function addRawJsonButton(container, w, onChange) {
+  var row = document.createElement('div');
+  row.className = 'prop';
+  row.style.display = 'flex';
+  row.style.justifyContent = 'flex-end';
+
+  var btn = document.createElement('button');
+  btn.innerHTML = '<span class="fa-icon">&#xf121;</span>&nbsp;Raw JSON';
+  btn.style.display = 'inline-flex';
+  btn.style.alignItems = 'center';
+  btn.style.gap = '6px';
+  btn.addEventListener('click', function() {
+    openRawWidgetJsonModal(w, onChange);
+  });
+
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+
 function openJsonArrayModal(heading, w, key, onChange) {
   var backdrop = document.createElement('div');
   backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
@@ -412,7 +573,7 @@ function openJsonArrayModal(heading, w, key, onChange) {
   var title = document.createElement('div');
   title.innerHTML = '<strong>' + heading + '</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
   var closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
+  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
   closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
   hdr.appendChild(title);
   hdr.appendChild(closeBtn);
@@ -456,7 +617,181 @@ function openJsonArrayModal(heading, w, key, onChange) {
       onChange({ path: [key], value: val });
       close();
     } catch(e) {
-      errMsg.textContent = 'Invalid JSON — ' + e.message;
+      errMsg.textContent = 'Invalid JSON - ' + e.message;
+      textarea.style.borderColor = '#cc4444';
+    }
+  }
+
+  textarea.addEventListener('input', function() {
+    errMsg.textContent = '';
+    textarea.style.borderColor = '#2d3641';
+  });
+
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      apply();
+    }
+  });
+
+  applyBtn.addEventListener('click', apply);
+  cancelBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape') close();
+  }
+  document.addEventListener('keydown', onKeyDown);
+
+  backdrop.addEventListener('click', function(e) {
+    if (e.target === backdrop) close();
+  });
+}
+
+function openJsonObjectModal(heading, w, key, onChange) {
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'background:#1e2730;border:1px solid #2d3641;border-radius:8px;width:720px;max-width:92vw;height:72vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.6);';
+
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2d3641;flex-shrink:0;';
+  var title = document.createElement('div');
+  title.innerHTML = '<strong>' + heading + '</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
+  closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
+  hdr.appendChild(title);
+  hdr.appendChild(closeBtn);
+
+  var textarea = document.createElement('textarea');
+  textarea.style.cssText = 'flex:1;margin:12px 16px;background:#141a21;color:#e6e6e6;border:1px solid #2d3641;border-radius:4px;padding:10px 12px;font-family:monospace;font-size:13px;line-height:1.6;resize:none;outline:none;';
+  textarea.value = JSON.stringify(w[key] || {}, null, 2);
+  textarea.spellcheck = false;
+
+  var ftr = document.createElement('div');
+  ftr.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid #2d3641;flex-shrink:0;';
+  var errMsg = document.createElement('span');
+  errMsg.style.cssText = 'flex:1;color:#cc4444;font-size:12px;';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  var applyBtn = document.createElement('button');
+  applyBtn.textContent = 'Apply';
+  applyBtn.style.cssText = 'background:#8ADF45;color:#000;border-color:#8ADF45;font-weight:600;';
+  ftr.appendChild(errMsg);
+  ftr.appendChild(cancelBtn);
+  ftr.appendChild(applyBtn);
+
+  modal.appendChild(hdr);
+  modal.appendChild(textarea);
+  modal.appendChild(ftr);
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+  textarea.focus();
+
+  function close() {
+    document.body.removeChild(backdrop);
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
+  function apply() {
+    try {
+      var val = JSON.parse(textarea.value || '{}');
+      if (!val || typeof val !== 'object' || Object.prototype.toString.call(val) === '[object Array]') {
+        throw new Error('must be an object { ... }');
+      }
+      onChange({ path: [key], value: val });
+      close();
+    } catch(e) {
+      errMsg.textContent = 'Invalid JSON - ' + e.message;
+      textarea.style.borderColor = '#cc4444';
+    }
+  }
+
+  textarea.addEventListener('input', function() {
+    errMsg.textContent = '';
+    textarea.style.borderColor = '#2d3641';
+  });
+
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      apply();
+    }
+  });
+
+  applyBtn.addEventListener('click', apply);
+  cancelBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape') close();
+  }
+  document.addEventListener('keydown', onKeyDown);
+
+  backdrop.addEventListener('click', function(e) {
+    if (e.target === backdrop) close();
+  });
+}
+
+function openRawWidgetJsonModal(w, onChange) {
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'background:#1e2730;border:1px solid #2d3641;border-radius:8px;width:760px;max-width:92vw;height:76vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.6);';
+
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2d3641;flex-shrink:0;';
+  var title = document.createElement('div');
+  title.innerHTML = '<strong>Raw Widget JSON</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
+  closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
+  hdr.appendChild(title);
+  hdr.appendChild(closeBtn);
+
+  var textarea = document.createElement('textarea');
+  textarea.style.cssText = 'flex:1;margin:12px 16px;background:#141a21;color:#e6e6e6;border:1px solid #2d3641;border-radius:4px;padding:10px 12px;font-family:monospace;font-size:13px;line-height:1.6;resize:none;outline:none;';
+  textarea.value = JSON.stringify(w || {}, null, 2);
+  textarea.spellcheck = false;
+
+  var ftr = document.createElement('div');
+  ftr.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid #2d3641;flex-shrink:0;';
+  var errMsg = document.createElement('span');
+  errMsg.style.cssText = 'flex:1;color:#cc4444;font-size:12px;';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  var applyBtn = document.createElement('button');
+  applyBtn.textContent = 'Apply';
+  applyBtn.style.cssText = 'background:#8ADF45;color:#000;border-color:#8ADF45;font-weight:600;';
+  ftr.appendChild(errMsg);
+  ftr.appendChild(cancelBtn);
+  ftr.appendChild(applyBtn);
+
+  modal.appendChild(hdr);
+  modal.appendChild(textarea);
+  modal.appendChild(ftr);
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+  textarea.focus();
+
+  function close() {
+    document.body.removeChild(backdrop);
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
+  function apply() {
+    try {
+      var val = JSON.parse(textarea.value || '{}');
+      if (!val || typeof val !== 'object' || Object.prototype.toString.call(val) === '[object Array]') {
+        throw new Error('must be an object { ... }');
+      }
+      onChange({ replace_widget: true, value: val });
+      close();
+    } catch(e) {
+      errMsg.textContent = 'Invalid JSON - ' + e.message;
       textarea.style.borderColor = '#cc4444';
     }
   }

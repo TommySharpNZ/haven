@@ -43,6 +43,7 @@ Quick reference for which attributes apply to each widget type, and which can be
 | Property | lbl | rct | bar | btn | clk | img | cam | arc | hch | Notes |
 |----------|-----|-----|-----|-----|-----|-----|-----|-----|-----|-------|
 | `background` | ★ | ✓ | ✓ | ★ | ✓ | — | — | ✓ | ✓ | arc: ring background color; bar/hch: widget/track background |
+| `gradient` | — | ✓ | — | — | — | ✓ | — | — | — | rectangle/image linear gradient object |
 | `opacity` | ★ | ✓ | ✓ | ★ | ✓ | ✓ | ✓ | ✓ | ✓ | base property, applied to all |
 | `border_width` | ★ | ✓ | — | ★ | — | — | — | — | — | rct via `states`, btn via `overrides` |
 | `border_color` | ★ | ✓ | — | ★ | — | — | — | — | — | rct via `states`, btn via `overrides` |
@@ -67,7 +68,7 @@ Quick reference for which attributes apply to each widget type, and which can be
 
 | Property | lbl | rct | bar | btn | clk | img | cam | arc | hch | Notes |
 |----------|-----|-----|-----|-----|-----|-----|-----|-----|-----|-------|
-| `overrides` | ★ | — | — | ★ | — | — | — | — | — | ordered rules; later rules win |
+| `overrides` | ★ | ★ | — | ★ | — | — | — | — | — | ordered rules; later rules win |
 | `states` (legacy) | — | ○ | — | ○ | — | — | — | — | — | rect: keyed by raw state string; btn: `on`/`off` only |
 
 **Settable via `overrides set: { ... }`**
@@ -76,11 +77,12 @@ Quick reference for which attributes apply to each widget type, and which can be
 |----------|-----|-----|-----|-----|
 | `text` | ★ | — | — | — |
 | `color` | ★ | — | — | — |
-| `background` | ★ | — | — | ★ |
+| `background` | ★ | ★ | — | ★ |
+| `gradient` | — | ★ | — | — |
 | `font_size` | ★ | — | — | — |
-| `opacity` | ★ | — | — | ★ |
-| `border_color` | ★ | — | — | ★ |
-| `border_width` | ★ | — | — | ★ |
+| `opacity` | ★ | ★ | — | ★ |
+| `border_color` | ★ | ★ | — | ★ |
+| `border_width` | ★ | ★ | — | ★ |
 | `icon` | — | — | — | ★ |
 | `icon_color` | — | — | — | ★ |
 | `label` | — | — | — | ★ |

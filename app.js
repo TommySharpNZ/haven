@@ -17,6 +17,7 @@
   var entityCallbacks = {};        // entityId -> [callback, ...] for current page
   var page0Callbacks  = {};        // entityId -> [callback, ...] persistent (page 0 widgets)
   var pendingStreamRequests = {};  // msgId -> callback for camera/stream responses
+  var pendingAgendaRequests = {};  // msgId -> callback for calendar/get_events responses
   var activePageTimers      = [];  // setInterval IDs to clear on page change
   var entityStates = {};      // entityId -> stateObject (cached)
   var INTERNAL_CONN_ENTITY = 'internal.connectionstatus';
@@ -24,6 +25,7 @@
   var returnTimer = null;
   var clockTimer = null;
   var internalTimeTimer = null;
+  var pageNavTheme = null;
   var haUrl = '';
   var haToken = '';
   var configCacheBuster = null;
@@ -352,6 +354,7 @@
       if (activePageTimers[t].pendingIds) {
         for (var p = 0; p < activePageTimers[t].pendingIds.length; p++) {
           delete pendingStreamRequests[activePageTimers[t].pendingIds[p]];
+          delete pendingAgendaRequests[activePageTimers[t].pendingIds[p]];
         }
       }
     }
@@ -424,6 +427,74 @@
   }
 
   // ---- Page navigation --------------------------------------
+  function getPageNavTheme() {
+    var nav = (config && config.device && config.device.page_nav) ? config.device.page_nav : {};
+    var size = String(nav.size || 'medium').toLowerCase();
+    var presets = {
+      small:  { dot: 9,  hit: 10, gap: 8,  padY: 12, padX: 16, activeScale: 1.2 },
+      medium: { dot: 12, hit: 14, gap: 10, padY: 18, padX: 24, activeScale: 1.25 },
+      large:  { dot: 15, hit: 18, gap: 12, padY: 22, padX: 30, activeScale: 1.3 }
+    };
+    if (!presets[size]) size = 'medium';
+
+    return {
+      size: size,
+      metrics: presets[size],
+      background: resolveColor(nav.background_color !== undefined ? nav.background_color : 'rgba(0,0,0,0.28)'),
+      primary: resolveColor(nav.primary_color !== undefined ? nav.primary_color : 'rgba(255,255,255,0.95)'),
+      secondary: resolveColor(nav.secondary_color !== undefined ? nav.secondary_color : 'rgba(255,255,255,0.40)')
+    };
+  }
+
+  function stylePageDot(dot, isActive) {
+    if (!pageNavTheme || !dot) return;
+    dot.style.background = isActive ? pageNavTheme.primary : pageNavTheme.secondary;
+    dot.style.transform = isActive ? ('scale(' + pageNavTheme.metrics.activeScale + ')') : 'scale(1)';
+    dot.style.webkitTransform = dot.style.transform;
+    dot.style.boxShadow = 'none';
+    dot.style.webkitBoxShadow = 'none';
+  }
+
+  function applyPageNavTheme() {
+    var nav = document.getElementById('page-nav');
+    if (!nav) return;
+
+    pageNavTheme = getPageNavTheme();
+    var m = pageNavTheme.metrics;
+
+    nav.style.gap = m.gap + 'px';
+    nav.style.padding = m.padY + 'px ' + m.padX + 'px';
+    nav.style.borderRadius = '999px';
+    nav.style.background = pageNavTheme.background;
+    nav.style.touchAction = 'manipulation';
+
+    var dots = nav.querySelectorAll('.page-dot');
+    for (var i = 0; i < dots.length; i++) {
+      var dot = dots[i];
+      dot.style.width = m.dot + 'px';
+      dot.style.height = m.dot + 'px';
+      dot.style.border = m.hit + 'px solid transparent';
+      dot.style.backgroundClip = 'padding-box';
+      dot.style.boxSizing = 'content-box';
+      dot.style.webkitBoxSizing = 'content-box';
+      dot.style.touchAction = 'manipulation';
+
+      stylePageDot(dot, dot.className.indexOf('active') !== -1);
+
+      if (!dot._havenHoverBound) {
+        dot.addEventListener('mouseenter', function () {
+          if (this.className.indexOf('active') === -1 && pageNavTheme) {
+            this.style.background = pageNavTheme.primary;
+          }
+        });
+        dot.addEventListener('mouseleave', function () {
+          stylePageDot(this, this.className.indexOf('active') !== -1);
+        });
+        dot._havenHoverBound = true;
+      }
+    }
+  }
+
   function setupPageNav() {
     var nav = document.getElementById('page-nav');
     nav.innerHTML = '';
@@ -443,6 +514,7 @@
       })(config.pages[i]);
     }
 
+    applyPageNavTheme();
     setupSwipeNav();
   }
 
@@ -452,30 +524,62 @@
     var touchStartX = 0;
     var touchStartY = 0;
     var touchStartTime = 0;
+    var touchStartValid = false;
+    var SWIPE_MAX_TIME_MS = 900;
+    var SWIPE_MIN_X_PX = 36;
+    var SWIPE_MIN_DOMINANCE = 0.7; // allow modest diagonal movement on tablets
 
     // Any touch or click anywhere on the canvas resets the return timer
     canvas.addEventListener('touchstart', function(e) {
       resetReturnTimer();
+      if (!e.touches || !e.touches.length) return;
+      if (e.touches.length > 1) {
+        touchStartValid = false;
+        return;
+      }
       touchStartX    = e.touches[0].clientX;
       touchStartY    = e.touches[0].clientY;
       touchStartTime = Date.now();
+      touchStartValid = true;
     }, { passive: true });
+
+    canvas.addEventListener('touchmove', function(e) {
+      if (!touchStartValid) return;
+      if (!e.touches || !e.touches.length) return;
+      if (e.touches.length > 1) return;
+
+      var dx = e.touches[0].clientX - touchStartX;
+      var dy = e.touches[0].clientY - touchStartY;
+      var adx = Math.abs(dx);
+      var ady = Math.abs(dy);
+
+      // When movement is predominantly horizontal, prevent browser pull-to-refresh
+      // and let the dashboard own the gesture.
+      if (adx >= 10 && adx >= (ady * 0.75)) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     canvas.addEventListener('mousedown', function() {
       resetReturnTimer();
     });
 
     canvas.addEventListener('touchend', function(e) {
+      if (!touchStartValid) return;
+      touchStartValid = false;
+      if (!e.changedTouches || !e.changedTouches.length) return;
       var dx   = e.changedTouches[0].clientX - touchStartX;
       var dy   = e.changedTouches[0].clientY - touchStartY;
       var dt   = Date.now() - touchStartTime;
       var adx  = Math.abs(dx);
       var ady  = Math.abs(dy);
 
-      // Must be: horizontal, fast enough, long enough, not mostly vertical
-      if (dt > 500)  return;  // too slow - probably a press not a swipe
-      if (adx < 50)  return;  // too short
-      if (ady > adx) return;  // more vertical than horizontal - ignore
+      // Must be: horizontal enough, quick enough, and long enough.
+      // Relaxed dominance check improves reliability on touch devices where
+      // a slight diagonal drift is common.
+      if (dt > SWIPE_MAX_TIME_MS) return;
+      if (adx < SWIPE_MIN_X_PX) return;
+      if (adx < (ady * SWIPE_MIN_DOMINANCE)) return;
 
       var pageIds = config.pages.map(function(p) { return p.id; }).filter(function(id) { return id !== 0; });
       var idx     = pageIds.indexOf(currentPage);
@@ -490,17 +594,19 @@
         resetReturnTimer();
       }
     }, { passive: true });
+
+    canvas.addEventListener('touchcancel', function() {
+      touchStartValid = false;
+    }, { passive: true });
   }
 
   function updatePageNav(pageId) {
     var dots = document.querySelectorAll('.page-dot');
     for (var i = 0; i < dots.length; i++) {
       var dot = dots[i];
-      if (parseInt(dot.getAttribute('data-page'), 10) === pageId) {
-        dot.className = 'page-dot active';
-      } else {
-        dot.className = 'page-dot';
-      }
+      var isActive = (parseInt(dot.getAttribute('data-page'), 10) === pageId);
+      dot.className = isActive ? 'page-dot active' : 'page-dot';
+      stylePageDot(dot, isActive);
     }
   }
 
@@ -592,45 +698,69 @@
       case 'rect':         renderRectangle(el, w);   break;
       case 'rectangle':    renderRectangle(el, w);   break;
       case 'bar':          renderBar(el, w);          break;
+      case 'slider':       renderSlider(el, w);       break;
+      case 'scene':        renderScene(el, w);        break;
       case 'button':       renderButton(el, w);       break;
       case 'clock':        renderClock(el, w);        break;
       case 'image':        renderImage(el, w);        break;
       case 'camera':       renderCamera(el, w);       break;
       case 'arc':          renderArc(el, w);          break;
+      case 'agenda':       renderAgenda(el, w);       break;
       case 'history_chart': renderHistoryChart(el, w); break;
       default:
         el.style.background = 'rgba(255,0,0,0.3)';
         el.textContent = 'Unknown: ' + w.type;
     }
 
-    // Visibility condition - hide widget based on entity state
-    if (w.visible === false) {
-      el.style.display = 'none';
-    } else if (w.visible && typeof w.visible === 'object') {
-      applyVisibility(el, w);
-      if (w.visible.entity) {
-        registerEntityCallback(w.visible.entity, function(state) {
-          applyVisibility(el, w, state);
-        });
-      }
-    }
+    // Visibility is controlled through conditional overrides using set.visible.
+    bindOverrideVisibility(el, w);
 
     canvas.appendChild(el);
   }
 
-  function applyVisibility(el, w, state) {
-    var v = w.visible;
-    var entityState = state || entityStates[v.entity];
-    var val = entityState ? parseFloat(entityState.state) : null;
-    var strVal = entityState ? entityState.state : null;
-    var visible = true;
+  function hasVisibleOverrideRule(w) {
+    if (!w || !w.overrides || !w.overrides.length) return false;
+    for (var i = 0; i < w.overrides.length; i++) {
+      var rule = w.overrides[i];
+      if (rule && rule.set && rule.set.hasOwnProperty('visible')) return true;
+    }
+    return false;
+  }
 
-    if (v.type === 'above')  visible = (val !== null && val > v.value);
-    if (v.type === 'below')  visible = (val !== null && val < v.value);
-    if (v.type === 'equals') visible = (strVal === String(v.value));
-    if (v.type === 'not_equals') visible = (strVal !== String(v.value));
+  function applyOverrideVisibility(el, w, state, state2) {
+    var ovr = resolveOverrides(w, state, state2) || {};
+    if (ovr.visible !== undefined) {
+      el.style.display = ovr.visible ? '' : 'none';
+    } else {
+      el.style.display = '';
+    }
+  }
 
-    el.style.display = visible ? '' : 'none';
+  function bindOverrideVisibility(el, w) {
+    if (!hasVisibleOverrideRule(w)) return;
+
+    var stateCache = w.entity ? (entityStates[w.entity] || null) : null;
+    var state2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+
+    function updateVisibility() {
+      applyOverrideVisibility(el, w, stateCache, state2Cache);
+    }
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        stateCache = state;
+        updateVisibility();
+      });
+    }
+
+    if (w.entity2) {
+      registerEntityCallback(w.entity2, function(state) {
+        state2Cache = state;
+        updateVisibility();
+      });
+    }
+
+    updateVisibility();
   }
 
   // -- Label --
@@ -715,7 +845,17 @@
   //   Passes state2 through to resolveOverrides and applyTemplate so both the
   //   condition system and template expressions can reference the secondary entity.
   function updateLabelFromState(el, w, state, state2) {
-    var val = state ? state.state : null;
+    var val = null;
+    if (state) {
+      if (w.entity_attribute) {
+        var attrs = state.attributes || {};
+        val = (attrs[w.entity_attribute] !== undefined && attrs[w.entity_attribute] !== null)
+          ? attrs[w.entity_attribute]
+          : null;
+      } else {
+        val = state.state;
+      }
+    }
 
     // Apply text - handles plain text and [mdi:name] / [small:x] icon tokens
     var overrides = resolveOverrides(w, state, state2);
@@ -746,8 +886,25 @@
   // -- Rectangle --
   function renderRectangle(el, w) {
     el.className += ' widget-rectangle';
-    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
-    el.style.background   = resolveColor(w.background || 'surface');
+    var radiusPx = (w.radius !== undefined ? w.radius : 0) + 'px';
+    el.style.borderRadius = radiusPx;
+    // Keep fill clipped to rounded corners even when borders/overlays are used.
+    el.style.overflow = 'hidden';
+    applyRectangleFill(el, w, null);
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        var ovr = resolveOverrides(w, state) || {};
+        applyRectangleFill(el, w, ovr);
+        if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
+        if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
+        if (ovr.border_width !== undefined) {
+          el.style.borderWidth = ovr.border_width + 'px';
+          el.style.borderStyle = 'solid';
+          el.style.boxSizing   = 'border-box';
+        }
+      });
+    }
 
     // If no action, pass pointer events through so taps reach widgets below
     if (!w.action) {
@@ -755,21 +912,6 @@
     } else {
       el.style.pointerEvents = 'auto';
       el.style.cursor = 'pointer';
-
-      // Apply initial state styling
-      if (w.entity && w.states) {
-        var currentState = entityStates[w.entity];
-        if (currentState) {
-          applyRectangleState(el, w, currentState.state);
-        }
-      }
-
-      // Register entity callback for state-based styling
-      if (w.entity) {
-        registerEntityCallback(w.entity, function(state) {
-          applyRectangleState(el, w, state ? state.state : null);
-        });
-      }
 
       // Tap handler
       el.addEventListener('click', function() {
@@ -786,17 +928,18 @@
     }
   }
 
-  function applyRectangleState(el, w, stateVal) {
-    var states = w.states || {};
-    var s = states[stateVal] || states['default'] || {};
-    el.style.background = resolveColor(s.background || w.background || 'surface');
-    if (s.opacity      !== undefined) el.style.opacity     = s.opacity;
-    if (s.border_color !== undefined) el.style.borderColor = resolveColor(s.border_color);
-    if (s.border_width !== undefined) {
-      el.style.borderWidth = s.border_width + 'px';
-      el.style.borderStyle = 'solid';
-      el.style.boxSizing   = 'border-box';
+  function applyRectangleFill(el, w, ovr) {
+    var rule = ovr || {};
+    var gradient = (rule.gradient !== undefined) ? rule.gradient : w.gradient;
+    if (gradient && typeof gradient === 'object') {
+      var css = resolveLinearGradient(gradient);
+      if (css) {
+        el.style.background = css;
+        return;
+      }
     }
+    var bg = (rule.background !== undefined) ? rule.background : (w.background || 'surface');
+    el.style.background = resolveColor(bg);
   }
 
   // -- Bar --
@@ -812,7 +955,7 @@
     var fill = document.createElement('div');
     fill.className = 'widget-bar-fill';
     fill.style.borderRadius = radius;
-    fill.style.background   = '#008000';
+    fill.style.background   = resolveColor(w.color || 'primary');
     el.appendChild(fill);
 
     if (w.entity) {
@@ -826,25 +969,673 @@
     var val = state ? parseFloat(state.state) : 0;
     if (isNaN(val)) val = 0;
 
-    var max      = w.max || 100;
-    var pct      = Math.max(0, Math.min(100, (val / max) * 100));
+    var max = (w.max !== undefined) ? parseFloat(w.max) : 100;
+    if (isNaN(max) || max <= 0) max = 100;
+    var pct = Math.max(0, Math.min(100, (val / max) * 100));
     fill.style.width = pct + '%';
 
-    // Threshold color: overrides w.color base, then fallback to legacy green
-    var color = resolveColor(w.color) || '#008000';
-    if (w.thresholds) {
-      var normalizedPct = pct;
-      for (var i = 0; i < w.thresholds.length; i++) {
-        var t = w.thresholds[i];
-        if (t['default']) {
-          color = resolveColor(t.color);
-        } else if (t.below !== undefined && normalizedPct <= t.below) {
-          color = resolveColor(t.color);
-          break;
-        }
+    var thresholdColor = getThresholdColor(w, val, (w.color || 'primary'));
+    var ovr = resolveOverrides(w, state) || {};
+    fill.style.background = resolveColor(ovr.color !== undefined ? ovr.color : thresholdColor);
+  }
+
+  // -- Slider --
+  // Interactive slider for writing raw numeric values to HA services.
+  // Reads current value from entity state or an optional entity attribute.
+  function renderSlider(el, w) {
+    el.className += ' widget-slider';
+
+    var orientation = (w.orientation === 'vertical') ? 'vertical' : 'horizontal';
+    if (orientation === 'vertical') el.className += ' widget-slider-vertical';
+
+    var min = (w.min !== undefined) ? parseFloat(w.min) : 0;
+    var max = (w.max !== undefined) ? parseFloat(w.max) : 100;
+    if (isNaN(min)) min = 0;
+    if (isNaN(max)) max = 100;
+    if (max <= min) max = min + 1;
+
+    var step = (w.step !== undefined) ? parseFloat(w.step) : 1;
+    if (isNaN(step) || step <= 0) step = 1;
+
+    var updateMode = (w.update_mode === 'drag') ? 'drag' : 'release';
+    var valueAttr  = w.value_attribute;
+    var minAttr    = w.min_attribute;
+    var maxAttr    = w.max_attribute;
+    var baseMin    = min;
+    var baseMax    = max;
+    var currentValue = min;
+    var isDragging = false;
+    var lastSentValue = null;
+    var latestState = null;
+
+    var crossSize = (orientation === 'vertical') ? w.w : w.h;
+    var radius = (w.radius !== undefined) ? w.radius : Math.round(crossSize / 2);
+    var thumbSize = (w.thumb_size !== undefined) ? parseFloat(w.thumb_size) : Math.max(14, Math.round(crossSize * 0.9));
+    if (isNaN(thumbSize) || thumbSize < 8) thumbSize = 8;
+
+    // Keep the thumb free to extend outside widget bounds when thumb_size is large.
+    // The track itself remains clipped via an inner container.
+    el.style.background = 'transparent';
+    el.style.borderRadius = radius + 'px';
+    el.style.overflow = 'visible';
+
+    var track = document.createElement('div');
+    track.className = 'widget-slider-track';
+    track.style.position = 'absolute';
+    track.style.left = '0';
+    track.style.top = '0';
+    track.style.width = '100%';
+    track.style.height = '100%';
+    track.style.background = resolveColor(w.background || 'surface2');
+    track.style.borderRadius = radius + 'px';
+    track.style.overflow = 'hidden';
+    el.appendChild(track);
+
+    var fill = document.createElement('div');
+    fill.className = 'widget-slider-fill';
+    fill.style.background = resolveColor(w.color || 'primary');
+    fill.style.borderRadius = radius + 'px';
+    track.appendChild(fill);
+
+    var thumb = document.createElement('div');
+    thumb.className = 'widget-slider-thumb';
+    thumb.style.width  = thumbSize + 'px';
+    thumb.style.height = thumbSize + 'px';
+    thumb.style.borderRadius = Math.round(thumbSize / 2) + 'px';
+    thumb.style.background = resolveColor(w.thumb_color || 'text');
+    el.appendChild(thumb);
+
+    function clampValue(v) {
+      if (v < min) return min;
+      if (v > max) return max;
+      return v;
+    }
+
+    function stepDecimals(s) {
+      var str = String(s);
+      var dot = str.indexOf('.');
+      if (dot === -1) return 0;
+      return str.length - dot - 1;
+    }
+
+    var stepDp = stepDecimals(step);
+    function roundToStep(v) {
+      var n = (v - min) / step;
+      var out = min + Math.round(n) * step;
+      out = clampValue(out);
+      if (stepDp > 0) out = parseFloat(out.toFixed(stepDp));
+      return out;
+    }
+
+    function valueToRatio(value) {
+      var r = (value - min) / (max - min);
+      if (r < 0) r = 0;
+      if (r > 1) r = 1;
+      return r;
+    }
+
+    function readNumberFromAttribute(state, attrName) {
+      if (!state || !attrName || !state.attributes) return null;
+      var raw = state.attributes[attrName];
+      if (raw === undefined || raw === null) return null;
+      var n = parseFloat(raw);
+      if (isNaN(n)) return null;
+      return n;
+    }
+
+    function updateDynamicBounds(state) {
+      var nextMin = baseMin;
+      var nextMax = baseMax;
+
+      var attrMin = readNumberFromAttribute(state, minAttr);
+      var attrMax = readNumberFromAttribute(state, maxAttr);
+      if (attrMin !== null) nextMin = attrMin;
+      if (attrMax !== null) nextMax = attrMax;
+
+      if (nextMax <= nextMin) nextMax = nextMin + 1;
+      min = nextMin;
+      max = nextMax;
+    }
+
+    function applySliderStyle(state) {
+      var ovr = resolveOverrides(w, state) || {};
+      var bg = (ovr.background !== undefined) ? ovr.background : (w.background || 'surface2');
+      var fg = (ovr.color !== undefined) ? ovr.color : (w.color || 'primary');
+      var th = (ovr.thumb_color !== undefined) ? ovr.thumb_color : (w.thumb_color || 'text');
+      track.style.background = resolveColor(bg);
+      fill.style.background = resolveColor(fg);
+      thumb.style.background = resolveColor(th);
+      if (ovr.opacity !== undefined) el.style.opacity = ovr.opacity;
+      else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+    }
+
+    function applySliderVisual(value, state) {
+      var r = valueToRatio(value);
+      var travel;
+      var pos;
+
+      applySliderStyle(state);
+
+      if (orientation === 'vertical') {
+        travel = Math.max(0, w.h - thumbSize);
+        pos = Math.round((1 - r) * travel);
+        var fillH = Math.round(w.h - (pos + thumbSize / 2));
+        if (fillH < 0) fillH = 0;
+        fill.style.left = '0';
+        fill.style.width = '100%';
+        fill.style.bottom = '0';
+        fill.style.height = fillH + 'px';
+        fill.style.top = '';
+        thumb.style.top = pos + 'px';
+        thumb.style.left = Math.round((w.w - thumbSize) / 2) + 'px';
+      } else {
+        travel = Math.max(0, w.w - thumbSize);
+        pos = Math.round(r * travel);
+        var fillW = Math.round(pos + thumbSize / 2);
+        if (fillW < 0) fillW = 0;
+        if (fillW > w.w) fillW = w.w;
+        fill.style.top = '0';
+        fill.style.left = '0';
+        fill.style.height = '100%';
+        fill.style.width = fillW + 'px';
+        fill.style.bottom = '';
+        thumb.style.left = pos + 'px';
+        thumb.style.top = Math.round((w.h - thumbSize) / 2) + 'px';
       }
     }
-    fill.style.background = color;
+
+    function getClientPoint(evt) {
+      if (evt.touches && evt.touches.length) {
+        return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
+      }
+      if (evt.changedTouches && evt.changedTouches.length) {
+        return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY };
+      }
+      return { x: evt.clientX, y: evt.clientY };
+    }
+
+    function valueFromEvent(evt) {
+      var p = getClientPoint(evt);
+      var rect = el.getBoundingClientRect();
+      var ratio;
+
+      if (orientation === 'vertical') {
+        ratio = 1 - ((p.y - rect.top) / rect.height);
+      } else {
+        ratio = (p.x - rect.left) / rect.width;
+      }
+
+      if (ratio < 0) ratio = 0;
+      if (ratio > 1) ratio = 1;
+      return roundToStep(min + ratio * (max - min));
+    }
+
+    function sendSliderValue(value) {
+      if (!w.action) return;
+      handleAction(w.action, value);
+    }
+
+    function updateFromPointer(evt, isMove) {
+      if (!isDragging) return;
+      var v = valueFromEvent(evt);
+      if (v === currentValue && isMove) return;
+      currentValue = v;
+      applySliderVisual(currentValue, entityStates[w.entity]);
+      resetReturnTimer();
+
+      if (updateMode === 'drag' && currentValue !== lastSentValue) {
+        sendSliderValue(currentValue);
+        lastSentValue = currentValue;
+      }
+    }
+
+    function finishDrag(evt) {
+      if (!isDragging) return;
+      isDragging = false;
+      if (evt) updateFromPointer(evt, false);
+      if (updateMode !== 'drag' || currentValue !== lastSentValue) {
+        sendSliderValue(currentValue);
+        lastSentValue = currentValue;
+      }
+      resetReturnTimer();
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchEnd);
+    }
+
+    function onMouseMove(e) {
+      updateFromPointer(e, true);
+    }
+
+    function onMouseUp(e) {
+      finishDrag(e);
+    }
+
+    function onTouchMove(e) {
+      e.preventDefault();
+      updateFromPointer(e, true);
+    }
+
+    function onTouchEnd(e) {
+      finishDrag(e);
+    }
+
+    function startDrag(e) {
+      e.preventDefault();
+      isDragging = true;
+      lastSentValue = null;
+      updateFromPointer(e, false);
+      resetReturnTimer();
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+      document.addEventListener('touchcancel', onTouchEnd);
+    }
+
+    thumb.addEventListener('mousedown', startDrag);
+    thumb.addEventListener('touchstart', startDrag, { passive: false });
+
+    function readValueFromState(state) {
+      if (!state) return null;
+      var raw;
+      if (valueAttr && state.attributes && state.attributes[valueAttr] !== undefined && state.attributes[valueAttr] !== null) {
+        raw = state.attributes[valueAttr];
+      } else {
+        raw = state.state;
+      }
+      var n = parseFloat(raw);
+      if (isNaN(n)) return null;
+      return roundToStep(n);
+    }
+
+    function shouldUseLiveMediaProgress(state) {
+      if (w.live_progress === false) return false;
+      if (valueAttr !== 'media_position') return false;
+      if (!state || !state.attributes) return false;
+      if (state.attributes.media_position === undefined || state.attributes.media_position === null) return false;
+      return true;
+    }
+
+    function computeLiveMediaPosition(state) {
+      if (!shouldUseLiveMediaProgress(state)) return null;
+      var attrs = state.attributes || {};
+      var pos = parseFloat(attrs.media_position);
+      if (isNaN(pos)) return null;
+
+      var st = String(state.state || '').toLowerCase();
+      if (st === 'playing') {
+        var ts = attrs.media_position_updated_at || state.last_updated || state.last_changed;
+        var baseMs = Date.parse(ts);
+        if (isNaN(baseMs)) baseMs = Date.now();
+        pos += Math.max(0, (Date.now() - baseMs) / 1000);
+      }
+      return roundToStep(pos);
+    }
+
+    function tickLiveProgress() {
+      if (isDragging) return;
+      var state = latestState || (w.entity ? entityStates[w.entity] : null);
+      if (!state) return;
+      if (!shouldUseLiveMediaProgress(state)) return;
+
+      updateDynamicBounds(state);
+      var next = computeLiveMediaPosition(state);
+      if (next === null) return;
+      currentValue = clampValue(next);
+      applySliderVisual(currentValue, state);
+    }
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        if (isDragging) return;
+        latestState = state;
+        updateDynamicBounds(state);
+        var next = computeLiveMediaPosition(state);
+        if (next === null) next = readValueFromState(state);
+        if (next !== null) currentValue = next;
+        else currentValue = clampValue(currentValue);
+        applySliderVisual(currentValue, state);
+      });
+    }
+
+    var initialState = w.entity ? entityStates[w.entity] : null;
+    latestState = initialState;
+    updateDynamicBounds(initialState);
+    var initialValue = computeLiveMediaPosition(initialState);
+    if (initialValue === null) initialValue = readValueFromState(initialState);
+    if (initialValue !== null) currentValue = initialValue;
+    else currentValue = clampValue(currentValue);
+    applySliderVisual(currentValue, initialState);
+
+    // Smooth playback progress between HA state_changed events for media players.
+    if (w.entity && valueAttr === 'media_position' && w.live_progress !== false) {
+      var liveTimer = setInterval(tickLiveProgress, 1000);
+      activePageTimers.push({ id: liveTimer });
+    }
+  }
+
+  // -- Scene --
+  // Generic option selector bound to an entity state/attribute.
+  // v1 supports static options with three layouts:
+  //   buttons  - visible chips/buttons
+  //   dropdown - native select
+  //   picker   - single button that opens a small modal picker
+  //
+  // Action token:
+  //   "$option" is replaced with the selected option value at call time.
+  function renderScene(el, w) {
+    el.className += ' widget-scene';
+
+    var layout = String(w.layout || 'buttons').toLowerCase();
+    if (layout !== 'dropdown' && layout !== 'picker') layout = 'buttons';
+    var valueAttr = w.value_attribute;
+
+    el.style.background = resolveColor(w.background || 'transparent');
+    el.style.borderRadius = (w.radius !== undefined ? w.radius : 8) + 'px';
+    el.style.overflow = 'hidden';
+    if (w.opacity !== undefined) el.style.opacity = w.opacity;
+
+    var options = normalizeSceneOptions(w.options);
+    var currentValue = null;
+    var controls = [];
+    var pickerButton = null;
+    var pickerClose = null;
+
+    function normalizeSceneOptions(raw) {
+      var out = [];
+      if (!raw || Object.prototype.toString.call(raw) !== '[object Array]') return out;
+      for (var i = 0; i < raw.length; i++) {
+        var it = raw[i];
+        if (it === null || it === undefined) continue;
+        if (typeof it === 'string' || typeof it === 'number' || typeof it === 'boolean') {
+          out.push({ value: String(it), label: String(it), icon: '' });
+          continue;
+        }
+        if (typeof it === 'object') {
+          var v = (it.value !== undefined && it.value !== null) ? String(it.value) : '';
+          if (!v) continue;
+          out.push({
+            value: v,
+            label: (it.label !== undefined && it.label !== null) ? String(it.label) : v,
+            icon: (it.icon !== undefined && it.icon !== null) ? String(it.icon) : ''
+          });
+        }
+      }
+      return out;
+    }
+
+    function readSceneValue(state) {
+      if (!state) return null;
+      var raw;
+      if (valueAttr && state.attributes && state.attributes[valueAttr] !== undefined && state.attributes[valueAttr] !== null) {
+        raw = state.attributes[valueAttr];
+      } else {
+        raw = state.state;
+      }
+      if (raw === undefined || raw === null) return null;
+      return String(raw);
+    }
+
+    function findOptionByValue(value) {
+      var v = value === null || value === undefined ? '' : String(value);
+      for (var i = 0; i < options.length; i++) {
+        if (String(options[i].value) === v) return options[i];
+      }
+      return null;
+    }
+
+    function optionText(opt) {
+      if (!opt) return '';
+      if (opt.icon && opt.label) return opt.icon + ' ' + opt.label;
+      if (opt.icon) return opt.icon;
+      return opt.label;
+    }
+
+    function applySceneStyle() {
+      var state = w.entity ? entityStates[w.entity] : null;
+      var ovr = resolveOverrides(w, state) || {};
+      var bg = (ovr.background !== undefined) ? ovr.background : (w.background || 'transparent');
+      el.style.background = resolveColor(bg);
+      if (ovr.opacity !== undefined) el.style.opacity = ovr.opacity;
+      else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+    }
+
+    function optionVisual(button, isActive) {
+      var activeBg = resolveColor(w.selected_background || 'primary');
+      var activeFg = resolveColor(w.selected_color || 'background');
+      var bg = resolveColor(w.option_background || 'surface2');
+      var fg = resolveColor(w.option_color || 'text');
+      button.style.background = isActive ? activeBg : bg;
+      button.style.color = isActive ? activeFg : fg;
+    }
+
+    function updateControls() {
+      applySceneStyle();
+      for (var i = 0; i < controls.length; i++) {
+        var c = controls[i];
+        if (c.kind === 'button') {
+          optionVisual(c.el, String(c.option.value) === String(currentValue));
+        } else if (c.kind === 'select') {
+          c.el.value = currentValue !== null && currentValue !== undefined ? String(currentValue) : '';
+        }
+      }
+      if (pickerButton) {
+        var opt = findOptionByValue(currentValue);
+        setContent(pickerButton, opt ? optionText(opt) : (w.placeholder || 'Select'));
+      }
+    }
+
+    function selectOption(value) {
+      currentValue = String(value);
+      updateControls();
+      if (!w.action) return;
+      handleAction(w.action, undefined, { '$option': currentValue });
+      resetReturnTimer();
+    }
+
+    function buildButtons() {
+      var wrap = document.createElement('div');
+      wrap.style.position = 'absolute';
+      wrap.style.left = '0';
+      wrap.style.top = '0';
+      wrap.style.right = '0';
+      wrap.style.bottom = '0';
+      wrap.style.display = 'flex';
+      wrap.style.flexWrap = 'wrap';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = 'center';
+      wrap.style.padding = (w.padding !== undefined ? w.padding : 6) + 'px';
+      el.appendChild(wrap);
+
+      for (var i = 0; i < options.length; i++) {
+        (function(opt) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.style.border = 'none';
+          b.style.borderRadius = (w.option_radius !== undefined ? w.option_radius : 18) + 'px';
+          b.style.padding = (w.option_padding_y !== undefined ? w.option_padding_y : 8) + 'px ' +
+                            (w.option_padding_x !== undefined ? w.option_padding_x : 12) + 'px';
+          b.style.margin = (w.option_gap !== undefined ? w.option_gap : 4) + 'px';
+          b.style.fontSize = (w.option_size !== undefined ? w.option_size : 14) + 'px';
+          b.style.cursor = 'pointer';
+          b.style.fontFamily = 'inherit';
+          setContent(b, optionText(opt));
+          b.addEventListener('click', function() { selectOption(opt.value); });
+          wrap.appendChild(b);
+          controls.push({ kind: 'button', el: b, option: opt });
+        })(options[i]);
+      }
+    }
+
+    function buildDropdown() {
+      var select = document.createElement('select');
+      select.style.position = 'absolute';
+      select.style.left = (w.padding !== undefined ? w.padding : 6) + 'px';
+      select.style.top = (w.padding !== undefined ? w.padding : 6) + 'px';
+      select.style.width = Math.max(10, w.w - 2 * (w.padding !== undefined ? w.padding : 6)) + 'px';
+      select.style.height = Math.max(10, w.h - 2 * (w.padding !== undefined ? w.padding : 6)) + 'px';
+      select.style.border = 'none';
+      select.style.borderRadius = (w.option_radius !== undefined ? w.option_radius : 8) + 'px';
+      select.style.background = resolveColor(w.option_background || 'surface2');
+      select.style.color = resolveColor(w.option_color || 'text');
+      select.style.fontSize = (w.option_size !== undefined ? w.option_size : 16) + 'px';
+      select.style.padding = '0 8px';
+      select.style.fontFamily = 'inherit';
+      for (var i = 0; i < options.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = options[i].value;
+        opt.textContent = options[i].label;
+        select.appendChild(opt);
+      }
+      select.addEventListener('change', function() { selectOption(select.value); });
+      el.appendChild(select);
+      controls.push({ kind: 'select', el: select });
+    }
+
+    function buildPicker() {
+      pickerButton = document.createElement('button');
+      pickerButton.type = 'button';
+      pickerButton.style.position = 'absolute';
+      pickerButton.style.left = (w.padding !== undefined ? w.padding : 6) + 'px';
+      pickerButton.style.top = (w.padding !== undefined ? w.padding : 6) + 'px';
+      pickerButton.style.width = Math.max(10, w.w - 2 * (w.padding !== undefined ? w.padding : 6)) + 'px';
+      pickerButton.style.height = Math.max(10, w.h - 2 * (w.padding !== undefined ? w.padding : 6)) + 'px';
+      pickerButton.style.border = 'none';
+      pickerButton.style.borderRadius = (w.option_radius !== undefined ? w.option_radius : 20) + 'px';
+      pickerButton.style.background = resolveColor(w.option_background || 'surface2');
+      pickerButton.style.color = resolveColor(w.option_color || 'text');
+      pickerButton.style.fontSize = (w.option_size !== undefined ? w.option_size : 16) + 'px';
+      pickerButton.style.cursor = 'pointer';
+      pickerButton.style.fontFamily = 'inherit';
+      pickerButton.addEventListener('click', function() { openPickerModal(); });
+      el.appendChild(pickerButton);
+    }
+
+    function openPickerModal() {
+      if (pickerClose) return;
+      var overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.left = '0';
+      overlay.style.top = '0';
+      overlay.style.right = '0';
+      overlay.style.bottom = '0';
+      overlay.style.background = 'rgba(0,0,0,0.25)';
+      overlay.style.zIndex = '10001';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+
+      var card = document.createElement('div');
+      card.style.minWidth = '220px';
+      card.style.maxWidth = '70vw';
+      card.style.background = resolveColor(w.option_panel_background || 'surface');
+      card.style.borderRadius = (w.option_panel_radius !== undefined ? w.option_panel_radius : 12) + 'px';
+      card.style.padding = '10px';
+      card.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)';
+      overlay.appendChild(card);
+
+      for (var i = 0; i < options.length; i++) {
+        (function(opt) {
+          var item = document.createElement('button');
+          item.type = 'button';
+          item.style.width = '100%';
+          item.style.border = 'none';
+          item.style.borderRadius = (w.option_radius !== undefined ? w.option_radius : 10) + 'px';
+          item.style.padding = '10px 12px';
+          item.style.marginBottom = '6px';
+          item.style.fontSize = (w.option_size !== undefined ? w.option_size : 15) + 'px';
+          item.style.cursor = 'pointer';
+          item.style.fontFamily = 'inherit';
+          setContent(item, optionText(opt));
+          optionVisual(item, String(opt.value) === String(currentValue));
+          item.addEventListener('click', function() {
+            selectOption(opt.value);
+            closePickerModal();
+          });
+          card.appendChild(item);
+        })(options[i]);
+      }
+      if (card.lastChild) card.lastChild.style.marginBottom = '0';
+
+      function closePickerModal() {
+        if (!overlay || !overlay.parentNode) return;
+        overlay.parentNode.removeChild(overlay);
+        pickerClose = null;
+      }
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closePickerModal();
+      });
+      pickerClose = closePickerModal;
+      document.body.appendChild(overlay);
+      resetReturnTimer();
+    }
+
+    if (!options.length) {
+      var msg = document.createElement('div');
+      msg.style.position = 'absolute';
+      msg.style.left = '8px';
+      msg.style.top = '8px';
+      msg.style.color = resolveColor('text_muted');
+      msg.style.fontSize = '12px';
+      msg.textContent = 'No options';
+      el.appendChild(msg);
+      return;
+    }
+
+    if (layout === 'dropdown') buildDropdown();
+    else if (layout === 'picker') buildPicker();
+    else buildButtons();
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        currentValue = readSceneValue(state);
+        updateControls();
+      });
+    }
+
+    var initial = w.entity ? entityStates[w.entity] : null;
+    currentValue = readSceneValue(initial);
+    if (currentValue === null || currentValue === undefined) {
+      currentValue = options.length ? String(options[0].value) : null;
+    }
+    updateControls();
+  }
+
+  // thresholds: first matching rule wins.
+  // Raw entity value is used for comparisons (no hidden percent conversion).
+  function getThresholdColor(w, rawValue, fallbackColor) {
+    if (!w || !w.thresholds || !w.thresholds.length) return fallbackColor;
+    var defaultColor;
+    for (var i = 0; i < w.thresholds.length; i++) {
+      var t = w.thresholds[i];
+      if (!t) continue;
+
+      if (t.default && t.color !== undefined && defaultColor === undefined) {
+        defaultColor = t.color;
+        continue;
+      }
+
+      if (t.below !== undefined) {
+        var below = parseFloat(t.below);
+        if (!isNaN(below) && rawValue < below && t.color !== undefined) return t.color;
+        continue;
+      }
+
+      if (t.above !== undefined) {
+        var above = parseFloat(t.above);
+        if (!isNaN(above) && rawValue > above && t.color !== undefined) return t.color;
+        continue;
+      }
+
+      if (t.equals !== undefined) {
+        if (String(rawValue) === String(t.equals) && t.color !== undefined) return t.color;
+      }
+    }
+    return (defaultColor !== undefined) ? defaultColor : fallbackColor;
   }
 
   // -- Button --
@@ -867,8 +1658,10 @@
       el.style.padding = w.padding + 'px';
     }
 
-    var hasIcon = !!(w.icon_on || w.icon_off);
+    var hasIcon = !!(w.icon || w.icon_off || w.icon_on);
     var hasLabel = (w.label !== undefined && w.label !== null && String(w.label).length > 0);
+    var baseIcon = (w.icon !== undefined && w.icon !== null) ? w.icon
+      : ((w.icon_off !== undefined && w.icon_off !== null) ? w.icon_off : w.icon_on);
 
     // Dynamic sizing based on button size (override with icon_size / label_size)
     var base = Math.min(w.w, w.h);
@@ -913,56 +1706,34 @@
       setContent(labelEl, t);
     }
 
-    setButtonIcon(w.icon_off || '');
+    setButtonIcon(baseIcon || '');
     setButtonLabel(w.label || '', null);
 
     el.appendChild(iconEl);
     el.appendChild(labelEl);
 
-    // Apply initial styling
-    if (w.overrides && w.overrides.length) {
-      // Overrides path: apply base styles until first state arrives
-      el.style.background = resolveColor(w.background || 'surface2');
-      iconEl.style.color  = resolveColor(w.icon_color  || 'text');
-      labelEl.style.color = resolveColor(w.label_color || 'text_dim');
-    } else {
-      // Legacy states path
-      var initState = applyButtonState(el, iconEl, labelEl, w, 'off');
-      if (initState && initState.text !== undefined) {
-        setButtonLabel(initState.text, null);
-      }
-    }
+    // Apply base styles (overrides applied on first state update)
+    el.style.background = resolveColor(w.background || 'surface2');
+    iconEl.style.color  = resolveColor(w.icon_color  || 'text');
+    labelEl.style.color = resolveColor(w.label_color || 'text_dim');
 
     if (w.entity) {
       registerEntityCallback(w.entity, function (state) {
-        var stateVal = state ? state.state : 'off';
-        if (w.overrides && w.overrides.length) {
-          var ovr = resolveOverrides(w, state) || {};
-          el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
-          iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
-          labelEl.style.color = resolveColor(ovr.label_color !== undefined ? ovr.label_color : (w.label_color || 'text_dim'));
-          if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
-          if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
-          if (ovr.border_width !== undefined) {
-            el.style.borderWidth = ovr.border_width + 'px';
-            el.style.borderStyle = 'solid';
-            el.style.boxSizing   = 'border-box';
-          }
-          var icon = (ovr.icon !== undefined) ? ovr.icon
-            : ((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
-          setButtonIcon(icon);
-          var labelText = (ovr.label !== undefined) ? ovr.label : (w.label || '');
-          setButtonLabel(labelText, state);
-        } else {
-          // Legacy states path
-          var s = applyButtonState(el, iconEl, labelEl, w, stateVal);
-          setButtonIcon((stateVal === 'on' && w.icon_on) ? w.icon_on : (w.icon_off || ''));
-          if (s && s.text !== undefined) {
-            setButtonLabel(s.text, state);
-          } else {
-            setButtonLabel(w.label || '', state);
-          }
+        var ovr = resolveOverrides(w, state) || {};
+        el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
+        iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
+        labelEl.style.color = resolveColor(ovr.label_color !== undefined ? ovr.label_color : (w.label_color || 'text_dim'));
+        if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
+        if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
+        if (ovr.border_width !== undefined) {
+          el.style.borderWidth = ovr.border_width + 'px';
+          el.style.borderStyle = 'solid';
+          el.style.boxSizing   = 'border-box';
         }
+        var icon = (ovr.icon !== undefined) ? ovr.icon : (baseIcon || '');
+        setButtonIcon(icon);
+        var labelText = (ovr.label !== undefined) ? ovr.label : (w.label || '');
+        setButtonLabel(labelText, state);
       });
     }
 
@@ -980,22 +1751,6 @@
     }
   }
 
-  function applyButtonState(el, iconEl, labelEl, w, stateKey) {
-    var states = w.states || {};
-    var s = states[stateKey] || states['default'] || {};
-
-    el.style.background   = resolveColor(s.background || w.background || 'surface2');
-    iconEl.style.color    = resolveColor(s.icon_color  || w.icon_color  || 'text');
-    labelEl.style.color   = resolveColor(s.label_color || w.label_color || 'text_dim');
-    if (s.border_color !== undefined) el.style.borderColor = resolveColor(s.border_color);
-    if (s.border_width !== undefined) {
-      el.style.borderWidth = s.border_width + 'px';
-      el.style.borderStyle = 'solid';
-      el.style.boxSizing   = 'border-box';
-    }
-    return s;
-  }
-
   // ---- Arc / gauge widget ----------------------------------
   // SVG-based circular arc gauge. Driven by a numeric HA entity.
   //
@@ -1009,7 +1764,8 @@
   //   background    - background arc ring color (default surface2 token)
   //   label         - static text shown below the value (optional)
   //   format        - value format (same as label widget)
-  //   thresholds    - same format as bar widget, color changes by % of range
+  //   color         - arc fill color (theme token or hex; use overrides for state-based colors)
+  //   overrides     - conditional overrides (color, opacity, label, label_color, background)
   //
   // Example:
   //   { "type": "arc", "x": 100, "y": 100, "w": 160, "h": 160,
@@ -1017,11 +1773,7 @@
   //     "min": 0, "max": 100,
   //     "start_angle": 135, "end_angle": 405,
   //     "line_width": 14,
-  //     "thresholds": [
-  //       { "below": 20, "color": "danger" },
-  //       { "below": 50, "color": "warning" },
-  //       { "default": true, "color": "primary" }
-  //     ],
+  //     "color": "primary",
   //     "label": "Battery" }
 
   function renderArc(el, w) {
@@ -1107,21 +1859,9 @@
       var pct     = (val - min) / (max - min);
       var fillEnd = startAngle + pct * (endAngle - startAngle);
 
-      // Resolve overrides - they win over thresholds for color
       var s = resolveOverrides(w, state) || {};
-
-      // Arc color: overrides → thresholds → base
-      var arcColor = resolveColor(s.color || w.color || 'primary');
-      if (!s.color && w.thresholds) {
-        var pctInt = Math.round(pct * 100);
-        for (var t = 0; t < w.thresholds.length; t++) {
-          var th = w.thresholds[t];
-          if (th.default || pctInt < th.below) {
-            arcColor = resolveColor(th.color);
-            break;
-          }
-        }
-      }
+      var thresholdColor = getThresholdColor(w, raw, (w.color || 'primary'));
+      var arcColor = resolveColor(s.color !== undefined ? s.color : thresholdColor);
 
       valuePath.setAttribute('stroke', arcColor);
       if (pct <= 0) {
@@ -1181,7 +1921,8 @@
   function renderImage(el, w) {
     el.className += ' widget-image';
     el.style.overflow     = 'hidden';
-    el.style.borderRadius = (w.radius !== undefined ? w.radius : 0) + 'px';
+    var radiusPx = (w.radius !== undefined ? w.radius : 0) + 'px';
+    el.style.borderRadius = radiusPx;
     el.style.background   = '#000';
     el.style.cursor       = w.fullscreen_on_tap ? 'pointer' : 'default';
 
@@ -1190,14 +1931,840 @@
     img.style.height    = '100%';
     img.style.objectFit = w.fit || 'cover';
     img.style.display   = 'block';
-    img.src = w.url || '';
+    var currentImageUrl = w.url || '';
+    img.src = currentImageUrl;
     el.appendChild(img);
+
+    var gradientEl = document.createElement('div');
+    gradientEl.style.position = 'absolute';
+    gradientEl.style.left = '0';
+    gradientEl.style.top = '0';
+    gradientEl.style.right = '0';
+    gradientEl.style.bottom = '0';
+    gradientEl.style.pointerEvents = 'none';
+    gradientEl.style.borderRadius = radiusPx;
+    gradientEl.style.display = 'none';
+    el.appendChild(gradientEl);
+
+    function applyImageGradient() {
+      if (!w.gradient || typeof w.gradient !== 'object') {
+        gradientEl.style.display = 'none';
+        gradientEl.style.background = 'none';
+        return;
+      }
+      var css = resolveLinearGradient(w.gradient);
+      if (!css) {
+        gradientEl.style.display = 'none';
+        gradientEl.style.background = 'none';
+        return;
+      }
+      gradientEl.style.display = 'block';
+      gradientEl.style.background = css;
+    }
+
+    applyImageGradient();
+
+    function normalizeImageUrl(raw) {
+      if (!raw) return '';
+      var u = String(raw);
+      if (/^https?:\/\//i.test(u) || u.indexOf('data:') === 0 || u.indexOf('blob:') === 0) return u;
+      if (u.charAt(0) === '/') return haUrl + u;
+      return u;
+    }
+
+    function updateImageFromState(state) {
+      if (!state || !w.entity_attribute) return;
+      var attrs = state.attributes || {};
+      var attrVal = attrs[w.entity_attribute];
+      if (!attrVal) return;
+
+      var nextUrl = normalizeImageUrl(attrVal);
+      if (!nextUrl) return;
+
+      // Avoid stale album-art cache when track changes but path is reused.
+      var cacheKey = state.last_updated || state.last_changed || Date.now();
+      nextUrl += (nextUrl.indexOf('?') !== -1 ? '&' : '?') + '_t=' + encodeURIComponent(cacheKey);
+
+      if (nextUrl !== currentImageUrl) {
+        currentImageUrl = nextUrl;
+        img.src = currentImageUrl;
+      }
+    }
+
+    if (w.entity && w.entity_attribute) {
+      registerEntityCallback(w.entity, function(state) {
+        updateImageFromState(state);
+      });
+      if (entityStates[w.entity]) updateImageFromState(entityStates[w.entity]);
+    }
 
     if (w.fullscreen_on_tap) {
       el.addEventListener('click', function() {
-        openFullscreenImage(w.url, null);
+        openFullscreenImage(currentImageUrl || w.url || '', null);
       });
     }
+  }
+
+  // -- Agenda widget --
+  // Basic upcoming calendar events list rendered from HA calendar/get_events.
+  function renderAgenda(el, w) {
+    el.className += ' widget-agenda';
+
+    // Prefer agenda-specific key to avoid ambiguity with designer/stage scale concepts.
+    var scaleRaw = (w.agenda_scale !== undefined) ? w.agenda_scale : w.scale;
+    var scale = (scaleRaw !== undefined) ? parseFloat(scaleRaw) : 1;
+    if (isNaN(scale) || scale <= 0) scale = 1;
+    function s(px) {
+      return Math.max(1, Math.round(px * scale));
+    }
+
+    var radius = s((w.radius !== undefined) ? w.radius : 12);
+    var pad = s((w.padding !== undefined) ? w.padding : 10);
+    var refreshSec = (w.refresh_interval !== undefined) ? parseInt(w.refresh_interval, 10) : 120;
+    if (isNaN(refreshSec) || refreshSec < 15) refreshSec = 120;
+    var daysAhead = (w.days_ahead !== undefined) ? parseInt(w.days_ahead, 10) : 7;
+    if (isNaN(daysAhead) || daysAhead < 1) daysAhead = 7;
+    var timeFormat = String(w.time_format || '12h').toLowerCase();
+    var layout = String(w.layout || 'list').toLowerCase();
+    if (layout !== 'columns') layout = 'list';
+    var todayIndicator = (w.today_indicator === true);
+    var showBlankDays = (w.show_blank_days === true);
+    var calendars = (w.calendars && Object.prototype.toString.call(w.calendars) === '[object Array]') ? w.calendars : [];
+
+    el.style.background = resolveColor(w.background || 'surface');
+    el.style.borderRadius = radius + 'px';
+    el.style.overflow = 'hidden';
+    if (w.opacity !== undefined) el.style.opacity = w.opacity;
+
+    var list = document.createElement('div');
+    list.style.position = 'absolute';
+    list.style.left = pad + 'px';
+    list.style.top = pad + 'px';
+    list.style.right = pad + 'px';
+    list.style.bottom = pad + 'px';
+    list.style.overflow = 'auto';
+    list.style.webkitOverflowScrolling = 'touch';
+    list.style.paddingRight = s(2) + 'px';
+    el.appendChild(list);
+
+    var fade = document.createElement('div');
+    fade.style.position = 'absolute';
+    fade.style.left = pad + 'px';
+    fade.style.right = pad + 'px';
+    fade.style.bottom = pad + 'px';
+    fade.style.height = s(56) + 'px';
+    fade.style.pointerEvents = 'none';
+    fade.style.display = 'none';
+    fade.style.background = 'linear-gradient(180deg, rgba(0,0,0,0), ' + resolveColor(w.background || 'surface') + ' 85%)';
+    el.appendChild(fade);
+
+    function updateOverflowFade() {
+      var hasOverflow = (list.scrollHeight > (list.clientHeight + 1));
+      if (!hasOverflow) {
+        fade.style.display = 'none';
+        return;
+      }
+      var atBottom = (list.scrollTop + list.clientHeight >= list.scrollHeight - 2);
+      fade.style.display = atBottom ? 'none' : 'block';
+    }
+    list.addEventListener('scroll', updateOverflowFade);
+
+    function setAgendaEmpty(text) {
+      list.innerHTML = '';
+      var empty = document.createElement('div');
+      empty.style.color = resolveColor(w.muted_color || 'text_muted');
+      empty.style.fontSize = s((w.font_size || 15)) + 'px';
+      empty.style.padding = s(8) + 'px ' + s(2) + 'px';
+      empty.textContent = text;
+      list.appendChild(empty);
+      updateOverflowFade();
+    }
+
+    function parseEventDate(value) {
+      if (!value) return null;
+      if (Object.prototype.toString.call(value) === '[object Date]') return value;
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return new Date(value + 'T00:00:00');
+      }
+      var d = new Date(value);
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function pad2(n) {
+      return (n < 10 ? '0' : '') + n;
+    }
+
+    function formatClockTime(d) {
+      var h = d.getHours();
+      var m = d.getMinutes();
+      if (timeFormat === '24h') return pad2(h) + ':' + pad2(m);
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12;
+      if (h12 === 0) h12 = 12;
+      return h12 + ':' + pad2(m) + ' ' + ampm;
+    }
+
+    function formatDateKey(d) {
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function startOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function addDays(d, n) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+    }
+
+    function getWeekdayShort(d) {
+      var names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return names[d.getDay()];
+    }
+
+    function getWeekdayLong(d) {
+      var names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return names[d.getDay()];
+    }
+
+    function getMonthHeader(d) {
+      var months = [
+        'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+        'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+      ];
+      return months[d.getMonth()];
+    }
+
+    function isAllDayEvent(rawEvent, startRaw) {
+      if (!rawEvent) return false;
+      if (rawEvent.all_day === true || rawEvent.is_all_day === true) return true;
+      return (typeof startRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startRaw));
+    }
+
+    function normalizeOneEvent(rawEvent, calCfg) {
+      if (!rawEvent) return null;
+
+      var summary = rawEvent.summary || rawEvent.message || rawEvent.title || '(No title)';
+      var startRaw = null;
+      var endRaw = null;
+
+      // REST calendar events commonly return start/end as objects:
+      // { start: { dateTime: "..." } } or { start: { date: "..." } }.
+      if (rawEvent.start && typeof rawEvent.start === 'object') {
+        startRaw = rawEvent.start.dateTime || rawEvent.start.date || null;
+      } else {
+        startRaw = rawEvent.start || rawEvent.start_date_time || rawEvent.start_date || null;
+      }
+
+      if (rawEvent.end && typeof rawEvent.end === 'object') {
+        endRaw = rawEvent.end.dateTime || rawEvent.end.date || null;
+      } else {
+        endRaw = rawEvent.end || rawEvent.end_date_time || rawEvent.end_date || null;
+      }
+
+      var startDt = parseEventDate(startRaw);
+      var endDt = parseEventDate(endRaw);
+      if (!startDt) return null;
+
+      return {
+        title: String(summary),
+        location: rawEvent.location ? String(rawEvent.location) : '',
+        description: rawEvent.description ? String(rawEvent.description) : '',
+        start: startDt,
+        end: endDt,
+        startIsDateOnly: (typeof startRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startRaw)),
+        endIsDateOnly: (typeof endRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(endRaw)),
+        dayKey: formatDateKey(startDt),
+        allDay: isAllDayEvent(rawEvent, startRaw),
+        color: resolveColor(calCfg.color || 'primary'),
+        fullDayHighlight: (calCfg.full_day_highlight === true),
+        icon: calCfg.icon || '',
+        show: (calCfg.show && Object.prototype.toString.call(calCfg.show) === '[object Array]') ? calCfg.show : []
+      };
+    }
+
+    function hasShow(ev, key) {
+      for (var i = 0; i < ev.show.length; i++) {
+        if (ev.show[i] === key) return true;
+      }
+      return false;
+    }
+
+    function rgbaWithAlpha(color, alpha) {
+      var c = String(color || '').trim();
+      if (!c) return '';
+
+      var hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c);
+      if (hex) {
+        var h = hex[1];
+        if (h.length === 3) {
+          h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+        }
+        var r = parseInt(h.substr(0, 2), 16);
+        var g = parseInt(h.substr(2, 2), 16);
+        var b = parseInt(h.substr(4, 2), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+      }
+
+      var rgb = /^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+\s*)?\)$/i.exec(c);
+      if (rgb) {
+        return 'rgba(' + Math.round(parseFloat(rgb[1])) + ',' + Math.round(parseFloat(rgb[2])) + ',' + Math.round(parseFloat(rgb[3])) + ',' + alpha + ')';
+      }
+
+      return c;
+    }
+
+    function openAgendaInfoModal(title, description) {
+      if (!description) return;
+      var overlay = buildFullscreenOverlay(title || 'More Information');
+      var body = document.createElement('div');
+      body.style.padding = s(16) + 'px';
+      body.style.color = resolveColor('text');
+      body.style.fontSize = s(16) + 'px';
+      body.style.lineHeight = '1.5';
+      body.style.whiteSpace = 'pre-wrap';
+      body.style.wordBreak = 'break-word';
+      body.textContent = String(description);
+      overlay.content.appendChild(body);
+      document.body.appendChild(overlay.el);
+    }
+
+    function renderOneEventCard(parent, ev) {
+      var card = document.createElement('div');
+      card.style.position = 'relative';
+      card.style.minHeight = s(58) + 'px';
+      card.style.padding = s(10) + 'px ' + s(12) + 'px';
+      card.style.borderRadius = s((w.event_radius !== undefined ? w.event_radius : 8)) + 'px';
+      card.style.background = resolveColor(w.event_background || 'surface2');
+      if (ev.allDay && ev.fullDayHighlight) {
+        card.style.background = rgbaWithAlpha(ev.color, 0.25);
+      }
+      card.style.overflow = 'hidden';
+      card.style.marginBottom = s(6) + 'px';
+      parent.appendChild(card);
+
+      var accent = document.createElement('div');
+      accent.style.position = 'absolute';
+      accent.style.left = '0';
+      accent.style.top = '0';
+      accent.style.bottom = '0';
+      accent.style.width = s((w.accent_width || 4)) + 'px';
+      accent.style.background = ev.color;
+      card.appendChild(accent);
+
+      var title = document.createElement('div');
+      title.style.color = resolveColor(w.title_color || 'text');
+      title.style.fontSize = s((w.title_size || 16)) + 'px';
+      title.style.lineHeight = '1.2';
+      title.style.paddingLeft = s(4) + 'px';
+      title.style.whiteSpace = 'nowrap';
+      title.style.overflow = 'hidden';
+      title.style.textOverflow = 'ellipsis';
+      var titleText = ev.title;
+      if (ev.isContinuation) titleText += ' (cont.)';
+      setContent(title, ev.icon ? ('[mdi:' + ev.icon.replace(/^mdi:/, '') + '] ' + titleText) : titleText);
+      card.appendChild(title);
+
+      if (hasShow(ev, 'time')) {
+        var t = document.createElement('div');
+        t.style.color = resolveColor(w.detail_color || 'text_muted');
+        t.style.fontSize = s((w.detail_size || 13)) + 'px';
+        t.style.marginTop = s(6) + 'px';
+        t.style.paddingLeft = s(4) + 'px';
+        if (ev.allDay) {
+          t.textContent = 'All day';
+        } else if (ev.timeMode === 'start_only' && ev.start) {
+          t.textContent = 'From ' + formatClockTime(ev.start);
+        } else if (ev.timeMode === 'end_only' && ev.end) {
+          t.textContent = 'Until ' + formatClockTime(ev.end);
+        } else if (ev.end) {
+          t.textContent = formatClockTime(ev.start) + ' - ' + formatClockTime(ev.end);
+        } else {
+          t.textContent = formatClockTime(ev.start);
+        }
+        card.appendChild(t);
+      }
+
+      if (hasShow(ev, 'location') && ev.location) {
+        var loc = document.createElement('div');
+        loc.style.color = resolveColor(w.detail_color || 'text_muted');
+        loc.style.fontSize = s((w.detail_size || 13)) + 'px';
+        loc.style.marginTop = s(4) + 'px';
+        loc.style.paddingLeft = s(4) + 'px';
+        loc.style.whiteSpace = 'nowrap';
+        loc.style.overflow = 'hidden';
+        loc.style.textOverflow = 'ellipsis';
+        loc.textContent = ev.location;
+        card.appendChild(loc);
+      }
+
+      if (hasShow(ev, 'description_icon') && ev.description) {
+        var infoRow = document.createElement('div');
+        infoRow.style.marginTop = s(6) + 'px';
+        infoRow.style.paddingLeft = s(4) + 'px';
+        infoRow.style.display = 'flex';
+        infoRow.style.alignItems = 'center';
+        card.appendChild(infoRow);
+
+        var infoDot = document.createElement('span');
+        infoDot.className = 'mdi mdi-text-box-outline';
+        infoDot.style.color = resolveColor(w.detail_color || 'text_muted');
+        infoDot.style.fontSize = s(14) + 'px';
+        infoRow.appendChild(infoDot);
+
+        var infoLink = document.createElement('span');
+        infoLink.textContent = 'More information...';
+        infoLink.style.marginLeft = s(6) + 'px';
+        infoLink.style.color = resolveColor(w.link_color || 'primary');
+        infoLink.style.fontSize = s((w.detail_size || 13)) + 'px';
+        infoLink.style.textDecoration = 'underline';
+        infoLink.style.cursor = 'pointer';
+        infoLink.addEventListener('click', function(e) {
+          e.stopPropagation();
+          openAgendaInfoModal(ev.title, ev.description);
+          resetReturnTimer();
+        });
+        infoRow.appendChild(infoLink);
+      }
+    }
+
+    function expandEventsForRange(events, rangeStartDay, rangeEndExclusive) {
+      var out = [];
+      var rangeLastDay = addDays(rangeEndExclusive, -1);
+
+      for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        var sDay = startOfDay(ev.start);
+        var eDay = ev.end ? startOfDay(ev.end) : sDay;
+
+        // All-day date-style events typically use an exclusive end date.
+        if (ev.allDay && ev.end && ev.endIsDateOnly) {
+          eDay = addDays(eDay, -1);
+        }
+        if (eDay.getTime() < sDay.getTime()) eDay = sDay;
+
+        var multiDay = (eDay.getTime() !== sDay.getTime());
+
+        var iterStart = (sDay.getTime() < rangeStartDay.getTime()) ? rangeStartDay : sDay;
+        var iterEnd = (eDay.getTime() > rangeLastDay.getTime()) ? rangeLastDay : eDay;
+        if (iterEnd.getTime() < iterStart.getTime()) continue;
+
+        for (var day = new Date(iterStart.getTime()); day.getTime() <= iterEnd.getTime(); day = addDays(day, 1)) {
+          var seg = 'single';
+          if (multiDay) {
+            if (day.getTime() === sDay.getTime()) seg = 'start';
+            else if (day.getTime() === eDay.getTime()) seg = 'end';
+            else seg = 'middle';
+          }
+
+          var ex = {};
+          for (var k in ev) {
+            if (ev.hasOwnProperty(k)) ex[k] = ev[k];
+          }
+          ex.dayKey = formatDateKey(day);
+          ex.isContinuation = (seg === 'middle' || seg === 'end');
+          ex.timeMode = 'normal';
+
+          if (multiDay && !ev.allDay) {
+            if (seg === 'start') {
+              ex.timeMode = 'start_only';
+              ex.end = null;
+              ex.allDay = false;
+            } else if (seg === 'middle') {
+              ex.timeMode = 'all_day_cont';
+              ex.allDay = true;
+            } else if (seg === 'end') {
+              ex.timeMode = 'end_only';
+              ex.start = null;
+              ex.allDay = false;
+            }
+          } else if (multiDay && ev.allDay) {
+            ex.allDay = true;
+          }
+
+          ex.sortTs = ex.start ? ex.start.getTime() : (ex.end ? ex.end.getTime() : day.getTime());
+          out.push(ex);
+        }
+      }
+      return out;
+    }
+
+    function prepareDayData(events, rangeStartDay, rangeEndExclusive, forceBlankDays) {
+      events = expandEventsForRange(events, rangeStartDay, rangeEndExclusive);
+      events.sort(function(a, b) {
+        if (a.dayKey < b.dayKey) return -1;
+        if (a.dayKey > b.dayKey) return 1;
+        var aa = (a.allDay ? -1 : 1);
+        var bb = (b.allDay ? -1 : 1);
+        if (aa !== bb) return aa - bb;
+        return a.sortTs - b.sortTs;
+      });
+
+      var byDay = {};
+      for (var ei = 0; ei < events.length; ei++) {
+        var dayKey = events[ei].dayKey;
+        if (!byDay[dayKey]) byDay[dayKey] = [];
+        byDay[dayKey].push(events[ei]);
+      }
+
+      var dayDates = [];
+      if (forceBlankDays || showBlankDays) {
+        var base = new Date(rangeStartDay.getTime());
+        for (var di = 0; di < daysAhead; di++) {
+          dayDates.push(new Date(base.getFullYear(), base.getMonth(), base.getDate() + di));
+        }
+      } else {
+        for (var dk in byDay) {
+          if (!byDay.hasOwnProperty(dk)) continue;
+          if (!byDay[dk] || !byDay[dk].length) continue;
+          var dayDate = parseEventDate(dk);
+          if (dayDate) dayDates.push(dayDate);
+        }
+        dayDates.sort(function(a, b) { return a.getTime() - b.getTime(); });
+      }
+
+      return { byDay: byDay, dayDates: dayDates };
+    }
+
+    function renderEventsList(events, rangeStartDay, rangeEndExclusive) {
+      list.innerHTML = '';
+      if (!events.length && !showBlankDays) {
+        setAgendaEmpty('No upcoming events');
+        return;
+      }
+
+      var data = prepareDayData(events, rangeStartDay, rangeEndExclusive, false);
+      var byDay = data.byDay;
+      var dayDates = data.dayDates;
+      if (!dayDates.length) {
+        setAgendaEmpty('No upcoming events');
+        return;
+      }
+
+      var today = new Date();
+      today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var todayKey = formatDateKey(today);
+      var lastMonthKey = '';
+      for (var i = 0; i < dayDates.length; i++) {
+        var dayDate = dayDates[i];
+        var dKey = formatDateKey(dayDate);
+        var dayEvents = byDay[dKey] || [];
+
+        var monthKey = dayDate.getFullYear() + '-' + (dayDate.getMonth() + 1);
+        if (w.show_month_headers !== false && monthKey !== lastMonthKey) {
+          lastMonthKey = monthKey;
+          var month = document.createElement('div');
+          month.style.color = resolveColor(w.month_color || 'primary');
+          month.style.fontSize = s((w.month_size || 13)) + 'px';
+          month.style.letterSpacing = s(2) + 'px';
+          month.style.margin = (i === 0 ? 0 : s(14)) + 'px 0 ' + s(8) + 'px 0';
+          month.style.opacity = '0.95';
+          month.textContent = getMonthHeader(dayDate);
+          list.appendChild(month);
+        }
+
+        var row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'flex-start';
+        row.style.marginBottom = s(8) + 'px';
+        list.appendChild(row);
+
+        var dateColWidth = s((w.date_col_width || 52));
+        var dateCol = document.createElement('div');
+        dateCol.style.width = dateColWidth + 'px';
+        dateCol.style.flex = '0 0 ' + dateColWidth + 'px';
+        dateCol.style.paddingTop = s(4) + 'px';
+        dateCol.style.textAlign = 'center';
+        dateCol.style.color = resolveColor(w.date_color || 'text');
+        if (todayIndicator && dKey === todayKey) {
+          dateCol.style.background = resolveColor('primary');
+          dateCol.style.borderRadius = s(10) + 'px';
+          dateCol.style.paddingTop = s(8) + 'px';
+          dateCol.style.paddingBottom = s(8) + 'px';
+          dateCol.style.color = resolveColor(w.today_text_color || 'background');
+        }
+        row.appendChild(dateCol);
+
+        var dayNum = document.createElement('div');
+        dayNum.style.fontSize = s((w.day_size || 36)) + 'px';
+        dayNum.style.lineHeight = '1';
+        dayNum.style.fontWeight = '500';
+        dayNum.textContent = String(dayDate.getDate());
+        dateCol.appendChild(dayNum);
+
+        var dayLbl = document.createElement('div');
+        dayLbl.style.fontSize = s((w.weekday_size || 14)) + 'px';
+        dayLbl.style.marginTop = s(4) + 'px';
+        dayLbl.style.opacity = '0.85';
+        dayLbl.textContent = getWeekdayShort(dayDate).toUpperCase();
+        dateCol.appendChild(dayLbl);
+
+        var eventsCol = document.createElement('div');
+        eventsCol.style.flex = '1';
+        eventsCol.style.marginLeft = s(8) + 'px';
+        row.appendChild(eventsCol);
+
+        if (!dayEvents.length) {
+          var blank = document.createElement('div');
+          blank.style.minHeight = s(58) + 'px';
+          eventsCol.appendChild(blank);
+          continue;
+        }
+
+        for (var e = 0; e < dayEvents.length; e++) {
+          renderOneEventCard(eventsCol, dayEvents[e]);
+        }
+      }
+      updateOverflowFade();
+    }
+
+    function wireColumnFade(scroller, fadeEl) {
+      function tick() {
+        var hasOverflow = (scroller.scrollHeight > (scroller.clientHeight + 1));
+        if (!hasOverflow) { fadeEl.style.display = 'none'; return; }
+        var atBottom = (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2);
+        fadeEl.style.display = atBottom ? 'none' : 'block';
+      }
+      scroller.addEventListener('scroll', tick);
+      setTimeout(tick, 0);
+    }
+
+    function renderEventsColumns(events, rangeStartDay, rangeEndExclusive) {
+      list.innerHTML = '';
+      fade.style.display = 'none';
+
+      var data = prepareDayData(events, rangeStartDay, rangeEndExclusive, showBlankDays);
+      var byDay = data.byDay;
+      var dayDates = data.dayDates;
+      if (!dayDates.length) {
+        setAgendaEmpty('No upcoming events');
+        return;
+      }
+
+      var colMin = s((w.column_min_width !== undefined) ? w.column_min_width : 170);
+      var gap = s((w.column_gap !== undefined) ? w.column_gap : 8);
+      var colCount = dayDates.length;
+      var totalGap = gap * Math.max(0, colCount - 1);
+      var listInnerW = Math.max(1, (w.w || 0) - (pad * 2) - s(2));
+      var fitColW = Math.floor((listInnerW - totalGap) / Math.max(1, colCount));
+      var useFitted = (fitColW >= colMin);
+      var colW = useFitted ? fitColW : colMin;
+
+      var board = document.createElement('div');
+      board.style.display = 'flex';
+      board.style.alignItems = 'stretch';
+      board.style.width = useFitted ? '100%' : 'auto';
+      board.style.minWidth = useFitted ? '' : ((colW * colCount) + totalGap) + 'px';
+      board.style.height = '100%';
+      list.appendChild(board);
+
+      var today = new Date();
+      today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var todayKey = formatDateKey(today);
+      var lastMonthKey = '';
+
+      for (var i = 0; i < dayDates.length; i++) {
+        var dayDate = dayDates[i];
+        var dKey = formatDateKey(dayDate);
+        var dayEvents = byDay[dKey] || [];
+
+        var col = document.createElement('div');
+        col.style.flex = useFitted ? ('1 1 ' + colW + 'px') : ('0 0 ' + colW + 'px');
+        col.style.minWidth = useFitted ? '0' : (colW + 'px');
+        col.style.display = 'flex';
+        col.style.flexDirection = 'column';
+        col.style.minHeight = '0';
+        if (i > 0) col.style.marginLeft = gap + 'px';
+        board.appendChild(col);
+
+        var header = document.createElement('div');
+        header.style.padding = s(6) + 'px ' + s(6) + 'px';
+        header.style.marginBottom = s(6) + 'px';
+        header.style.borderRadius = s(8) + 'px';
+        header.style.textAlign = 'left';
+        header.style.display = 'flex';
+        header.style.flexDirection = 'column';
+        header.style.justifyContent = 'flex-start';
+        header.style.background = 'transparent';
+        header.style.color = resolveColor(w.date_color || 'text');
+        if (todayIndicator && dKey === todayKey) {
+          // Subtle indicator for columns layout: no full header fill.
+          header.style.background = rgbaWithAlpha(resolveColor('primary'), 0.16);
+          header.style.borderBottom = s(2) + 'px solid ' + resolveColor('primary');
+        }
+        col.appendChild(header);
+
+        var monthKey = dayDate.getFullYear() + '-' + (dayDate.getMonth() + 1);
+        var monthSlot = document.createElement('div');
+        monthSlot.style.fontSize = s((w.month_size || 11)) + 'px';
+        monthSlot.style.letterSpacing = s(1.5) + 'px';
+        monthSlot.style.lineHeight = '1';
+        monthSlot.style.minHeight = s((w.month_size || 11)) + 'px';
+        monthSlot.style.marginBottom = s(4) + 'px';
+        monthSlot.style.color = resolveColor(w.month_color || 'primary');
+        monthSlot.style.opacity = '0.9';
+        if (w.show_month_headers !== false && monthKey !== lastMonthKey) {
+          lastMonthKey = monthKey;
+          monthSlot.textContent = getMonthHeader(dayDate);
+        } else {
+          monthSlot.textContent = '';
+        }
+        header.appendChild(monthSlot);
+
+        var dayLine = document.createElement('div');
+        dayLine.style.fontSize = s((w.weekday_size || 21)) + 'px';
+        dayLine.style.lineHeight = '1.05';
+        dayLine.style.fontWeight = '500';
+        dayLine.style.whiteSpace = 'nowrap';
+        dayLine.style.overflow = 'hidden';
+        dayLine.style.textOverflow = 'ellipsis';
+        dayLine.textContent = String(dayDate.getDate()) + ' ' + getWeekdayLong(dayDate);
+        header.appendChild(dayLine);
+
+        var scrollerWrap = document.createElement('div');
+        scrollerWrap.style.position = 'relative';
+        scrollerWrap.style.flex = '1';
+        scrollerWrap.style.minHeight = '0';
+        col.appendChild(scrollerWrap);
+
+        var scroller = document.createElement('div');
+        scroller.style.position = 'absolute';
+        scroller.style.left = '0';
+        scroller.style.right = '0';
+        scroller.style.top = '0';
+        scroller.style.bottom = '0';
+        scroller.style.overflow = 'auto';
+        scroller.style.webkitOverflowScrolling = 'touch';
+        scrollerWrap.appendChild(scroller);
+
+        for (var e = 0; e < dayEvents.length; e++) {
+          renderOneEventCard(scroller, dayEvents[e]);
+        }
+
+        var colFade = document.createElement('div');
+        colFade.style.position = 'absolute';
+        colFade.style.left = '0';
+        colFade.style.right = '0';
+        colFade.style.bottom = '0';
+        colFade.style.height = s(48) + 'px';
+        colFade.style.pointerEvents = 'none';
+        colFade.style.display = 'none';
+        colFade.style.background = 'linear-gradient(180deg, rgba(0,0,0,0), ' + resolveColor(w.background || 'surface') + ' 88%)';
+        scrollerWrap.appendChild(colFade);
+        wireColumnFade(scroller, colFade);
+      }
+    }
+
+    function renderEvents(events, rangeStartDay, rangeEndExclusive) {
+      if (layout === 'columns') {
+        renderEventsColumns(events, rangeStartDay, rangeEndExclusive);
+      } else {
+        renderEventsList(events, rangeStartDay, rangeEndExclusive);
+      }
+    }
+
+    function extractEvents(result, entityId) {
+      if (!result) return [];
+      if (Object.prototype.toString.call(result) === '[object Array]') return result;
+      if (result.events && Object.prototype.toString.call(result.events) === '[object Array]') return result.events;
+      if (entityId && result[entityId] && Object.prototype.toString.call(result[entityId]) === '[object Array]') return result[entityId];
+
+      for (var k in result) {
+        if (!result.hasOwnProperty(k)) continue;
+        if (Object.prototype.toString.call(result[k]) === '[object Array]') return result[k];
+      }
+      return [];
+    }
+
+    function requestCalendar(entityId, startIso, endIso, cb, timerRef) {
+      var url = haUrl + '/api/calendars/' + entityId +
+        '?start=' + encodeURIComponent(startIso) +
+        '&end=' + encodeURIComponent(endIso);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + haToken);
+      xhr.onload = function() {
+        if (xhr.status !== 200) {
+          cb([]);
+          return;
+        }
+        var data = null;
+        try { data = JSON.parse(xhr.responseText); } catch (e) {}
+        cb(extractEvents(data, entityId));
+      };
+      xhr.onerror = function() { cb([]); };
+      xhr.send();
+    }
+
+    var timerRef = { id: null, pendingIds: [], stop: null };
+    var active = true;
+    timerRef.stop = function() { active = false; };
+    activePageTimers.push(timerRef);
+
+    function refreshAgenda() {
+      if (!active) return;
+      if (!calendars.length) {
+        setAgendaEmpty('No calendars configured');
+        return;
+      }
+
+      timerRef.pendingIds = [];
+      var startDay = new Date();
+      startDay = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
+      var end = new Date(startDay.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+      var startIso = startDay.toISOString();
+      var endIso = end.toISOString();
+
+      var remaining = 0;
+      var allEvents = [];
+
+      function doneOne() {
+        remaining--;
+        if (remaining > 0 || !active) return;
+
+        if (w.combine_duplicates) {
+          var merged = {};
+          for (var i = 0; i < allEvents.length; i++) {
+            var ev = allEvents[i];
+            var key = ev.dayKey + '|' + ev.title;
+            if (!merged[key]) merged[key] = ev;
+          }
+          allEvents = [];
+          for (var k in merged) {
+            if (merged.hasOwnProperty(k)) allEvents.push(merged[k]);
+          }
+        }
+
+        renderEvents(allEvents, startDay, end);
+      }
+
+      for (var i = 0; i < calendars.length; i++) {
+        var calCfg = calendars[i];
+        if (!calCfg || !calCfg.entity) continue;
+        remaining++;
+        (function(cfg) {
+          requestCalendar(cfg.entity, startIso, endIso, function(rawEvents) {
+            if (!active) return;
+            for (var j = 0; j < rawEvents.length; j++) {
+              var ev = normalizeOneEvent(rawEvents[j], cfg);
+              if (ev) allEvents.push(ev);
+            }
+            doneOne();
+          }, timerRef);
+        })(calCfg);
+      }
+
+      if (remaining === 0) {
+        setAgendaEmpty('No calendars configured');
+      }
+    }
+
+    setAgendaEmpty('Loading...');
+    refreshAgenda();
+
+    var timer = setInterval(refreshAgenda, refreshSec * 1000);
+    timerRef.id = timer;
   }
 
   // -- Camera widget --
@@ -1863,6 +3430,18 @@
     var prefix = w.prefix || '';
 
     switch (fmt) {
+      case 'duration':
+        if (isNaN(num)) return '--:--';
+        if (num < 0) num = 0;
+        num = Math.floor(num);
+        var hh = Math.floor(num / 3600);
+        var mm = Math.floor((num % 3600) / 60);
+        var ss = num % 60;
+        var mmStr = (mm < 10 ? '0' : '') + mm;
+        var ssStr = (ss < 10 ? '0' : '') + ss;
+        if (hh > 0) return prefix + hh + ':' + mmStr + ':' + ssStr;
+        return prefix + mm + ':' + ssStr;
+
       case 'time_24':
       case 'time_12':
       case 'date_iso':
@@ -2026,39 +3605,6 @@
 
   var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // ---- State condition resolution ---------------------------
-  // Evaluate a single condition object against a HA state value.
-  // Returns the matching states entry or null.
-  function evalCondition(cond, haState) {
-    if (!cond || !haState) return null;
-    var num = parseFloat(haState.state);
-    var str = haState.state;
-    switch (cond.type) {
-      case 'above':      return (!isNaN(num) && num > cond.value)       ? cond.state_key : null;
-      case 'below':      return (!isNaN(num) && num < cond.value)       ? cond.state_key : null;
-      case 'equals':     return (str === String(cond.value))            ? cond.state_key : null;
-      case 'not_equals': return (str !== String(cond.value))            ? cond.state_key : null;
-      default:           return null;
-    }
-  }
-
-  // Resolve which named state applies given the current HA entity state.
-  // state_condition can be a single condition object OR an array of conditions
-  // evaluated in order - first match wins.
-  //
-  // Single condition (legacy, still supported):
-  //   "state_condition": { "type": "above", "value": 0, "state_key": "active" }
-  //
-  // Multiple conditions (new - first match wins, like CSS):
-  //   "state_condition": [
-  //     { "type": "below", "value": 20, "state_key": "low" },
-  //     { "type": "below", "value": 50, "state_key": "medium" },
-  //     { "type": "above", "value": 50, "state_key": "ok" }
-  //   ]
-  function resolveWidgetState(w, haState) {
-    return null; // deprecated by overrides
-  }
-
   // ---- Conditional overrides -------------------------------
   // overrides: [{ when: { logic: 'all'|'any', conditions: [...] }, set: { ... } }, ...]
   // conditions can be nested groups with their own logic/conditions.
@@ -2068,7 +3614,7 @@
   //   haState2 is the secondary entity state (entity2) - optional, pass null if unused.
   //   All matching rules are merged (last-wins per property), so rule order matters.
   function resolveOverrides(w, haState, haState2) {
-    if (!w.overrides || !w.overrides.length || !haState) return null;
+    if (!w.overrides || !w.overrides.length || (!haState && !haState2)) return null;
     var out = {};
     for (var i = 0; i < w.overrides.length; i++) {
       var rule = w.overrides[i];
@@ -2114,7 +3660,7 @@
   //   "state2"               - haState2.state          (secondary entity, requires entity2)
   //   "attribute2"           - haState2.attributes[x]  (secondary entity attribute)
   function evalCondition(cond, haState, haState2) {
-    if (!cond || !haState) return false;
+    if (!cond) return false;
     var src = cond.source || 'state';
 
     // Determine which state object to test against
@@ -2207,6 +3753,30 @@
     return colors[token] || token;
   }
 
+  function clampPct(p, fallback) {
+    var n = parseFloat(p);
+    if (isNaN(n)) n = fallback;
+    if (n < 0) n = 0;
+    if (n > 100) n = 100;
+    return n;
+  }
+
+  function resolveLinearGradient(grad) {
+    if (!grad || typeof grad !== 'object') return '';
+    var from = resolveColor(grad.from !== undefined ? grad.from : 'transparent');
+    var to = resolveColor(grad.to !== undefined ? grad.to : 'surface2');
+    var angle = parseFloat(grad.angle);
+    if (isNaN(angle)) angle = 180;
+
+    var startPct = clampPct(grad.start_pct, 60);
+    var endPct = clampPct(grad.end_pct, 100);
+    if (endPct < startPct) endPct = startPct;
+
+    return 'linear-gradient(' + angle + 'deg, ' +
+      from + ' ' + startPct + '%, ' +
+      to + ' ' + endPct + '%)';
+  }
+
   // ---- Entity subscription ----------------------------------
   function registerEntityCallback(entityId, callback) {
     if (!entityCallbacks[entityId]) {
@@ -2252,7 +3822,6 @@
       if (w.entity2)         entities[w.entity2]         = true;  // secondary entity
       if (w.snapshot_entity) entities[w.snapshot_entity] = true;
       if (w.stream_entity)   entities[w.stream_entity]   = true;
-      if (w.visible && w.visible.entity) entities[w.visible.entity] = true;
     }
 
     // If WS is ready, subscribe to state_changed for these entities
@@ -2363,6 +3932,12 @@
           streamCb(msg.success ? msg.result : null);
           break;
         }
+        if (pendingAgendaRequests[msg.id]) {
+          var agendaCb = pendingAgendaRequests[msg.id];
+          delete pendingAgendaRequests[msg.id];
+          agendaCb(msg.success ? msg.result : null);
+          break;
+        }
         if (msg.success && msg.result && Array.isArray(msg.result)) {
           // This is the get_states response
           for (var i = 0; i < msg.result.length; i++) {
@@ -2423,7 +3998,7 @@
   }
 
   // Handle any action type - service call, page navigation, or automation trigger
-  function handleAction(action) {
+  function handleAction(action, dynamicValue, tokenMap) {
     if (!action) return;
 
     // Support legacy format: { service, entity_id } with no type field
@@ -2446,7 +4021,16 @@
       if (parts.length === 2) {
         var payload = { id: msgId++, type: 'call_service', domain: parts[0], service: parts[1] };
         if (action.entity_id) payload.target = { entity_id: action.entity_id };
-        if (action.data)      payload.service_data = action.data;
+        if (action.data) {
+          var map = {};
+          if (tokenMap) {
+            for (var tk in tokenMap) {
+              if (tokenMap.hasOwnProperty(tk)) map[tk] = tokenMap[tk];
+            }
+          }
+          if (dynamicValue !== undefined) map['$value'] = dynamicValue;
+          payload.service_data = injectActionTokens(action.data, map);
+        }
         wsSend(payload);
       }
       return;
@@ -2454,8 +4038,35 @@
 
     // Shorthand: { service: 'domain.service', entity_id: ... } without explicit type
     if (action.service) {
-      handleAction({ type: 'service', service: action.service, entity_id: action.entity_id, data: action.data });
+      handleAction({ type: 'service', service: action.service, entity_id: action.entity_id, data: action.data }, dynamicValue, tokenMap);
     }
+  }
+
+  // Recursively replace "$value" tokens in action.data for slider service calls.
+  // Token replacement is raw-only: "$value" => current numeric slider value.
+  function injectActionTokens(node, tokenMap) {
+    if (node && typeof node === 'string' && tokenMap && tokenMap[node] !== undefined) return tokenMap[node];
+
+    if (node && Object.prototype.toString.call(node) === '[object Array]') {
+      var arr = [];
+      for (var i = 0; i < node.length; i++) arr.push(injectActionTokens(node[i], tokenMap));
+      return arr;
+    }
+
+    if (node && typeof node === 'object') {
+      var out = {};
+      for (var k in node) {
+        if (node.hasOwnProperty(k)) out[k] = injectActionTokens(node[k], tokenMap);
+      }
+      return out;
+    }
+
+    return node;
+  }
+
+  // Backward-compatible wrapper for slider token replacement.
+  function injectActionValue(node, value) {
+    return injectActionTokens(node, { '$value': value });
   }
 
   function scheduleReconnect() {

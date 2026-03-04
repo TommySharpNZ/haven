@@ -83,6 +83,48 @@ export function createWidgetGroup(w, theme) {
       }));
     }
   }
+
+  // For sliders, draw track + fill + thumb preview.
+  if (w.type === 'slider') {
+    label.visible(false);
+    var sw = w.w || 10;
+    var sh = w.h || 10;
+    var vertical = (w.orientation === 'vertical');
+    var thickness = vertical ? sw : sh;
+    var radius = (w.radius !== undefined) ? w.radius : Math.round(thickness / 2);
+    var thumbSize = (w.thumb_size !== undefined) ? w.thumb_size : Math.max(14, Math.round(thickness * 0.9));
+    var ratio = 0.55;
+
+    bg.fill(resolveColor(w.background, theme) || '#363f4a');
+    bg.cornerRadius(radius);
+
+    var fill = new Konva.Rect({
+      x: 0,
+      y: 0,
+      width: vertical ? sw : Math.round(sw * ratio),
+      height: vertical ? Math.round(sh * ratio) : sh,
+      fill: resolveColor(w.color, theme) || '#8ADF45',
+      cornerRadius: radius,
+      listening: false
+    });
+    if (vertical) {
+      fill.y(sh - fill.height());
+    }
+    group.add(fill);
+
+    var thumbX = vertical ? Math.round((sw - thumbSize) / 2) : Math.round(sw * ratio - thumbSize / 2);
+    var thumbY = vertical ? Math.round((sh - sh * ratio) - thumbSize / 2) : Math.round((sh - thumbSize) / 2);
+    if (thumbX < 0) thumbX = 0;
+    if (thumbY < 0) thumbY = 0;
+    group.add(new Konva.Circle({
+      x: thumbX + thumbSize / 2,
+      y: thumbY + thumbSize / 2,
+      radius: Math.round(thumbSize / 2),
+      fill: resolveColor(w.thumb_color, theme) || '#ffffff',
+      opacity: 0.95,
+      listening: false
+    }));
+  }
   group._rect = bg;
   group._label = label;
   group._data = w;

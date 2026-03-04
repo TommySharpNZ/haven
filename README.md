@@ -17,16 +17,18 @@ Written in vanilla ES5 JavaScript with no framework dependencies, HAven tries re
 - [Theming](#theming)
 - [Icons](#icons)
 - [Actions](#actions)
-- [Visibility Conditions](#visibility-conditions)
 - [Widget Types](#widget-types)
   - [label](#label)
   - [rectangle](#rectangle)
   - [bar](#bar)
+  - [slider](#slider)
+  - [scene](#scene)
   - [button](#button)
   - [clock](#clock)
   - [image](#image)
   - [camera](#camera)
   - [arc](#arc)
+  - [agenda](#agenda)
   - [history\_chart](#history_chart)
 - [Pages & Navigation](#pages--navigation)
 - [Credentials & Security](#credentials--security)
@@ -123,6 +125,7 @@ config/
 | `canvas.height` | Design height in pixels |
 | `default_page` | Page ID to show on load and return to after inactivity |
 | `return_to_default` | Seconds of inactivity before returning to default page |
+| `page_nav` | Optional nav dot style (`background_color`, `primary_color`, `secondary_color`, `size`) |
 
 ---
 
@@ -174,14 +177,13 @@ Pages can have a background image:
 
 HAven uses [Material Design Icons](https://pictogrammers.com/library/mdi/) (MDI), bundled locally - no internet required. MDI is the same icon set used by Home Assistant's own UI, so names are already familiar if you've written HA config YAML.
 
-Use `[mdi:icon-name]` syntax anywhere in label `text` or button `icon_on`/`icon_off` fields:
+Use `[mdi:icon-name]` syntax anywhere in label `text` or button `icon` fields:
 
 ```json
 "text":     "[mdi:fire] Heating"
 "text":     "[mdi:lightbulb-outline] Living Room : 3 lights on"
 "text":     "[mdi:solar-panel] 1.4 kW"
-"icon_off": "[mdi:lightbulb-outline]"
-"icon_on":  "[mdi:lightbulb]"
+"icon": "[mdi:lightbulb-outline]"
 ```
 
 Icons and text can be freely mixed in a single string. The icon name matches the MDI name exactly - the same name you'd use in a HA entity `icon:` field.
@@ -231,32 +233,24 @@ With optional service data:
 }
 ```
 
----
+**Slider value token (`$value`)**
 
-## Visibility Conditions : Still to be tested!!!!
-
-Any widget can be shown or hidden based on an entity's state:
+For slider widgets, `"$value"` in `action.data` is replaced at call time with the current slider value.
 
 ```json
-"visible": { "entity": "sensor.solar_power", "type": "above", "value": 0 }
+"action": {
+  "type": "service",
+  "service": "media_player.volume_set",
+  "entity_id": "media_player.living_room",
+  "data": { "volume_level": "$value" }
+}
 ```
-
-| Type | Behaviour | Note |
-|------|-----------|------|
-| `above` | Show when entity state > value | Numeric Comparison |
-| `below` | Show when entity state < value | Numeric Comparison |
-| `equals` | Show when entity state == value | Text Comparison |
-| `not_equals` | Show when entity state != value | Text Comparison |
-
-The widget updates live as the entity state changes.
-The entity is entirely separate from the widget's own entity. You can show/hide a solar label based on a switch state, or hide a heating widget based on a completely unrelated temperature sensor. No relationship required.
-Note : Attributes are not currently supported.
 
 ---
 
 ## Conditional Overrides
 
-Labels and buttons support ordered conditional overrides via an `overrides` array. Each rule has a `when` block (logic + conditions) and a `set` block (attributes to override). Rules are evaluated in order and all matching rules are applied — later rules win.
+Widgets support ordered conditional overrides via an `overrides` array. Each rule has a `when` block (logic + conditions) and a `set` block (attributes to override). Rules are evaluated in order and all matching rules are applied — later rules win.
 
 ```json
 "overrides": [
@@ -302,6 +296,23 @@ The `source` field controls what value a condition tests against:
 { "source": "attribute2", "attribute": "battery_level", "type": "below",  "value": 20 }
 ```
 
+**Visibility via overrides (`set.visible`)**
+
+Use `set.visible` inside override rules to show or hide any widget.
+
+```json
+"overrides": [
+  {
+    "when": { "logic": "all", "conditions": [ { "source": "attribute", "attribute": "shuffle", "type": "equals", "value": true } ] },
+    "set": { "visible": true }
+  },
+  {
+    "when": { "logic": "all", "conditions": [ { "source": "attribute", "attribute": "shuffle", "type": "not_equals", "value": true } ] },
+    "set": { "visible": false }
+  }
+]
+```
+
 ---
 
 ## Widget Types
@@ -319,7 +330,6 @@ All widgets share these base properties:
 | `opacity` | 0.0–1.0, optional |
 | `border_width` | Border thickness in px, optional |
 | `border_color` | Border color - token or hex, optional |
-| `visible` | Visibility condition, optional |
 | `groupid` | Designer grouping hint, ignored at runtime |
 
 ---
@@ -359,6 +369,7 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `letter_spacing` | Letter spacing in px |
 | `font_weight` | CSS font-weight value (e.g. `400`, `600`, `bold`) |
 | `entity` | Primary HA entity ID for live value |
+| `entity_attribute` | Optional primary entity attribute key to use as value source (e.g. `media_title`, `media_artist`) |
 | `entity2` | Secondary HA entity ID. Label re-renders when either entity changes. |
 | `format` | How to format the entity value (see below) |
 | `prefix` | Text prefix for `power_prefix` format |
@@ -384,6 +395,22 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 **entity2 — secondary entity binding**
 
 Labels can subscribe to a second entity with `entity2`. The label re-renders whenever either entity changes. `entity` remains the primary (drives `format`, default override tests, and template variables `state`/`state_str`/`attr`). `entity2` adds `state2`/`state_str2`/`attr2` template variables and the `state2`/`attribute2` condition sources.
+
+**Attribute source on labels**
+
+Use `entity_attribute` when the displayed value lives in a HA attribute instead of state (common for media player metadata):
+
+```json
+{
+  "type": "label",
+  "entity": "media_player.living_room",
+  "entity_attribute": "media_title",
+  "x": 20, "y": 340, "w": 420, "h": 40,
+  "font_size": 28,
+  "align": "left",
+  "color": "text"
+}
+```
 
 ```json
 {
@@ -424,6 +451,23 @@ Labels can include `{{ ... }}` expressions in their `text` and `color` fields. E
 **Functions**
 - `round(x, n)`, `min(a,b)`, `max(a,b)`, `abs(x)`, `floor(x)`, `ceil(x)`
 
+**Syntax / operators (JavaScript-style)**
+- Arithmetic: `+`, `-`, `*`, `/`, `%`
+- Comparisons: `>`, `<`, `>=`, `<=`, `==`, `!=`, `===`, `!==`
+- Boolean logic: `&&`, `||`, `!`
+- Conditional (ternary): `condition ? value_if_true : value_if_false`
+- Parentheses for grouping: `( ... )`
+
+**Common patterns**
+- Null-safe attribute fallback:
+  `{{ attr.volume_level != null ? attr.volume_level : 0 }}`
+- Volume percent from HA `0..1` attribute:
+  `{{ attr.volume_level != null ? (round(attr.volume_level * 100, 0) + '%') : '--' }}`
+- Choose color by threshold:
+  `{{ state > 5000 ? 'danger' : (state > 1000 ? 'warning' : 'primary') }}`
+- Combine values from `entity` + `entity2`:
+  `{{ round(state, 1) }} kW / {{ round(state2, 1) }} kW`
+
 **Example**
 ```json
 {
@@ -447,7 +491,7 @@ Labels can include `{{ ... }}` expressions in their `text` and `color` fields. E
 
 ### rectangle
 
-A plain colored rectangle. Used for panel/card backgrounds and decorative elements.
+A rectangle fill layer for cards, overlays, and decorative elements. Supports solid color or a simple two-color linear gradient.
 
 ```json
 {
@@ -461,15 +505,33 @@ A plain colored rectangle. Used for panel/card backgrounds and decorative elemen
 }
 ```
 
+Gradient example (mostly transparent, fading to solid near the bottom):
+```json
+{
+  "id": "card_fade",
+  "type": "rectangle",
+  "x": 0, "y": 360, "w": 390, "h": 140,
+  "gradient": {
+    "from": "transparent",
+    "to": "surface2",
+    "angle": 180,
+    "start_pct": 62,
+    "end_pct": 100
+  },
+  "radius": 10
+}
+```
+
 | Property | Description |
 |----------|-------------|
 | `background` | Fill color - token or hex |
+| `gradient` | Optional linear gradient object `{ from, to, angle, start_pct, end_pct }` |
 | `radius` | Corner radius in px |
 | `border_width` | Border thickness in px |
 | `border_color` | Border color - token or hex |
 | `action` | Optional action to perform on tap |
 | `entity` | Optional HA entity to drive state-based styling |
-| `states` | Optional map of state → style overrides (`background`, `opacity`, `border_width`, `border_color`) |
+| `overrides` | Ordered conditional style overrides (`background`, `gradient`, `opacity`, `border_width`, `border_color`) |
 
 ---
 
@@ -499,7 +561,126 @@ A horizontal progress bar driven by a numeric entity value.
 | `max` | Value that represents 100% fill |
 | `radius` | Corner radius in px |
 | `background` | Track background color (token or hex, default `surface2`) |
-| `thresholds` | Array of color rules. First matching `below` (as % of max) wins. `default` applies when no `below` matches. |
+| `thresholds` | Array of color rules. First matching `below` (raw entity value) wins. `default` applies when no rule matches. |
+
+---
+
+### slider
+
+An interactive slider for controlling numeric Home Assistant service values (brightness, cover position, volume, etc).
+
+```json
+{
+  "id": "living_volume",
+  "type": "slider",
+  "x": 40, "y": 220, "w": 280, "h": 36,
+  "entity": "media_player.living_room",
+  "value_attribute": "volume_level",
+  "min": 0,
+  "max": 1,
+  "step": 0.01,
+  "orientation": "horizontal",
+  "update_mode": "release",
+  "background": "surface2",
+  "color": "primary",
+  "thumb_color": "text",
+  "thumb_size": 24,
+  "radius": 18,
+  "action": {
+    "type": "service",
+    "service": "media_player.volume_set",
+    "entity_id": "media_player.living_room",
+    "data": { "volume_level": "$value" }
+  }
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `entity` | HA entity used to read current value |
+| `value_attribute` | Optional attribute key to read from (e.g. `brightness`, `volume_level`). If omitted, reads `state`. |
+| `min` | Minimum slider value (default `0`) |
+| `max` | Maximum slider value (default `100`) |
+| `min_attribute` | Optional attribute key used as dynamic minimum bound |
+| `max_attribute` | Optional attribute key used as dynamic maximum bound (useful for media seek with `media_duration`) |
+| `step` | Step size (default `1`) |
+| `orientation` | `horizontal` (default) or `vertical` |
+| `update_mode` | `release` (default) sends once on drag end, `drag` sends continuously while dragging |
+| `background` | Track color - token or hex |
+| `color` | Fill color - token or hex |
+| `thumb_color` | Thumb color - token or hex |
+| `thumb_size` | Thumb diameter in px |
+| `radius` | Track corner radius in px |
+| `action` | Service action with `"$value"` token in `data` |
+| `overrides` | Conditional style overrides (`background`, `color`, `thumb_color`, `opacity`) |
+
+**Interaction:** slider is drag-only (no tap-to-jump).
+
+**Future enhancement (planned):** support for a slider `thumb_icon` option may be added to help discoverability for controls like volume/brightness.
+
+**Per-track seek example**
+```json
+{
+  "type": "slider",
+  "entity": "media_player.office",
+  "value_attribute": "media_position",
+  "min": 0,
+  "max": 1,
+  "max_attribute": "media_duration",
+  "step": 1,
+  "action": {
+    "type": "service",
+    "service": "media_player.media_seek",
+    "entity_id": "media_player.office",
+    "data": { "seek_position": "$value" }
+  }
+}
+```
+
+---
+
+### scene
+
+Generic option selector widget for controlling an entity state/attribute with a fixed set of options.
+
+```json
+{
+  "id": "repeat_mode",
+  "type": "scene",
+  "x": 120, "y": 760, "w": 280, "h": 56,
+  "entity": "media_player.kitchen_sonos",
+  "value_attribute": "repeat",
+  "layout": "buttons",
+  "options": [
+    { "value": "off", "label": "Off", "icon": "[mdi:repeat-off]" },
+    { "value": "all", "label": "All", "icon": "[mdi:repeat-variant]" },
+    { "value": "one", "label": "One", "icon": "[mdi:repeat-once]" }
+  ],
+  "background": "transparent",
+  "option_background": "surface2",
+  "option_color": "text",
+  "selected_background": "primary",
+  "selected_color": "background",
+  "action": {
+    "type": "service",
+    "service": "media_player.repeat_set",
+    "entity_id": "media_player.kitchen_sonos",
+    "data": { "repeat": "$option" }
+  }
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `entity` | Entity used to read current value |
+| `value_attribute` | Optional attribute key to read selected value from (otherwise reads `state`) |
+| `layout` | `buttons` (default), `dropdown`, or `picker` |
+| `options` | Static option list. Each item can be a string or object `{value,label,icon}` |
+| `action` | Service action; use `"$option"` in `data` to inject selected value |
+| `option_background` / `option_color` | Default option colors |
+| `selected_background` / `selected_color` | Active/selected option colors |
+
+`picker` layout shows a single control that opens a small option modal on tap.
 
 ---
 
@@ -517,7 +698,7 @@ A tappable button that reflects entity state visually and calls a HA service on 
   "background": "surface",
   "icon_color": "icon_inactive",
   "label_color": "text_muted",
-  "icon_off": "[mdi:lightbulb-outline]",
+  "icon": "[mdi:lightbulb-outline]",
   "overrides": [
     {
       "when": { "logic": "all", "conditions": [ { "type": "equals", "value": "on" } ] },
@@ -536,8 +717,7 @@ A tappable button that reflects entity state visually and calls a HA service on 
 | `background` | Default button background (token or hex) |
 | `icon_color` | Default icon color (token or hex) |
 | `label_color` | Default label text color (token or hex) |
-| `icon_off` | Default icon (used when no override matches). Supports `[mdi:icon-name]`. |
-| `icon_on` | Legacy: icon shown when entity is `on` (use `overrides` instead) |
+| `icon` | Default icon (used when no override `set.icon` matches). Supports `[mdi:icon-name]`. |
 | `icon_size` | Icon size in px (optional). If omitted, auto-scales based on button size |
 | `label_size` | Label font size in px (optional). If omitted, auto-scales based on button size |
 | `radius` | Corner radius in px (optional) |
@@ -602,7 +782,7 @@ Displays the current time (HH:MM), updated every second. No entity binding neede
 
 ### image
 
-Displays a static image from a URL or local path. Optionally opens fullscreen on tap.
+Displays a static image from a URL/local path, or a dynamic image from a HA entity attribute (for example media player album art). Optionally opens fullscreen on tap.
 
 ```json
 {
@@ -618,9 +798,43 @@ Displays a static image from a URL or local path. Optionally opens fullscreen on
 | Property | Description |
 |----------|-------------|
 | `url` | Image URL or path relative to haven folder |
+| `entity` | Optional HA entity to watch for dynamic image updates |
+| `entity_attribute` | Optional attribute key containing image URL/path (e.g. `entity_picture`) |
+| `gradient` | Optional linear gradient overlay object `{ from, to, angle, start_pct, end_pct }` |
 | `fit` | `cover` (default, may crop) or `contain` (letterbox) |
 | `fullscreen_on_tap` | `true` to open fullscreen overlay on tap |
 | `radius` | Corner radius in px |
+
+**Image gradient overlay example**
+```json
+{
+  "type": "image",
+  "entity": "media_player.living_room",
+  "entity_attribute": "entity_picture",
+  "gradient": {
+    "from": "transparent",
+    "to": "surface2",
+    "angle": 180,
+    "start_pct": 62,
+    "end_pct": 100
+  }
+}
+```
+
+**Album art example (`entity_picture`)**
+```json
+{
+  "id": "album_art",
+  "type": "image",
+  "x": 20, "y": 100, "w": 220, "h": 220,
+  "entity": "media_player.living_room",
+  "entity_attribute": "entity_picture",
+  "fit": "cover",
+  "radius": 8
+}
+```
+
+When `entity` + `entity_attribute` are set, the image widget updates whenever that entity changes. Relative HA paths like `/api/media_player_proxy/...` are resolved automatically.
 
 ---
 
@@ -719,7 +933,7 @@ An SVG-based circular gauge driven by a numeric entity value.
 | `line_width` | Arc stroke width in px (default `12`) |
 | `background` | Background ring color (token or hex, default `surface2`) |
 | `color` | Arc fill color when no thresholds match (token or hex) |
-| `thresholds` | Array of color rules; first matching `below` (as % of range) wins |
+| `thresholds` | Array of color rules; first matching `below` (raw entity value) wins |
 | `label` | Optional label shown under the value |
 | `label_color` | Label color (token or hex, default `text_muted`) |
 | `format` | Value format (same as label widget) |
@@ -777,6 +991,59 @@ Fetches HA long-term statistics and renders a vertical bar chart. Useful for ene
 
 ---
 
+### agenda
+
+Displays upcoming events from one or more Home Assistant `calendar.*` entities in a compact, scrollable agenda list.
+
+```json
+{
+  "id": "family_agenda",
+  "type": "agenda",
+  "x": 20, "y": 80, "w": 760, "h": 360,
+  "layout": "list",
+  "agenda_scale": 1.0,
+  "days_ahead": 14,
+  "refresh_interval": 120,
+  "today_indicator": true,
+  "show_blank_days": false,
+  "time_format": "12h",
+  "show_month_headers": true,
+  "combine_duplicates": true,
+  "calendars": [
+    { "entity": "calendar.family", "color": "primary", "icon": "mdi:home", "full_day_highlight": true, "show": ["time", "location", "description_icon"] },
+    { "entity": "calendar.work",   "color": "warning", "icon": "mdi:briefcase", "show": ["time"] }
+  ]
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `layout` | `list` (default) or `columns` |
+| `agenda_scale` | Global internal sizing multiplier for agenda content (default `1.0`) |
+| `scale` | Backward-compatible alias for `agenda_scale` |
+| `days_ahead` | Days forward to request events (default `7`) |
+| `refresh_interval` | Seconds between refreshes (default `120`) |
+| `today_indicator` | Highlight today's date/day in a rounded primary-color date block |
+| `show_blank_days` | Render days with no events in the range (default `false`) |
+| `time_format` | `12h` (default) or `24h` |
+| `show_month_headers` | Show month separators (default `true`) |
+| `combine_duplicates` | Merge same-title events on same day across calendars |
+| `calendars` | Array of calendar sources and display options |
+
+Each calendar entry supports:
+- `entity` (required)
+- `color` (accent color)
+- `icon` (optional `mdi:` icon shown before title)
+- `full_day_highlight` (optional, when `true`, all-day event cards use the accent color at low opacity)
+- `show` array: `time`, `location`, `description_icon` (or `[]` for title-only)
+
+Notes:
+- In `layout: "columns"`, `days_ahead` is the exact number of day-columns rendered (one day per column, from today).
+- `description_icon` renders a `More information...` link when an event has description text; tapping opens a detail modal.
+- When content overflows, the widget fades at the bottom edge and remains touch-scrollable.
+
+---
+
 ## Pages & Navigation
 
 Pages are defined in the `pages` array. Navigate between them by swiping left/right or tapping the dot indicators at the bottom of the screen.
@@ -788,6 +1055,24 @@ Pages are defined in the `pages` array. Navigate between them by swiping left/ri
   { "id": 3, "label": "Cameras", "widgets": [] }
 ]
 ```
+
+### Page nav styling
+
+Set `device.page_nav` to tune navigation visibility for each device/browser:
+
+```json
+"device": {
+  "page_nav": {
+    "background_color": "rgba(0,0,0,0.20)",
+    "primary_color": "text",
+    "secondary_color": "#6f7781",
+    "size": "large"
+  }
+}
+```
+
+`size` supports `small`, `medium`, `large` (`medium` default).
+Colors accept theme tokens or literal color values.
 
 ### Page 0 (persistent overlay)
 
@@ -877,6 +1162,7 @@ Open `designer.html` in your browser. From the welcome screen you can:
 | **Save** | Save back to disk (File System Access API). Creates a timestamped backup before overwriting. |
 | **Download** | Save as a downloaded file (fallback if File System Access is not available) |
 | **↩ / ↪** | Undo / Redo (50 levels deep) |
+| **Copy / Cut / Paste** | Clipboard actions for selected widgets (also `Ctrl/Cmd + C/X/V`) |
 | **Snap** | Toggle grid snap. Active state shown highlighted. |
 | **Pan** | Toggle pan mode (right-click to pan is always available). |
 | **Preview** | Toggle a live preview iframe showing the dashboard with the current config injected. |
@@ -922,6 +1208,14 @@ Click **Pages…** to open the page manager:
 ### Alignment tools
 
 With multiple widgets selected, the toolbar shows alignment buttons: align left/right/top/bottom edges, distribute horizontally/vertically.
+
+### Keyboard shortcuts
+
+- `Ctrl/Cmd + C` — copy selected widget(s)
+- `Ctrl/Cmd + X` — cut selected widget(s)
+- `Ctrl/Cmd + V` — paste copied widget(s) with a small offset
+- `Ctrl/Cmd + Z` — undo
+- `Ctrl/Cmd + Shift + Z` — redo
 
 ### Preview
 

@@ -24,6 +24,8 @@ var undoStack = [];
 var redoStack = [];
 var MAX_UNDO = 50;
 var isDirty = false;
+var widgetClipboard = null; // { items:[{widget,pageId}], copiedAt:number }
+var clipboardPasteCount = 0;
 
 var pickDeviceBtn = document.getElementById('pickDeviceBtn');
 var pageSelect = document.getElementById('pageSelect');
@@ -32,10 +34,23 @@ var toggleSnap = document.getElementById('toggleSnap');
 var togglePan = document.getElementById('togglePan');
 var undoBtn = document.getElementById('undoBtn');
 var redoBtn = document.getElementById('redoBtn');
+var copyBtn = document.getElementById('copyBtn');
+var cutBtn = document.getElementById('cutBtn');
+var pasteBtn = document.getElementById('pasteBtn');
 var saveBtn = document.getElementById('saveBtn');
 var previewBtn = document.getElementById('previewBtn');
 var addLabelBtn  = document.getElementById('addLabelBtn');
 var addRectBtn   = document.getElementById('addRectBtn');
+var addButtonBtn = document.getElementById('addButtonBtn');
+var addImageBtn  = document.getElementById('addImageBtn');
+var addBarBtn    = document.getElementById('addBarBtn');
+var addArcBtn    = document.getElementById('addArcBtn');
+var addSliderBtn = document.getElementById('addSliderBtn');
+var addSceneBtn  = document.getElementById('addSceneBtn');
+var addClockBtn  = document.getElementById('addClockBtn');
+var addCameraBtn = document.getElementById('addCameraBtn');
+var addAgendaBtn = document.getElementById('addAgendaBtn');
+var addHistoryChartBtn = document.getElementById('addHistoryChartBtn');
 var addHGuideBtn = document.getElementById('addHGuideBtn');
 var addVGuideBtn = document.getElementById('addVGuideBtn');
 var clearGuidesBtn = document.getElementById('clearGuidesBtn');
@@ -141,10 +156,23 @@ function init() {
 
   undoBtn.addEventListener('click', function () { undo(); });
   redoBtn.addEventListener('click', function () { redo(); });
+  copyBtn.addEventListener('click', function () { copySelectionToClipboard(); updateHistoryButtons(); });
+  cutBtn.addEventListener('click', function () { cutSelectionToClipboard(); });
+  pasteBtn.addEventListener('click', function () { pasteClipboardSelection(); });
   saveBtn.addEventListener('click', function () { saveConfig(); });
   previewBtn.addEventListener('click', function () { togglePreview(); });
   addLabelBtn.addEventListener('click', function () { addWidget('label'); });
   addRectBtn.addEventListener('click', function () { addWidget('rectangle'); });
+  addButtonBtn.addEventListener('click', function () { addWidget('button'); });
+  addImageBtn.addEventListener('click', function () { addWidget('image'); });
+  addBarBtn.addEventListener('click', function () { addWidget('bar'); });
+  addArcBtn.addEventListener('click', function () { addWidget('arc'); });
+  addSliderBtn.addEventListener('click', function () { addWidget('slider'); });
+  addSceneBtn.addEventListener('click', function () { addWidget('scene'); });
+  addClockBtn.addEventListener('click', function () { addWidget('clock'); });
+  addCameraBtn.addEventListener('click', function () { addWidget('camera'); });
+  addAgendaBtn.addEventListener('click', function () { addWidget('agenda'); });
+  addHistoryChartBtn.addEventListener('click', function () { addWidget('history_chart'); });
   addHGuideBtn.addEventListener('click', function () { addGuide('h'); });
   addVGuideBtn.addEventListener('click', function () { addGuide('v'); });
   clearGuidesBtn.addEventListener('click', function () { clearGuides(); });
@@ -215,12 +243,20 @@ function init() {
     var isMac = navigator.platform.indexOf('Mac') === 0;
     var mod = isMac ? e.metaKey : e.ctrlKey;
     if (!mod) return;
-    if (key.toLowerCase() === 'z' && !e.shiftKey) {
+    if (isEditableFocus()) return;
+    var lk = key.toLowerCase();
+    if (lk === 'z' && !e.shiftKey) {
       e.preventDefault();
       undo();
-    } else if (key.toLowerCase() === 'z' && e.shiftKey) {
+    } else if (lk === 'z' && e.shiftKey) {
       e.preventDefault();
       redo();
+    } else if (lk === 'c') {
+      if (copySelectionToClipboard()) e.preventDefault();
+    } else if (lk === 'x') {
+      if (cutSelectionToClipboard()) e.preventDefault();
+    } else if (lk === 'v') {
+      if (pasteClipboardSelection()) e.preventDefault();
     }
   });
 
@@ -1545,6 +1581,9 @@ function redo() {
 function updateHistoryButtons() {
   undoBtn.disabled = undoStack.length < 2;
   redoBtn.disabled = redoStack.length === 0;
+  copyBtn.disabled = !selectedIds.length;
+  cutBtn.disabled = !selectedIds.length;
+  pasteBtn.disabled = !(widgetClipboard && widgetClipboard.items && widgetClipboard.items.length);
 }
 
 async function saveConfig() {
@@ -1749,6 +1788,32 @@ function onPropChange(key, value) {
   var w = getWidgetById(selectedIds[0]);
   if (!w) return;
   pushHistory();
+  if (key && typeof key === 'object' && key.replace_widget) {
+    var oldId = w.id;
+    var next = key.value || {};
+    for (var wk in w) {
+      if (w.hasOwnProperty(wk)) delete w[wk];
+    }
+    for (var nk in next) {
+      if (next.hasOwnProperty(nk)) w[nk] = next[nk];
+    }
+
+    if (!w.id && oldId) w.id = oldId;
+    if (oldId && w.id !== oldId) {
+      if (selectedIds[0] === oldId) selectedIds[0] = w.id;
+      if (hidden.hasOwnProperty(oldId)) {
+        hidden[w.id] = hidden[oldId];
+        delete hidden[oldId];
+      }
+      if (locked.hasOwnProperty(oldId)) {
+        locked[w.id] = locked[oldId];
+        delete locked[oldId];
+        saveLocked();
+      }
+    }
+    renderPage();
+    return;
+  }
   if (key && typeof key === 'object' && key.path) {
     setByPath(w, key.path, key.value);
   } else {
@@ -1803,6 +1868,78 @@ function onDuplicateSelected() {
   renderPage();
 }
 
+function isEditableFocus() {
+  var el = document.activeElement;
+  if (!el) return false;
+  var tag = (el.tagName || '').toUpperCase();
+  return tag === 'INPUT' || tag === 'TEXTAREA' || !!el.isContentEditable;
+}
+
+function copySelectionToClipboard() {
+  if (!config || !selectedIds.length) return false;
+  var items = [];
+  selectedIds.forEach(function (id) {
+    var entry = findWidgetEntry(id);
+    if (!entry || !entry.widget || !entry.page) return;
+    items.push({
+      pageId: entry.page.id,
+      widget: JSON.parse(JSON.stringify(entry.widget))
+    });
+  });
+  if (!items.length) return false;
+  widgetClipboard = { items: items, copiedAt: Date.now() };
+  clipboardPasteCount = 0;
+  setStatus('Copied ' + items.length + ' widget' + (items.length === 1 ? '' : 's'), true);
+  updateHistoryButtons();
+  return true;
+}
+
+function cutSelectionToClipboard() {
+  if (!copySelectionToClipboard()) return false;
+  pushHistory();
+  selectedIds.forEach(function (id) { removeWidgetById(id); });
+  selectedIds = [];
+  renderPage();
+  setStatus('Cut selection', true);
+  return true;
+}
+
+function pasteClipboardSelection() {
+  if (!config || !widgetClipboard || !widgetClipboard.items || !widgetClipboard.items.length) return false;
+  var pageById = {};
+  config.pages.forEach(function (p) { pageById[p.id] = p; });
+
+  var offset = 16 * (clipboardPasteCount + 1);
+  var newIds = [];
+  pushHistory();
+
+  widgetClipboard.items.forEach(function (item) {
+    if (!item || !item.widget) return;
+    var destPage;
+    if (item.pageId === 0 && pageById[0]) {
+      // Keep page-0 overlays in page 0.
+      destPage = pageById[0];
+    } else {
+      destPage = pageById[currentPageId];
+    }
+    if (!destPage || !destPage.widgets) return;
+
+    var copy = JSON.parse(JSON.stringify(item.widget));
+    copy.id = generateId(copy.type || 'widget');
+    copy.x = (copy.x || 0) + offset;
+    copy.y = (copy.y || 0) + offset;
+    destPage.widgets.push(copy);
+    newIds.push(copy.id);
+  });
+
+  if (!newIds.length) return false;
+  clipboardPasteCount++;
+  selectedIds = newIds;
+  renderPage();
+  setStatus('Pasted ' + newIds.length + ' widget' + (newIds.length === 1 ? '' : 's'), true);
+  return true;
+}
+
 function addWidget(type) {
   if (!config) return;
   var page = config.pages.find(function (p) { return p.id === currentPageId; });
@@ -1828,6 +1965,108 @@ function addWidget(type) {
   if (type === 'rectangle') {
     w.background = 'surface2';
     w.radius = 6;
+  }
+  if (type === 'button') {
+    w.w = 160;
+    w.h = 120;
+    w.label = 'Button';
+    w.icon = '[mdi:gesture-tap-button]';
+    w.background = 'surface';
+    w.icon_color = 'text';
+    w.label_color = 'text_muted';
+    w.radius = 14;
+  }
+  if (type === 'image') {
+    w.w = 220;
+    w.h = 160;
+    w.fit = 'cover';
+    w.radius = 8;
+  }
+  if (type === 'bar') {
+    w.w = 280;
+    w.h = 20;
+    w.max = 100;
+    w.color = 'primary';
+    w.background = 'surface2';
+  }
+  if (type === 'arc') {
+    w.w = 180;
+    w.h = 180;
+    w.min = 0;
+    w.max = 100;
+    w.start_angle = 135;
+    w.end_angle = 405;
+    w.line_width = 12;
+    w.background = 'surface2';
+    w.color = 'primary';
+    w.label = 'Value';
+    w.label_color = 'text_muted';
+    w.format = 'percent';
+  }
+  if (type === 'slider') {
+    w.w = 280;
+    w.h = 36;
+    w.min = 0;
+    w.max = 100;
+    w.step = 1;
+    w.orientation = 'horizontal';
+    w.update_mode = 'release';
+    w.background = 'surface2';
+    w.color = 'primary';
+    w.thumb_color = 'text';
+    w.radius = 18;
+    w.thumb_size = 24;
+  }
+  if (type === 'scene') {
+    w.w = 320;
+    w.h = 56;
+    w.layout = 'buttons';
+    w.options = ['off', 'on'];
+    w.background = 'transparent';
+    w.option_background = 'surface2';
+    w.option_color = 'text';
+    w.selected_background = 'primary';
+    w.selected_color = 'background';
+  }
+  if (type === 'clock') {
+    w.w = 150;
+    w.h = 36;
+    w.font_size = 26;
+    w.align = 'left';
+    w.color = 'text';
+    w.background = 'surface';
+  }
+  if (type === 'camera') {
+    w.w = 360;
+    w.h = 220;
+    w.label = 'Camera';
+    w.preview = 'mjpeg';
+    w.fit = 'cover';
+    w.radius = 8;
+    w.refresh_interval = 5000;
+  }
+  if (type === 'agenda') {
+    w.w = 520;
+    w.h = 320;
+    w.layout = 'list';
+    w.background = 'surface';
+    w.days_ahead = 7;
+    w.refresh_interval = 120;
+    w.show_month_headers = true;
+    w.show_blank_days = false;
+    w.today_indicator = true;
+    w.time_format = '12h';
+    w.calendars = [];
+  }
+  if (type === 'history_chart') {
+    w.w = 520;
+    w.h = 240;
+    w.background = 'surface';
+    w.color = 'primary';
+    w.bars = 24;
+    w.period = 'day';
+    w.value_field = 'sum';
+    w.aggregate = 'sum';
   }
 
   pushHistory();

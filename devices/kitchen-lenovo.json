@@ -11,9 +11,14 @@
       "width": 800,
       "height": 1280
     },
-    "orientation": "portrait",
     "default_page": 1,
-    "return_to_default": 0
+    "return_to_default": 0,
+    "page_nav": {
+      "background_color": "surface",
+      "primary_color": "text",
+      "secondary_color": "text_dim",
+      "size": "small"
+    }
   },
   "theme": {
     "colors": {
@@ -24,8 +29,8 @@
       "warning": "#F0AD4E",
       "danger": "#D9534F",
       "text": "#FFFFFF",
-      "text_dim": "#464c53",
-      "text_muted": "#363B3E",
+      "text_dim": "#D3D3D3",
+      "text_muted": "#ADADAD",
       "icon_inactive": "#464c53"
     },
     "font_size": 16
@@ -49,7 +54,8 @@
           "color": "text",
           "background": "transparent",
           "w": 216,
-          "h": 32
+          "h": 32,
+          "name": "Clock Header"
         },
         {
           "id": "p0_connection_status",
@@ -110,22 +116,33 @@
                 "color": "danger"
               }
             }
-          ]
+          ],
+          "name": "Connection Header"
         }
       ]
     },
     {
       "id": 1,
-      "label": "Page1",
+      "label": "Main Page",
       "widgets": [
+        {
+          "id": "rectangle_6",
+          "type": "rectangle",
+          "x": 16,
+          "y": 532,
+          "w": 768,
+          "h": 72,
+          "background": "surface2",
+          "radius": 6
+        },
         {
           "id": "rectangle_5",
           "type": "rectangle",
           "x": 16,
           "y": 368,
           "w": 768,
-          "h": 216,
-          "background": "background",
+          "h": 148,
+          "background": "surface2",
           "radius": 6
         },
         {
@@ -135,11 +152,12 @@
           "y": 8,
           "w": 360,
           "h": 32,
-          "text": "Energy System",
+          "text": "Kitchen Tablet",
           "font_size": 22,
           "color": "text",
           "background": "transparent",
-          "align": "center"
+          "align": "center",
+          "name": "Page Title"
         },
         {
           "id": "rectangle_2",
@@ -292,35 +310,44 @@
           "id": "image_floorplan",
           "type": "image",
           "x": 16,
-          "y": 600,
+          "y": 620,
           "w": 768,
-          "h": 420,
+          "h": 416,
           "url": "images/floorplan.jpg",
           "fit": "stretch",
-          "radius": 8
+          "radius": 8,
+          "name": "Floorplan"
         },
         {
           "id": "btn_floor_light_1",
           "type": "button",
           "x": 208,
-          "y": 768,
+          "y": 780,
           "w": 64,
           "h": 64,
           "radius": 32,
           "background": "surface2",
-          "icon_off": "[mdi:lightbulb-outline]",
-          "icon_on": "[mdi:lightbulb]",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
           "entity": "light.esphome_mfa03_03_light",
-          "states": {
-            "on": {
-              "background": "#493416",
-              "icon_color": "#ffdd66"
-            },
-            "off": {
-              "background": "surface2",
-              "icon_color": "icon_inactive"
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
             }
-          },
+          ],
           "action": {
             "service": "homeassistant.toggle",
             "entity_id": "light.esphome_mfa03_03_light"
@@ -330,24 +357,32 @@
           "id": "btn_floor_light_2",
           "type": "button",
           "x": 360,
-          "y": 764,
+          "y": 776,
           "w": 64,
           "h": 64,
           "radius": 32,
           "background": "surface2",
-          "icon_off": "[mdi:lightbulb-outline]",
-          "icon_on": "[mdi:lightbulb]",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
           "entity": "light.esphome_mfa05_01_light",
-          "states": {
-            "on": {
-              "background": "#493416",
-              "icon_color": "#ffdd66"
-            },
-            "off": {
-              "background": "surface2",
-              "icon_color": "icon_inactive"
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
             }
-          },
+          ],
           "action": {
             "service": "homeassistant.toggle",
             "entity_id": "light.esphome_mfa05_01_light"
@@ -357,24 +392,32 @@
           "id": "btn_floor_light_3",
           "type": "button",
           "x": 572,
-          "y": 716,
+          "y": 728,
           "w": 64,
           "h": 64,
           "radius": 32,
           "background": "surface2",
-          "icon_off": "[mdi:lightbulb-outline]",
-          "icon_on": "[mdi:lightbulb]",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
           "entity": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2",
-          "states": {
-            "on": {
-              "background": "#493416",
-              "icon_color": "#ffdd66"
-            },
-            "off": {
-              "background": "surface2",
-              "icon_color": "icon_inactive"
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
             }
-          },
+          ],
           "action": {
             "service": "homeassistant.toggle",
             "entity_id": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2"
@@ -384,56 +427,36 @@
           "id": "btn_floor_light_4",
           "type": "button",
           "x": 532,
-          "y": 852,
+          "y": 864,
           "w": 64,
           "h": 64,
           "radius": 32,
           "background": "surface2",
-          "icon_off": "[mdi:lightbulb-outline]",
-          "icon_on": "[mdi:lightbulb]",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
           "entity": "switch.esphome_tx_ultimate_02_l1",
-          "states": {
-            "on": {
-              "background": "#493416",
-              "icon_color": "#ffdd66"
-            },
-            "off": {
-              "background": "surface2",
-              "icon_color": "icon_inactive"
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
             }
-          },
+          ],
           "action": {
             "service": "homeassistant.toggle",
             "entity_id": "switch.esphome_tx_ultimate_02_l1"
           }
-        },
-        {
-          "id": "camera_kitchen",
-          "type": "camera",
-          "x": 16,
-          "y": 1044,
-          "w": 376,
-          "h": 220,
-          "radius": 6,
-          "label": "Sec Cam 10",
-          "preview": "poster",
-          "entity": "camera.seccam10_fluent",
-          "snapshot_entity": "camera.seccam10_snapshots_fluent",
-          "stream_entity": "camera.seccam10_fluent",
-          "refresh_interval": 60000,
-          "fit": "cover"
-        },
-        {
-          "id": "camera_front",
-          "type": "camera",
-          "x": 408,
-          "y": 1044,
-          "w": 376,
-          "h": 220,
-          "entity": "camera.seccam05_snapshots_fluent",
-          "preview": "poster",
-          "fit": "cover",
-          "radius": 6
         },
         {
           "id": "rectangle_1",
@@ -728,6 +751,21 @@
               },
               "set": {
                 "text": "[mdi:arrow-right-thick]",
+                "color": "danger"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "Standby"
+                  }
+                ]
+              },
+              "set": {
+                "text": "",
                 "color": "danger"
               }
             }
@@ -1120,24 +1158,42 @@
           "start_angle": 270,
           "end_angle": 450,
           "line_width": 16,
-          "color": "orange",
+          "color": "danger",
           "format": "power",
-          "background": "surface",
+          "track_color": "surface",
           "label_color": "text",
-          "thresholds": [
+          "overrides": [
             {
-              "below": 20,
-              "color": "primary"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 10500
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning"
+              }
             },
             {
-              "below": 70,
-              "color": "warning"
-            },
-            {
-              "default": true,
-              "color": "danger"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 3000
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             }
-          ]
+          ],
+          "name": "Whole House Arc",
+          "background": "text_dim"
         },
         {
           "id": "label_26",
@@ -1162,28 +1218,45 @@
           "entity": "sensor.master_house_phase_3_power",
           "max": 14000,
           "radius": 4,
-          "thresholds": [
+          "color": "#F9DA44",
+          "overrides": [
             {
-              "below": 33,
-              "color": "primary"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 4620
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             },
             {
-              "below": 66,
-              "color": "primary"
-            },
-            {
-              "default": true,
-              "color": "#F9DA44"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 9240
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             }
           ],
-          "color": "warning",
-          "background": "surface"
+          "track_color": "surface",
+          "background": "text_dim"
         },
         {
           "id": "label_27",
           "type": "label",
           "x": 24,
-          "y": 524,
+          "y": 540,
           "w": 168,
           "h": 24,
           "text": "[mdi:car] Charger",
@@ -1234,21 +1307,38 @@
           "entity": "sensor.master_house_phase_1_power",
           "max": 14000,
           "radius": 4,
-          "thresholds": [
+          "color": "#F9DA44",
+          "overrides": [
             {
-              "below": 33,
-              "color": "primary"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 4620
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             },
             {
-              "below": 66,
-              "color": "primary"
-            },
-            {
-              "default": true,
-              "color": "#F9DA44"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 9240
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             }
           ],
-          "color": "warning",
+          "track_color": "surface",
           "background": "surface"
         },
         {
@@ -1261,28 +1351,45 @@
           "entity": "sensor.master_house_phase_2_power",
           "max": 14000,
           "radius": 4,
-          "thresholds": [
+          "color": "#F9DA44",
+          "overrides": [
             {
-              "below": 33,
-              "color": "primary"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 4620
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             },
             {
-              "below": 66,
-              "color": "primary"
-            },
-            {
-              "default": true,
-              "color": "#F9DA44"
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "below",
+                    "value": 9240
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
             }
           ],
-          "color": "warning",
-          "background": "surface"
+          "track_color": "surface",
+          "background": "text_muted"
         },
         {
           "id": "label_28",
           "type": "label",
           "x": 208,
-          "y": 524,
+          "y": 540,
           "w": 136,
           "h": 24,
           "text": "3.5 kW  |  29.9 kWh",
@@ -1329,7 +1436,7 @@
           "id": "label_29",
           "type": "label",
           "x": 24,
-          "y": 552,
+          "y": 572,
           "w": 168,
           "h": 24,
           "text": "[mdi:shower]&nbsp;&nbsp;Boiler {{ Math.round(state) }} °C",
@@ -1369,7 +1476,7 @@
           "id": "label_33",
           "type": "label",
           "x": 636,
-          "y": 524,
+          "y": 540,
           "w": 136,
           "h": 24,
           "text": "3.5 kW  |  29.9 kWh",
@@ -1416,7 +1523,7 @@
           "id": "label_35",
           "type": "label",
           "x": 464,
-          "y": 552,
+          "y": 572,
           "w": 168,
           "h": 24,
           "text": "[mdi:air-conditioner]&nbsp;&nbsp;Bedrooms",
@@ -1429,7 +1536,7 @@
           "id": "label_36",
           "type": "label",
           "x": 464,
-          "y": 524,
+          "y": 540,
           "w": 168,
           "h": 24,
           "text": "[mdi:air-conditioner]&nbsp;&nbsp;Living",
@@ -1457,7 +1564,7 @@
           "id": "chart_power_7d",
           "x": 320,
           "y": 376,
-          "w": 256,
+          "w": 252,
           "h": 132,
           "entity": "sensor.house_water_daily",
           "stat_type": "change",
@@ -1506,7 +1613,7 @@
           "id": "label_34",
           "type": "label",
           "x": 636,
-          "y": 552,
+          "y": 572,
           "w": 136,
           "h": 24,
           "text": "3.5 kW  |  29.9 kWh",
@@ -1553,7 +1660,7 @@
           "id": "label_30",
           "type": "label",
           "x": 208,
-          "y": 552,
+          "y": 572,
           "w": 136,
           "h": 24,
           "text": "3.5 kW  |  29.9 kWh",
@@ -1595,6 +1702,2402 @@
               }
             }
           ]
+        },
+        {
+          "id": "camera_front",
+          "type": "camera",
+          "x": 280,
+          "y": 1052,
+          "w": 248,
+          "h": 156,
+          "entity": "camera.seccam05_snapshots_fluent",
+          "preview": "poster",
+          "fit": "cover",
+          "radius": 6,
+          "name": "SecCam05"
+        },
+        {
+          "id": "camera_kitchen",
+          "type": "camera",
+          "x": 16,
+          "y": 1052,
+          "w": 248,
+          "h": 156,
+          "radius": 6,
+          "label": "Sec Cam 10",
+          "preview": "poster",
+          "entity": "camera.seccam10_fluent",
+          "snapshot_entity": "camera.seccam10_snapshots_fluent",
+          "stream_entity": "camera.seccam10_fluent",
+          "refresh_interval": 60000,
+          "fit": "cover",
+          "name": "SecCam10"
+        },
+        {
+          "id": "image_1",
+          "type": "image",
+          "x": 540,
+          "y": 1052,
+          "w": 244,
+          "h": 156,
+          "url": "images/nissan-leaf.png",
+          "fit": "stretch",
+          "radius": 8,
+          "name": "Nissan Leaf"
+        },
+        {
+          "id": "label_38",
+          "type": "label",
+          "x": 16,
+          "y": 1232,
+          "w": 100,
+          "h": 32,
+          "align": "left",
+          "valign": "top",
+          "text": "Import",
+          "font_size": 28,
+          "color": "text"
+        },
+        {
+          "id": "label_39",
+          "type": "label",
+          "x": 212,
+          "y": 420,
+          "w": 92,
+          "h": 24,
+          "font_size": 16,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_1_power",
+          "text": "{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_40",
+          "type": "label",
+          "x": 212,
+          "y": 452,
+          "w": 92,
+          "h": 24,
+          "font_size": 16,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_2_power",
+          "text": "{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_41",
+          "type": "label",
+          "x": 212,
+          "y": 484,
+          "w": 92,
+          "h": 24,
+          "font_size": 16,
+          "color": "text",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.master_house_phase_3_power",
+          "text": "{{ state }} w",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "above",
+                    "value": 0
+                  }
+                ]
+              },
+              "set": {
+                "color": "primary"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Test Page",
+      "widgets": [
+        {
+          "id": "slider_1",
+          "type": "slider",
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "volume_level",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": "$value"
+            }
+          },
+          "x": 52,
+          "y": 72,
+          "w": 220,
+          "h": 20,
+          "name": "Volume Slider",
+          "radius": 5,
+          "color": "primary",
+          "background": "danger",
+          "thumb_color": "warning",
+          "thumb_size": 42
+        },
+        {
+          "id": "album_art",
+          "type": "image",
+          "x": 56,
+          "y": 144,
+          "w": 604,
+          "h": 604,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 8,
+          "name": "Album Art",
+          "fullscreen_on_tap": true
+        },
+        {
+          "id": "slider_2",
+          "type": "slider",
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "volume_level",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "orientation": "vertical",
+          "update_mode": "drag",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": "$value"
+            }
+          },
+          "x": 680,
+          "y": 144,
+          "w": 20,
+          "h": 180,
+          "name": "Volume Slider",
+          "radius": 5,
+          "color": "primary",
+          "background": "danger",
+          "thumb_color": "warning",
+          "thumb_size": 42
+        },
+        {
+          "id": "label_38",
+          "type": "label",
+          "x": 56,
+          "y": 760,
+          "w": 604,
+          "h": 40,
+          "text": "New Label",
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "name": "Media Title"
+        },
+        {
+          "id": "label_39",
+          "type": "label",
+          "x": 56,
+          "y": 808,
+          "w": 604,
+          "h": 40,
+          "text": "New Label",
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "title",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "name": "Media Title"
+        },
+        {
+          "id": "label_40",
+          "type": "label",
+          "x": 56,
+          "y": 856,
+          "w": 604,
+          "h": 40,
+          "text": "New Label",
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_artist",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "name": "Media Title"
+        },
+        {
+          "id": "label_41",
+          "type": "label",
+          "x": 56,
+          "y": 904,
+          "w": 604,
+          "h": 40,
+          "text": "New Label",
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "album",
+          "font_size": 28,
+          "align": "left",
+          "color": "text",
+          "name": "Media Title"
+        }
+      ],
+      "background_image": "images/wallpaper-test.png"
+    },
+    {
+      "id": 3,
+      "label": "Test Page 3",
+      "widgets": [
+        {
+          "id": "mp3_panel_a",
+          "type": "rectangle",
+          "x": 16,
+          "y": 44,
+          "w": 768,
+          "h": 320,
+          "background": "surface2",
+          "radius": 10
+        },
+        {
+          "id": "mp3_a_title",
+          "type": "label",
+          "x": 32,
+          "y": 58,
+          "w": 736,
+          "h": 30,
+          "text": "Variation A : Compact",
+          "font_size": 20,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp3_a_art",
+          "type": "image",
+          "x": 36,
+          "y": 98,
+          "w": 180,
+          "h": 180,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 8
+        },
+        {
+          "id": "mp3_a_track",
+          "type": "label",
+          "x": 236,
+          "y": 108,
+          "w": 520,
+          "h": 46,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 30,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp3_a_artist",
+          "type": "label",
+          "x": 236,
+          "y": 158,
+          "w": 520,
+          "h": 38,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_artist",
+          "font_size": 24,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp3_a_slider",
+          "type": "slider",
+          "x": 236,
+          "y": 216,
+          "w": 470,
+          "h": 24,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "volume_level",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 28,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp3_a_prev",
+          "type": "button",
+          "x": 236,
+          "y": 258,
+          "w": 102,
+          "h": 88,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-previous]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_a_playpause",
+          "type": "button",
+          "x": 348,
+          "y": 258,
+          "w": 102,
+          "h": 88,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:play]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]",
+                "background": "primary",
+                "icon_color": "background"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_a_next",
+          "type": "button",
+          "x": 460,
+          "y": 258,
+          "w": 102,
+          "h": 88,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-next]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_a_stop",
+          "type": "button",
+          "x": 572,
+          "y": 258,
+          "w": 134,
+          "h": 88,
+          "background": "surface",
+          "icon_color": "danger",
+          "label_color": "text",
+          "icon": "[mdi:stop]",
+          "label": "Stop",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_stop",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_panel_b",
+          "type": "rectangle",
+          "x": 16,
+          "y": 380,
+          "w": 768,
+          "h": 340,
+          "background": "surface2",
+          "radius": 10
+        },
+        {
+          "id": "mp3_b_title",
+          "type": "label",
+          "x": 32,
+          "y": 394,
+          "w": 736,
+          "h": 30,
+          "text": "Variation B : Labeled Command Pad",
+          "font_size": 20,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp3_b_status",
+          "type": "label",
+          "x": 32,
+          "y": 430,
+          "w": 736,
+          "h": 28,
+          "entity": "media_player.kitchen_sonos",
+          "text": "{{ state_str }}  |  {{ attr.media_title }}",
+          "font_size": 20,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp3_b_prev",
+          "type": "button",
+          "x": 32,
+          "y": 476,
+          "w": 144,
+          "h": 104,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:skip-previous]",
+          "label": "Previous",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_play",
+          "type": "button",
+          "x": 188,
+          "y": 476,
+          "w": 144,
+          "h": 104,
+          "background": "surface",
+          "icon_color": "primary",
+          "label_color": "text_dim",
+          "icon": "[mdi:play]",
+          "label": "Play",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_pause",
+          "type": "button",
+          "x": 344,
+          "y": 476,
+          "w": 144,
+          "h": 104,
+          "background": "surface",
+          "icon_color": "warning",
+          "label_color": "text_dim",
+          "icon": "[mdi:pause]",
+          "label": "Pause",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_next",
+          "type": "button",
+          "x": 500,
+          "y": 476,
+          "w": 144,
+          "h": 104,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:skip-next]",
+          "label": "Next",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_stop",
+          "type": "button",
+          "x": 656,
+          "y": 476,
+          "w": 112,
+          "h": 104,
+          "background": "surface",
+          "icon_color": "danger",
+          "label_color": "text_dim",
+          "icon": "[mdi:stop]",
+          "label": "Stop",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_stop",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_playpause",
+          "type": "button",
+          "x": 32,
+          "y": 592,
+          "w": 220,
+          "h": 108,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:play]",
+          "label": "Play / Pause",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]",
+                "background": "primary",
+                "icon_color": "background",
+                "label_color": "background"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp3_b_hint",
+          "type": "label",
+          "x": 268,
+          "y": 618,
+          "w": 500,
+          "h": 54,
+          "text": "Dedicated actions + one smart play/pause toggle button",
+          "font_size": 20,
+          "align": "left",
+          "color": "text_muted"
+        },
+        {
+          "id": "mp3_panel_c",
+          "type": "rectangle",
+          "x": 16,
+          "y": 736,
+          "w": 768,
+          "h": 516,
+          "background": "surface2",
+          "radius": 10
+        },
+        {
+          "id": "mp3_c_title",
+          "type": "label",
+          "x": 32,
+          "y": 750,
+          "w": 736,
+          "h": 30,
+          "text": "Variation C : Presets + Vertical Slider",
+          "font_size": 20,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp3_c_slider",
+          "type": "slider",
+          "x": 56,
+          "y": 796,
+          "w": 30,
+          "h": 236,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "volume_level",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "orientation": "vertical",
+          "update_mode": "drag",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 28,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp3_c_vol_25",
+          "type": "button",
+          "x": 116,
+          "y": 802,
+          "w": 146,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-low]",
+          "label": "25%",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": 0.25
+            }
+          }
+        },
+        {
+          "id": "mp3_c_vol_50",
+          "type": "button",
+          "x": 274,
+          "y": 802,
+          "w": 146,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-medium]",
+          "label": "50%",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": 0.5
+            }
+          }
+        },
+        {
+          "id": "mp3_c_vol_75",
+          "type": "button",
+          "x": 432,
+          "y": 802,
+          "w": 146,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-high]",
+          "label": "75%",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": 0.75
+            }
+          }
+        },
+        {
+          "id": "mp3_c_mute_on",
+          "type": "button",
+          "x": 590,
+          "y": 802,
+          "w": 178,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "warning",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-off]",
+          "label": "Mute",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_mute",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "is_volume_muted": true
+            }
+          }
+        },
+        {
+          "id": "mp3_c_mute_off",
+          "type": "button",
+          "x": 590,
+          "y": 896,
+          "w": 178,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "primary",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-source]",
+          "label": "Unmute",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_mute",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "is_volume_muted": false
+            }
+          }
+        },
+        {
+          "id": "mp3_c_now_playing",
+          "type": "label",
+          "x": 116,
+          "y": 904,
+          "w": 456,
+          "h": 32,
+          "entity": "media_player.kitchen_sonos",
+          "text": "{{ attr.media_artist }}  -  {{ attr.media_title }}",
+          "font_size": 20,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp3_c_state_chip",
+          "type": "button",
+          "x": 116,
+          "y": 952,
+          "w": 456,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text",
+          "icon": "[mdi:music-note]",
+          "label": "{{ state_str }}",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "background": "primary",
+                "icon_color": "background",
+                "label_color": "background",
+                "icon": "[mdi:music-circle]"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "paused"
+                  }
+                ]
+              },
+              "set": {
+                "background": "warning",
+                "icon_color": "background",
+                "label_color": "background",
+                "icon": "[mdi:pause-circle]"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "label": "Test Page 4",
+      "widgets": [
+        {
+          "id": "mp4_card2_art",
+          "type": "image",
+          "x": 16,
+          "y": 404,
+          "w": 768,
+          "h": 768,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 14,
+          "gradient": {
+            "from": "transparent",
+            "to": "text_dim",
+            "angle": 200,
+            "start_pct": 20,
+            "end_pct": 50
+          }
+        },
+        {
+          "id": "sonos_repeat_scene",
+          "type": "scene",
+          "x": 468,
+          "y": 784,
+          "w": 224,
+          "h": 64,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "repeat",
+          "layout": "picker",
+          "background": "surface",
+          "radius": 16,
+          "option_background": "surface",
+          "option_color": "text",
+          "selected_background": "primary",
+          "selected_color": "background",
+          "options": [
+            {
+              "value": "off",
+              "label": "No Repeat",
+              "icon": "[mdi:repeat-off]"
+            },
+            {
+              "value": "all",
+              "label": "Repeat All",
+              "icon": "[mdi:repeat-variant]"
+            },
+            {
+              "value": "one",
+              "label": "Repeat One",
+              "icon": "[mdi:repeat-once]"
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.repeat_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "repeat": "$option"
+            }
+          }
+        },
+        {
+          "id": "mp4_card1_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 44,
+          "w": 768,
+          "h": 336,
+          "background": "surface2",
+          "radius": 14
+        },
+        {
+          "id": "mp4_card1_title",
+          "type": "label",
+          "x": 34,
+          "y": 58,
+          "w": 610,
+          "h": 30,
+          "text": "Variation D : Horizontal Card",
+          "font_size": 20,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp4_card1_art",
+          "type": "image",
+          "x": 612,
+          "y": 82,
+          "w": 154,
+          "h": 154,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 8
+        },
+        {
+          "id": "mp4_card1_name",
+          "type": "label",
+          "x": 34,
+          "y": 96,
+          "w": 560,
+          "h": 36,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 30,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp4_card1_artist",
+          "type": "label",
+          "x": 34,
+          "y": 138,
+          "w": 560,
+          "h": 30,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_artist",
+          "font_size": 22,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp4_card1_state",
+          "type": "label",
+          "x": 34,
+          "y": 172,
+          "w": 560,
+          "h": 28,
+          "entity": "media_player.kitchen_sonos",
+          "text": "{{ state_str }}",
+          "font_size": 18,
+          "align": "left",
+          "color": "text_muted"
+        },
+        {
+          "id": "mp4_card1_prev",
+          "type": "button",
+          "x": 34,
+          "y": 214,
+          "w": 88,
+          "h": 72,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-previous]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp4_card1_playpause",
+          "type": "button",
+          "x": 132,
+          "y": 214,
+          "w": 88,
+          "h": 72,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:play]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "background": "primary",
+                "icon_color": "background",
+                "icon": "[mdi:pause]"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp4_card1_next",
+          "type": "button",
+          "x": 230,
+          "y": 214,
+          "w": 88,
+          "h": 72,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-next]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp4_card1_seek",
+          "type": "slider",
+          "x": 34,
+          "y": 298,
+          "w": 698,
+          "h": 18,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "media_position",
+          "min": 0,
+          "max": 7200,
+          "step": 1,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 20,
+          "radius": 5,
+          "action": {
+            "type": "service",
+            "service": "media_player.media_seek",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "seek_position": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp4_card1_elapsed",
+          "type": "label",
+          "x": 34,
+          "y": 322,
+          "w": 120,
+          "h": 22,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_position",
+          "format": "duration",
+          "font_size": 16,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp4_card1_total",
+          "type": "label",
+          "x": 612,
+          "y": 322,
+          "w": 120,
+          "h": 22,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_duration",
+          "format": "duration",
+          "font_size": 16,
+          "align": "right",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp4_card3a_track",
+          "type": "label",
+          "x": 188,
+          "y": 948,
+          "w": 480,
+          "h": 44,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 28,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp4_card3a_artist",
+          "type": "label",
+          "x": 188,
+          "y": 1000,
+          "w": 480,
+          "h": 24,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_artist",
+          "font_size": 18,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp4_card3b_seek",
+          "type": "slider",
+          "x": 32,
+          "y": 1096,
+          "w": 520,
+          "h": 30,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "media_position",
+          "min": 0,
+          "max": 7200,
+          "step": 1,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 56,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.media_seek",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "seek_position": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp4_card3b_total",
+          "type": "label",
+          "x": 448,
+          "y": 1100,
+          "w": 96,
+          "h": 22,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_duration",
+          "format": "duration",
+          "font_size": 16,
+          "align": "right",
+          "color": "text"
+        },
+        {
+          "id": "mp4_card3b_prev",
+          "type": "button",
+          "x": 586,
+          "y": 1098,
+          "w": 56,
+          "h": 56,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-previous]",
+          "radius": 28,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp4_card3b_playpause",
+          "type": "button",
+          "x": 650,
+          "y": 1098,
+          "w": 56,
+          "h": 56,
+          "background": "primary",
+          "icon_color": "background",
+          "icon": "[mdi:play]",
+          "radius": 28,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp4_card3b_next",
+          "type": "button",
+          "x": 714,
+          "y": 1098,
+          "w": 56,
+          "h": 56,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-next]",
+          "radius": 28,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "slider_3",
+          "type": "slider",
+          "x": 732,
+          "y": 424,
+          "w": 30,
+          "h": 632,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "volume_level",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "orientation": "vertical",
+          "update_mode": "drag",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 56,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "volume_level": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp4_card3a_art",
+          "type": "image",
+          "x": 32,
+          "y": 948,
+          "w": 136,
+          "h": 136,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 8,
+          "fullscreen_on_tap": true
+        },
+        {
+          "id": "button_1",
+          "type": "button",
+          "x": 340,
+          "y": 768,
+          "w": 102,
+          "h": 88,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:play]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]",
+                "background": "primary",
+                "icon_color": "background"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "button_2",
+          "type": "button",
+          "x": 468,
+          "y": 704,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:repeat-variant]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.repeat_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "repeat": "all"
+            }
+          }
+        },
+        {
+          "id": "button_3",
+          "type": "button",
+          "x": 208,
+          "y": 784,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:shuffle]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.shuffle_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "shuffle": true
+            }
+          }
+        },
+        {
+          "id": "button_4",
+          "type": "button",
+          "x": 208,
+          "y": 712,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:shuffle-disabled]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.shuffle_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "shuffle": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "label": "Test Page 5",
+      "widgets": [
+        {
+          "id": "mp5_card1_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 44,
+          "w": 768,
+          "h": 750,
+          "background": "surface2",
+          "radius": 16,
+          "gradient": {}
+        },
+        {
+          "id": "mp5_card1_art",
+          "type": "image",
+          "x": 56,
+          "y": 72,
+          "w": 692,
+          "h": 692,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 16,
+          "gradient": {
+            "from": "transparent",
+            "to": "text_dim",
+            "angle": 180,
+            "start_pct": 40,
+            "end_pct": 60
+          }
+        },
+        {
+          "id": "mp5_card1_title",
+          "type": "label",
+          "x": 64,
+          "y": 526,
+          "w": 672,
+          "h": 44,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 46,
+          "align": "center",
+          "color": "text"
+        },
+        {
+          "id": "mp5_card1_artist",
+          "type": "label",
+          "x": 64,
+          "y": 574,
+          "w": 672,
+          "h": 34,
+          "entity": "media_player.kitchen_sonos",
+          "text": "{{ attr.media_artist }} - {{ attr.album }}",
+          "font_size": 28,
+          "align": "center",
+          "color": "text"
+        },
+        {
+          "id": "mp5_card1_seek",
+          "type": "slider",
+          "x": 88,
+          "y": 624,
+          "w": 624,
+          "h": 16,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "media_position",
+          "min": 0,
+          "max": 1,
+          "max_attribute": "media_duration",
+          "step": 1,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "background": "text_muted",
+          "color": "text",
+          "thumb_color": "primary",
+          "thumb_size": 20,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.media_seek",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "seek_position": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp5_card1_elapsed",
+          "type": "label",
+          "x": 88,
+          "y": 646,
+          "w": 100,
+          "h": 24,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_position",
+          "format": "duration",
+          "font_size": 16,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp5_card1_total",
+          "type": "label",
+          "x": 612,
+          "y": 646,
+          "w": 100,
+          "h": 24,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_duration",
+          "format": "duration",
+          "font_size": 16,
+          "align": "right",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp5_card1_shuffle",
+          "type": "button",
+          "x": 72,
+          "y": 678,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:shuffle-variant]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.shuffle_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "shuffle": true
+            }
+          }
+        },
+        {
+          "id": "mp5_card1_prev",
+          "type": "button",
+          "x": 196,
+          "y": 678,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-previous]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card1_playpause",
+          "type": "button",
+          "x": 320,
+          "y": 664,
+          "w": 160,
+          "h": 92,
+          "background": "text",
+          "icon_color": "background",
+          "icon": "[mdi:play]",
+          "radius": 46,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card1_next",
+          "type": "button",
+          "x": 496,
+          "y": 678,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-next]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card1_repeat",
+          "type": "button",
+          "x": 620,
+          "y": 678,
+          "w": 108,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:repeat-variant]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.repeat_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "repeat": "all"
+            }
+          }
+        },
+        {
+          "id": "mp5_card2_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 812,
+          "w": 768,
+          "h": 348,
+          "background": "surface2",
+          "radius": 16
+        },
+        {
+          "id": "mp5_card2_art",
+          "type": "image",
+          "x": 34,
+          "y": 834,
+          "w": 164,
+          "h": 164,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "entity_picture",
+          "fit": "cover",
+          "radius": 10
+        },
+        {
+          "id": "mp5_card2_title",
+          "type": "label",
+          "x": 216,
+          "y": 842,
+          "w": 540,
+          "h": 40,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_title",
+          "font_size": 40,
+          "align": "left",
+          "color": "text"
+        },
+        {
+          "id": "mp5_card2_artist",
+          "type": "label",
+          "x": 216,
+          "y": 884,
+          "w": 540,
+          "h": 34,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_artist",
+          "font_size": 28,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp5_card2_seek",
+          "type": "slider",
+          "x": 216,
+          "y": 930,
+          "w": 520,
+          "h": 16,
+          "entity": "media_player.kitchen_sonos",
+          "value_attribute": "media_position",
+          "min": 0,
+          "max": 1,
+          "max_attribute": "media_duration",
+          "step": 1,
+          "orientation": "horizontal",
+          "update_mode": "release",
+          "background": "text_muted",
+          "color": "primary",
+          "thumb_color": "text",
+          "thumb_size": 20,
+          "radius": 6,
+          "action": {
+            "type": "service",
+            "service": "media_player.media_seek",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "seek_position": "$value"
+            }
+          }
+        },
+        {
+          "id": "mp5_card2_elapsed",
+          "type": "label",
+          "x": 216,
+          "y": 952,
+          "w": 96,
+          "h": 22,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_position",
+          "format": "duration",
+          "font_size": 16,
+          "align": "left",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp5_card2_total",
+          "type": "label",
+          "x": 640,
+          "y": 952,
+          "w": 96,
+          "h": 22,
+          "entity": "media_player.kitchen_sonos",
+          "entity_attribute": "media_duration",
+          "format": "duration",
+          "font_size": 16,
+          "align": "right",
+          "color": "text_dim"
+        },
+        {
+          "id": "mp5_card2_prev",
+          "type": "button",
+          "x": 216,
+          "y": 988,
+          "w": 96,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-previous]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_previous_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card2_playpause",
+          "type": "button",
+          "x": 324,
+          "y": 988,
+          "w": 112,
+          "h": 64,
+          "background": "primary",
+          "icon_color": "background",
+          "icon": "[mdi:play]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card2_next",
+          "type": "button",
+          "x": 448,
+          "y": 988,
+          "w": 96,
+          "h": 64,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:skip-next]",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.media_next_track",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "mp5_card2_chip_jazz",
+          "type": "button",
+          "x": 36,
+          "y": 1078,
+          "w": 174,
+          "h": 64,
+          "background": "text",
+          "icon_color": "background",
+          "label_color": "background",
+          "icon": "[mdi:saxophone]",
+          "label": "Jazz",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.select_source",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "source": "Jazz"
+            }
+          }
+        },
+        {
+          "id": "mp5_card2_chip_rock",
+          "type": "button",
+          "x": 222,
+          "y": 1078,
+          "w": 174,
+          "h": 64,
+          "background": "text",
+          "icon_color": "background",
+          "label_color": "background",
+          "icon": "[mdi:guitar-electric]",
+          "label": "Rock",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.select_source",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "source": "Rock"
+            }
+          }
+        },
+        {
+          "id": "mp5_card2_chip_pop",
+          "type": "button",
+          "x": 408,
+          "y": 1078,
+          "w": 174,
+          "h": 64,
+          "background": "text",
+          "icon_color": "background",
+          "label_color": "background",
+          "icon": "[mdi:microphone]",
+          "label": "Pop",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.select_source",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "source": "Pop"
+            }
+          }
+        },
+        {
+          "id": "mp5_card2_chip_focus",
+          "type": "button",
+          "x": 594,
+          "y": 1078,
+          "w": 174,
+          "h": 64,
+          "background": "text",
+          "icon_color": "background",
+          "label_color": "background",
+          "icon": "[mdi:headphones]",
+          "label": "Focus",
+          "radius": 32,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.select_source",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "source": "Focus"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "label": "Calendar",
+      "widgets": [
+        {
+          "id": "agenda_bg_1",
+          "type": "rectangle",
+          "x": 16,
+          "y": 48,
+          "w": 768,
+          "h": 484,
+          "background": "surface2",
+          "radius": 14
+        },
+        {
+          "id": "agenda_title_1",
+          "type": "label",
+          "x": 32,
+          "y": 64,
+          "w": 736,
+          "h": 44,
+          "text": "[mdi:calendar-month] Upcoming",
+          "font_size": 28,
+          "font_weight": 600,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "agenda_main_1",
+          "type": "agenda",
+          "x": 32,
+          "y": 116,
+          "w": 736,
+          "h": 416,
+          "days_ahead": 14,
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "today_indicator": true,
+          "show_blank_days": true,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_your_family",
+              "color": "#1283EA",
+              "icon": "mdi:wallet-travel",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location",
+                "description_icon"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        },
+        {
+          "id": "rectangle_7",
+          "type": "rectangle",
+          "x": 16,
+          "y": 544,
+          "w": 768,
+          "h": 380,
+          "background": "surface2",
+          "radius": 14
+        },
+        {
+          "id": "label_42",
+          "type": "label",
+          "x": 32,
+          "y": 560,
+          "w": 736,
+          "h": 44,
+          "text": "[mdi:calendar-month] Upcoming (0.75 scale)",
+          "font_size": 28,
+          "font_weight": 600,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "agenda_1",
+          "type": "agenda",
+          "x": 32,
+          "y": 612,
+          "w": 736,
+          "h": 312,
+          "days_ahead": 14,
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "scale": 0.75,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        },
+        {
+          "id": "rectangle_8",
+          "type": "rectangle",
+          "x": 16,
+          "y": 940,
+          "w": 768,
+          "h": 324,
+          "background": "surface2",
+          "radius": 14
+        },
+        {
+          "id": "agenda_2",
+          "type": "agenda",
+          "x": 32,
+          "y": 1008,
+          "w": 364,
+          "h": 256,
+          "days_ahead": 1,
+          "refresh_interval": 12,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "scale": 0.5,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        },
+        {
+          "id": "label_43",
+          "type": "label",
+          "x": 32,
+          "y": 956,
+          "w": 364,
+          "h": 44,
+          "text": "[mdi:calendar-month] Upcoming (0.50 scale)",
+          "font_size": 28,
+          "font_weight": 600,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "label_44",
+          "type": "label",
+          "x": 404,
+          "y": 956,
+          "w": 364,
+          "h": 44,
+          "text": "[mdi:calendar-month] Upcoming (1.25 scale)",
+          "font_size": 28,
+          "font_weight": 600,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "agenda_3",
+          "type": "agenda",
+          "x": 404,
+          "y": 1008,
+          "w": 364,
+          "h": 256,
+          "days_ahead": 7,
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "agenda_scale": 1.25,
+          "today_indicator": true,
+          "show_blank_days": true,
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "label": "Calendar Variants",
+      "widgets": [
+        {
+          "id": "agenda_var_bg",
+          "type": "rectangle",
+          "x": 16,
+          "y": 48,
+          "w": 768,
+          "h": 1216,
+          "background": "surface2",
+          "radius": 14
+        },
+        {
+          "id": "agenda_var_title",
+          "type": "label",
+          "x": 32,
+          "y": 64,
+          "w": 736,
+          "h": 38,
+          "text": "[mdi:calendar-multiple] Agenda Variants",
+          "font_size": 30,
+          "font_weight": 600,
+          "align": "left",
+          "color": "text",
+          "background": "transparent"
+        },
+        {
+          "id": "agenda_var_1",
+          "type": "agenda",
+          "x": 28,
+          "y": 114,
+          "w": 744,
+          "h": 344,
+          "days_ahead": 7,
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "agenda_var_2",
+          "type": "agenda",
+          "x": 28,
+          "y": 470,
+          "w": 744,
+          "h": 344,
+          "days_ahead": 10,
+          "refresh_interval": 180,
+          "time_format": "24h",
+          "show_month_headers": false,
+          "combine_duplicates": false,
+          "background": "surface",
+          "event_background": "surface2",
+          "title_color": "text",
+          "detail_color": "text_dim",
+          "month_color": "warning",
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "show": [
+                "time"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "agenda_var_3",
+          "type": "agenda",
+          "x": 28,
+          "y": 826,
+          "w": 744,
+          "h": 426,
+          "days_ahead": 14,
+          "refresh_interval": 240,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "#20252C",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "month_color": "primary",
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "show": []
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "icon": "mdi:briefcase",
+              "show": []
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": []
+            }
+          ]
         }
       ]
     }
@@ -1603,9 +4106,16 @@
     "guides": {
       "1": [
         {
-          "id": "g1772359263467",
+          "id": "g1772405418717",
           "type": "v",
-          "pos": 450
+          "pos": 400
+        }
+      ],
+      "4": [
+        {
+          "id": "g1772495979396",
+          "type": "h",
+          "pos": 1152
         }
       ]
     }

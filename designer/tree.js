@@ -4,11 +4,14 @@ var BADGES = {
   rectangle:     { char: 'R', color: '#568' },
   button:        { char: 'B', color: '#86a' },
   bar:           { char: 'b', color: '#a74' },
+  slider:        { char: 'S', color: '#6a8' },
   arc:           { char: 'A', color: '#a49' },
   clock:         { char: 'C', color: '#559' },
   image:         { char: 'I', color: '#779' },
-  camera:        { char: '⌾', color: '#477' },
-  history_chart: { char: 'H', color: '#4a8' }
+  camera:        { char: 'V', color: '#477' },
+  history_chart: { char: 'H', color: '#4a8' },
+  scene:         { char: 'N', color: '#7a6' },
+  agenda:        { char: 'G', color: '#5a8' }
 };
 
 // renderTree — builds the widget list in the left sidebar.
@@ -52,7 +55,9 @@ export function renderTree(container, widgets, selectedIds, hiddenMap, lockedMap
     var eyeBtn = document.createElement('button');
     eyeBtn.className = 'tree-icon-btn';
     eyeBtn.title     = isHidden ? 'Show' : 'Hide';
-    eyeBtn.textContent = isHidden ? '○' : '●';
+    eyeBtn.innerHTML = isHidden
+      ? '<span class="fa-icon">&#xf070;</span>'
+      : '<span class="fa-icon">&#xf06e;</span>';
     eyeBtn.style.color = isHidden ? '#555' : '#8ADF45';
     eyeBtn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -63,7 +68,9 @@ export function renderTree(container, widgets, selectedIds, hiddenMap, lockedMap
     var lockBtn = document.createElement('button');
     lockBtn.className = 'tree-icon-btn';
     lockBtn.title     = isLocked ? 'Unlock' : 'Lock';
-    lockBtn.textContent = '🔒';
+    lockBtn.innerHTML = isLocked
+      ? '<span class="fa-icon">&#xf023;</span>'
+      : '<span class="fa-icon">&#xf09c;</span>';
     lockBtn.style.opacity = isLocked ? '1' : '0.2';
     lockBtn.addEventListener('click', function (e) {
       e.stopPropagation();

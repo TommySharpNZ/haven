@@ -1,0 +1,143 @@
+{
+  "version": "1.0",
+  "device": {
+    "name": "Lounge TV",
+    "canvas": {
+      "width": 1920,
+      "height": 1080
+    },
+    "default_page": 1,
+    "return_to_default": 60
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Home",
+      "widgets": [
+        {
+          "id": "agenda_2",
+          "type": "agenda",
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 444,
+          "days_ahead": 8,
+          "layout": "columns",
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "today_indicator": true,
+          "show_blank_days": false,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_your_family",
+              "color": "#1283EA",
+              "icon": "mdi:wallet-travel",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location",
+                "description_icon"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        },
+        {
+          "id": "agenda_3",
+          "type": "agenda",
+          "x": 0,
+          "y": 460,
+          "w": 728,
+          "h": 620,
+          "days_ahead": 10,
+          "layout": "list",
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "today_indicator": true,
+          "show_blank_days": true,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "icon": "mdi:home-heart",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "icon": "mdi:school",
+              "show": [
+                "time"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_your_family",
+              "color": "#1283EA",
+              "icon": "mdi:wallet-travel",
+              "full_day_highlight": true,
+              "show": [
+                "time",
+                "location",
+                "description_icon"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        }
+      ]
+    }
+  ]
+}

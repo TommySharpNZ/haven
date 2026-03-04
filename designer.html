@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HAven Designer (PoC)</title>
   <style>
+    @font-face {
+      font-family: 'FontAwesome';
+      src: url('fonts/fontawesome-webfont.woff2') format('woff2'),
+           url('fonts/fontawesome-webfont.woff') format('woff'),
+           url('fonts/fontawesome-webfont.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
     :root {
       --bg: #0f141a;
       --panel: #1b222a;
@@ -55,6 +64,9 @@
       padding: 5px 7px;
       font-size: 15px;
       line-height: 1;
+    }
+    .toolbar button.icon-btn .fa-icon {
+      font-size: 14px;
     }
     /* Disabled state */
     .toolbar button:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
@@ -111,6 +123,46 @@
     }
     .tree-search::placeholder { color: var(--muted); }
     .tree-bulk { display: flex; gap: 4px; margin-top: 6px; }
+    .widget-add-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .widget-add-btn {
+      height: 38px;
+      padding: 0;
+      border-radius: 8px;
+      font-size: 17px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .widget-add-btn:hover {
+      border-color: var(--accent);
+      background: #2a3440;
+      transform: translateY(-1px);
+    }
+    .widget-add-btn:active {
+      transform: translateY(0);
+    }
+    .fa-icon {
+      font-family: 'FontAwesome';
+      font-style: normal;
+      font-weight: normal;
+      font-size: 17px;
+      line-height: 1;
+      display: inline-block;
+      width: 1em;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     .tree-item {
       display: flex;
       align-items: center;
@@ -133,6 +185,10 @@
       flex-shrink: 0;
       color: inherit;
       line-height: 1;
+    }
+    .tree-icon-btn .fa-icon {
+      font-size: 12px;
+      vertical-align: middle;
     }
     .tree-badge {
       display: inline-flex;
@@ -427,8 +483,11 @@
     </label>
     <div class="toolbar-sep"></div>
     <button id="saveBtn" title="Save to disk (Ctrl+S)">Save</button>
-    <button id="undoBtn" class="icon-btn" title="Undo (Ctrl+Z)">↩</button>
-    <button id="redoBtn" class="icon-btn" title="Redo (Ctrl+Y)">↪</button>
+    <button id="undoBtn" class="icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo"><span class="fa-icon">&#xf0e2;</span></button>
+    <button id="redoBtn" class="icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo"><span class="fa-icon">&#xf01e;</span></button>
+    <button id="copyBtn" class="icon-btn" title="Copy selection (Ctrl/Cmd+C)" aria-label="Copy selection"><span class="fa-icon">&#xf0c5;</span></button>
+    <button id="cutBtn" class="icon-btn" title="Cut selection (Ctrl/Cmd+X)" aria-label="Cut selection"><span class="fa-icon">&#xf0c4;</span></button>
+    <button id="pasteBtn" class="icon-btn" title="Paste (Ctrl/Cmd+V)" aria-label="Paste"><span class="fa-icon">&#xf0ea;</span></button>
     <div class="toolbar-sep"></div>
     <button id="previewBtn" title="Toggle live preview overlay">Preview</button>
     <button id="toggleSnap" class="active" title="Toggle grid snapping">Snap</button>
@@ -440,9 +499,19 @@
   <div class="layout">
     <div class="panel" id="treePanel">
       <h3>Widgets</h3>
-      <div style="display:flex;gap:6px;margin-bottom:8px;">
-        <button id="addLabelBtn">Add Label</button>
-        <button id="addRectBtn">Add Rect</button>
+      <div class="widget-add-grid">
+        <button id="addLabelBtn" class="widget-add-btn" title="Add Label" aria-label="Add Label"><span class="fa-icon">&#xf031;</span></button>
+        <button id="addRectBtn" class="widget-add-btn" title="Add Rectangle" aria-label="Add Rectangle"><span class="fa-icon">&#xf096;</span></button>
+        <button id="addButtonBtn" class="widget-add-btn" title="Add Button" aria-label="Add Button"><span class="fa-icon">&#xf111;</span></button>
+        <button id="addImageBtn" class="widget-add-btn" title="Add Image" aria-label="Add Image"><span class="fa-icon">&#xf03e;</span></button>
+        <button id="addBarBtn" class="widget-add-btn" title="Add Bar" aria-label="Add Bar"><span class="fa-icon">&#xf080;</span></button>
+        <button id="addArcBtn" class="widget-add-btn" title="Add Arc" aria-label="Add Arc"><span class="fa-icon">&#xf1fe;</span></button>
+        <button id="addSliderBtn" class="widget-add-btn" title="Add Slider" aria-label="Add Slider"><span class="fa-icon">&#xf1de;</span></button>
+        <button id="addSceneBtn" class="widget-add-btn" title="Add Scene" aria-label="Add Scene"><span class="fa-icon">&#xf00b;</span></button>
+        <button id="addClockBtn" class="widget-add-btn" title="Add Clock" aria-label="Add Clock"><span class="fa-icon">&#xf017;</span></button>
+        <button id="addCameraBtn" class="widget-add-btn" title="Add Camera" aria-label="Add Camera"><span class="fa-icon">&#xf030;</span></button>
+        <button id="addAgendaBtn" class="widget-add-btn" title="Add Agenda" aria-label="Add Agenda"><span class="fa-icon">&#xf073;</span></button>
+        <button id="addHistoryChartBtn" class="widget-add-btn" title="Add History Chart" aria-label="Add History Chart"><span class="fa-icon">&#xf201;</span></button>
       </div>
       <div class="tree-controls">
         <input id="treeSearch" class="tree-search" type="text" placeholder="Search widgets…">
@@ -488,7 +557,7 @@
       <div class="modal-header">
         Pages
         <div class="spacer"></div>
-        <button id="pagesModalCloseBtn" title="Close">&#x2715;</button>
+        <button id="pagesModalCloseBtn" title="Close" aria-label="Close"><span class="fa-icon">&#xf00d;</span></button>
       </div>
       <div class="modal-body">
         <div class="modal-list-col">
@@ -528,7 +597,7 @@
       <div class="modal-header">
         Device Properties
         <div class="spacer"></div>
-        <button id="devicePropsCloseBtn" title="Cancel">&#x2715;</button>
+        <button id="devicePropsCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
       </div>
       <div style="padding:20px 24px 4px;">
 
@@ -590,7 +659,7 @@
       <div class="modal-header">
         New Device
         <div class="spacer"></div>
-        <button id="newDeviceCloseBtn" title="Cancel">&#x2715;</button>
+        <button id="newDeviceCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
       </div>
       <div style="padding:20px 24px 8px;">
         <div class="ndm-row">
@@ -626,3 +695,4 @@
   <script type="module" src="designer/app.js"></script>
 </body>
 </html>
+
