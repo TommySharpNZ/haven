@@ -74,7 +74,7 @@ A graphical designer is available at `designer.html` on the same path. It requir
 | [Widget Reference](docs/widgets.md) | All widget types with links to individual widget pages |
 | [Actions](docs/actions.md) | Navigate, service calls, automations, value tokens, `haven_command` |
 | [Conditional Overrides](docs/overrides.md) | Override syntax, condition sources, visibility, template expressions |
-| [Designer Reference](DESIGNER.md) | Full designer tool documentation |
+| [Designer Reference](docs/designer.md) | Canvas, properties panel, entity search, pages, theme editor, keyboard shortcuts |
 
 ---
 
@@ -144,5 +144,3 @@ HAven is a personal project shared freely. If it's running on a screen in your h
 If you'd like to go further, you can buy me a coffee. HAven will always be free and open source, including the visual designer. Any support goes straight toward HA gadgets and tinkering that feeds future features.
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/tommysharpnz)
-
-[![GitHub](https://img.shields.io/badge/GitHub-TommySharpNZ%2Fhaven-181717?style=flat&logo=github)](https://github.com/TommySharpNZ/haven)
