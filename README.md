@@ -1,6 +1,5 @@
 # HAven
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/release/TommySharpNZ/haven.svg)](https://github.com/TommySharpNZ/haven/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Thanks!-%23FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/tommysharpnz)
@@ -51,19 +50,11 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 
 ## Installation
 
-### HACS (Recommended)
+1. Download the latest release from the [releases page](https://github.com/TommySharpNZ/haven/releases/latest) and unzip it
+2. Copy the contents into a `haven/` folder inside your Home Assistant `/config/www/` directory
+3. Access HAven at `http://your-ha-ip:8123/local/haven/index.html`
 
-1. Open **HACS** in Home Assistant
-2. Click the three dots (⋮) in the top right → **Custom repositories**
-3. Add `https://github.com/TommySharpNZ/haven` and select **Dashboard** as the category
-4. Click **Add**
-5. Search for **HAven** and click **Download**
-6. Hard refresh your browser (Ctrl+Shift+R)
-
-### Manual
-
-1. Download the latest release from the [latest release](https://github.com/TommySharpNZ/haven/releases/latest)
-2. Copy the `haven/` folder to your Home Assistant `/config/www/` folder
+> HACS distribution is planned for a future release. See the Roadmap below.
 
 ---
 
@@ -113,7 +104,7 @@ A graphical designer is available at `designer.html` on the same path. It requir
 ## Roadmap
 
 **Planned**
-- [ ] HACS frontend distribution
+- [ ] HACS distribution: HAven does not fit HACS 2.x plugin or dashboard categories cleanly, as it is a standalone web app rather than a Lovelace resource. A companion `custom_components/haven` integration that registers HAven as a proper HA panel is the likely path forward.
 - [ ] Flow dots widget: animated dots along a path for energy/power direction visuals
 
 **Implemented**
