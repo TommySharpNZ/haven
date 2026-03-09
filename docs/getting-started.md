@@ -1,6 +1,6 @@
 # Getting Started with HAven
 
-HAven is a browser-based Home Assistant dashboard. Static files dropped into your HA `www/` folder — no addons, no server-side code, no build process.
+HAven is a browser-based Home Assistant dashboard. Static files dropped into your HA `www/` folder, no addons, no server-side code, no build process.
 
 ---
 
@@ -37,8 +37,8 @@ config/
       style.css
       fonts/
       devices/
-        example.json      ← sample config, start here
-        my-tablet.json    ← your own device configs
+        example.json      <- sample config, start here
+        my-tablet.json    <- your own device configs
 ```
 
 ---
@@ -48,7 +48,7 @@ config/
 1. In Home Assistant, open your **Profile** (click your avatar in the bottom-left).
 2. Scroll down to **Long-Lived Access Tokens**.
 3. Click **Create Token** and give it a name (e.g. "Kitchen Tablet").
-4. Copy the token immediately — it is only shown once.
+4. Copy the token immediately. It is only shown once.
 
 ---
 
@@ -56,8 +56,8 @@ config/
 
 When you first open HAven on a device, a setup screen appears asking for:
 
-- **Home Assistant URL** — defaults to the same origin HAven is served from (no entry needed when hosted inside HA's `www/` folder). Only change this for non-standard deployments.
-- **Long-Lived Access Token** — paste the token you created above.
+- **Home Assistant URL**: defaults to the same origin HAven is served from (no entry needed when hosted inside HA's `www/` folder). Only change this for non-standard deployments.
+- **Long-Lived Access Token**: paste the token you created above.
 
 These credentials are saved in the browser's `localStorage` for that device and persist across reloads. You won't be prompted again unless you clear browser storage or open a different browser.
 
@@ -76,10 +76,10 @@ Omit the parameter entirely to load `devices/default.json`. If that file is miss
 ## How It Works
 
 - Each tablet or screen has its own JSON config file in `devices/`.
-- The config defines a fixed canvas size (e.g. 1024×768) and widgets are placed at absolute pixel positions within that canvas.
-- The canvas scales uniformly to fill whatever screen is displaying it — like a retro game emulator stretching to fill a TV.
+- The config defines a fixed canvas size (e.g. 1024x768) and widgets are placed at absolute pixel positions within that canvas.
+- The canvas scales uniformly to fill whatever screen is displaying it, like a retro game emulator stretching to fill a TV.
 - On load, HAven connects to HA via WebSocket, fetches current entity states, then subscribes to `state_changed` events.
-- When an entity changes, only the DOM elements bound to that entity update — no page re-renders.
+- When an entity changes, only the DOM elements bound to that entity update. No page re-renders.
 
 ---
 
@@ -129,11 +129,11 @@ HAven scales your fixed design to fill the screen, so you generally do **not** n
 
 | Preset | Good for |
 |--------|----------|
-| `1024×768` | iPad (non-retina), budget Android tablets |
-| `1280×800` | 10" Android tablets |
-| `1920×1080` | Full HD wall-mounted screens |
-| `800×480` | Small 7" panels |
-| `480×320` | Compact portrait panels |
+| `1024x768` | iPad (non-retina), budget Android tablets |
+| `1280x800` | 10" Android tablets |
+| `1920x1080` | Full HD wall-mounted screens |
+| `800x480` | Small 7" panels |
+| `480x320` | Compact portrait panels |
 
 Lower design resolutions are easier to build and maintain and tend to produce better touch ergonomics (larger tap targets).
 
@@ -175,13 +175,13 @@ A page with `"id": 0` renders as a persistent overlay on top of all other pages.
 
 HAven looks for HA credentials in this order:
 
-1. **localStorage** (per device) — set via the setup screen on first run, persists across reloads.
-2. **Device config file** — `device.ha_token` (and optionally `device.ha_url`) in the device JSON.
-3. **Setup screen** — shown if no token is found anywhere.
+1. **localStorage** (per device): set via the setup screen on first run, persists across reloads.
+2. **Device config file**: `device.ha_token` (and optionally `device.ha_url`) in the device JSON.
+3. **Setup screen**: shown if no token is found anywhere.
 
-The HA URL defaults to `window.location.origin` — no configuration needed when HAven is hosted inside HA's `www/` folder.
+The HA URL defaults to `window.location.origin`. No configuration needed when HAven is hosted inside HA's `www/` folder.
 
-**Embedding a token in the config** (optional) — useful for provisioning a new tablet without touching it:
+**Embedding a token in the config** (optional), useful for provisioning a new tablet without touching it:
 
 ```json
 {
@@ -192,9 +192,9 @@ The HA URL defaults to `window.location.origin` — no configuration needed when
 }
 ```
 
-Once the device has saved the token to localStorage you can remove it from the JSON file. Note that `devices/` JSON files are served without authentication, so anyone on your local network can read them — treat embedded tokens accordingly.
+Once the device has saved the token to localStorage you can remove it from the JSON file. Note that `devices/` JSON files are served without authentication, so anyone on your local network can read them. Treat embedded tokens accordingly.
 
-**Resetting credentials** — open the browser console on the device and run:
+**Resetting credentials**: open the browser console on the device and run:
 
 ```javascript
 localStorage.removeItem('haven_url');
@@ -208,19 +208,31 @@ location.reload();
 
 A small dot in the bottom-right corner shows WebSocket state:
 
-- **Green** — connected and receiving live data
-- **Amber** — connecting or reconnecting
-- **Red** — disconnected (auto-retries every 5 seconds)
+- **Green**: connected and receiving live data
+- **Amber**: connecting or reconnecting
+- **Red**: disconnected (auto-retries every 5 seconds)
 
 ---
 
 ## Browser Compatibility
 
-HAven targets any browser that can reach your HA instance, including old tablets and budget devices. It is written in vanilla ES5 JavaScript with no framework dependencies.
+### Runtime (`index.html`)
 
-- **Broadly compatible** — tested on ancient iPad Safaris, budget Android WebViews, and smart TV browsers.
-- **The runtime** (`index.html`) works on essentially any modern browser, including older ones.
-- **The designer** (`designer.html`) requires Chrome or Edge for the File System Access API (save-to-disk). Firefox can open and download files but cannot save directly back to disk.
+HAven targets any browser that can reach your HA instance, including old tablets and budget devices. It is written in vanilla ES5 JavaScript with no framework dependencies and has been tested on ancient iPad Safaris, budget Android WebViews, and smart TV browsers.
+
+### Designer (`designer.html`)
+
+The designer is a desktop tool and has two requirements beyond a modern browser:
+
+**Chrome or Edge recommended.** The File System Access API (used to save changes directly back to the config file on disk) requires Chrome or Edge 86+. Firefox can open and download files but cannot save directly back to disk — use the **Download** button instead.
+
+**HTTPS required.** Browsers restrict the File System Access API and certain other features to secure contexts. The designer must be opened over HTTPS. The simplest way to achieve this is via your Nabu Casa remote URL, which is always HTTPS:
+
+```
+https://your-instance.ui.nabu.casa/local/haven/designer.html
+```
+
+If you don't use Nabu Casa, your HA instance needs to be accessible over HTTPS — either through a reverse proxy or a self-signed certificate. Setting that up is outside the scope of HAven; the Home Assistant documentation covers the available options.
 
 ---
 
@@ -229,7 +241,7 @@ HAven targets any browser that can reach your HA instance, including old tablets
 ### Connection indicator stays red
 
 **Check the basics first:**
-- Open the HA URL directly in the same browser tab — if it does not load, the problem is network or URL, not HAven.
+- Open the HA URL directly in the same browser tab. If it does not load, the problem is network or URL, not HAven.
 - Confirm the long-lived access token was copied in full with no extra spaces.
 
 **HTTP/HTTPS mismatch (most common cause):**
@@ -238,11 +250,11 @@ Browsers silently block WebSocket connections from an HTTPS page to an HTTP HA i
 Fix: use the same protocol for both, or access the dashboard over HTTP when connecting to a local HTTP HA instance.
 
 **Check the browser console:**
-Open developer tools (`F12`) → Console tab. The failure reason will be there:
+Open developer tools (`F12`) then the Console tab. The failure reason will be there:
 
-- `ERR_CONNECTION_REFUSED` — wrong IP or port
-- `401` — token invalid or expired
-- `Mixed Content` — HTTP/HTTPS mismatch (see above)
+- `ERR_CONNECTION_REFUSED`: wrong IP or port
+- `401`: token invalid or expired
+- `Mixed Content`: HTTP/HTTPS mismatch (see above)
 
 ### Setup screen appears on every load
 
@@ -250,4 +262,4 @@ The setup screen saves credentials to `localStorage` for the specific page URL. 
 
 ### Fonts look wrong on first load
 
-HAven bundles Material Design Icons locally in the `fonts/` folder — they work offline. If icons appear as squares or question marks, check that the `fonts/` folder was copied correctly alongside `index.html`.
+HAven bundles Material Design Icons locally in the `fonts/` folder and they work offline. If icons appear as squares or question marks, check that the `fonts/` folder was copied correctly alongside `index.html`.
