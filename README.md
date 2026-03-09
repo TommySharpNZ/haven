@@ -33,6 +33,8 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 
 ![Preview](images/smartclock.png)
 
+![Preview](images/designer.png)
+
 ---
 
 ## Installation
