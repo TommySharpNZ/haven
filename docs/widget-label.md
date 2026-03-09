@@ -2,8 +2,6 @@
 
 The label is the most versatile widget in HAven. It displays text, can show live values from any HA entity, supports number formatting, icons, template expressions, and can change its appearance dynamically through conditional overrides.
 
-[screenshothere - a few label examples side by side: a plain text label, a formatted power value, one with an MDI icon, and one using an override to change color]
-
 ---
 
 ## Contents
@@ -73,8 +71,6 @@ The `text` field accepts plain text, MDI icon tokens, HTML entities, and templat
 
 Use `&nbsp;` to guarantee a space next to an icon. Regular spaces adjacent to icon spans can be collapsed by the browser's flex rendering.
 
-[screenshothere - label showing an MDI icon next to text, e.g. a thermometer icon and temperature value]
-
 Supported HTML entities: `&nbsp;`, `&amp;`, `&lt;`, `&gt;`, `&quot;`.
 
 Full MDI icon library: https://pictogrammers.com/library/mdi/
@@ -121,8 +117,6 @@ The `format` property transforms the raw entity state before display:
 | `datetime_12` | `2026-02-27 2:05 PM` | |
 | *(none)* | Raw state string | Default when `format` is omitted |
 
-[screenshothere - a grid of labels showing different format values from the same or similar sensors]
-
 ---
 
 ## Attribute Source
@@ -154,8 +148,6 @@ Use `entity_attribute` when the value you want to display lives in a HA entity a
   "color": "text_muted"
 }
 ```
-
-[screenshothere - a media player card area showing track title and artist labels, possibly with album art image widget nearby]
 
 The label updates whenever the entity changes, even when the attribute value is what changed.
 
@@ -189,51 +181,16 @@ A common use case is showing a total (primary) but changing color based on a liv
 
 ## Template Expressions
 
-Labels support `{{ ... }}` expressions in both `text` and `color` fields. Expressions are evaluated locally in the browser against the bound entity state — no HA templates or automations required.
+Labels support `{{ ... }}` expressions in both `text` and `color` fields. Expressions are evaluated locally in the browser against the bound entity state, no HA templates or automations required.
 
-### Variables
-
-| Variable | Description |
-|----------|-------------|
-| `state` | Primary entity value, numeric if possible, otherwise string |
-| `state_str` | Primary entity state always as a string |
-| `attr.<name>` | Primary entity attribute value |
-| `state2` | Secondary entity value (requires `entity2`) |
-| `state_str2` | Secondary entity state as a string |
-| `attr2.<name>` | Secondary entity attribute value |
-
-### Functions and operators
-
-- Math functions: `round(x, n)`, `min(a, b)`, `max(a, b)`, `abs(x)`, `floor(x)`, `ceil(x)`
-- Arithmetic: `+`, `-`, `*`, `/`, `%`
-- Comparisons: `>`, `<`, `>=`, `<=`, `==`, `!=`
-- Boolean: `&&`, `||`, `!`
-- Ternary: `condition ? value_if_true : value_if_false`
-- Grouping: `( ... )`
-
-### Template examples
-
-Display a rounded sensor value with a unit:
 ```json
-"text": "{{ round(state, 1) }} °C"
-```
-
-Null-safe attribute with a fallback:
-```json
-"text": "{{ attr.volume_level != null ? (round(attr.volume_level * 100, 0) + '%') : '--' }}"
-```
-
-Combine values from two entities:
-```json
-"text": "{{ round(state, 1) }} kW / {{ round(state2, 1) }} kW"
-```
-
-Color chosen dynamically by threshold (returns a theme token name):
-```json
+"text":  "{{ round(state, 1) }} °C"
 "color": "{{ state > 5000 ? 'danger' : (state > 1000 ? 'warning' : 'primary') }}"
 ```
 
-[screenshothere - a label using a template expression, e.g. showing a calculated percentage or combined value]
+Variables available include `state`, `state_str`, `attr.<name>`, and `state2`/`attr2.<name>` when `entity2` is set. Standard math functions (`round`, `min`, `max`, `abs`, etc.) and JavaScript-style operators are supported.
+
+See [Conditional Overrides: Template Expressions](overrides.md#template-expressions) for the full variable list, operator reference, and more examples.
 
 ---
 
@@ -314,8 +271,6 @@ See the [Conditional Overrides](overrides.md) reference for full condition synta
   ]
 }
 ```
-
-[screenshothere - the solar power label in its inactive state (grey) and active state (green/primary color)]
 
 ### Clock using internal entity
 
