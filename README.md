@@ -117,3 +117,7 @@ MIT. Do whatever you like; attribution appreciated but not required.
 ## Supporting the Project
 
 HAven is a personal project shared freely. If it's running on a screen in your home and you find it useful, the best support is sharing it with other HA users or contributing improvements back via GitHub issues or pull requests.
+
+If you'd like to go further, you can buy me a coffee. HAven will always be free and open source, including the visual designer. Any support goes straight toward HA gadgets and tinkering that feeds future features.
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/tommysharpnz)
