@@ -16,6 +16,8 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 > [!NOTE]
 > HAven is actively developed and should be considered a work in progress. Bugs are expected, and refactoring between releases may occasionally introduce breaking changes to config files or widget properties. Check the release notes before updating.
 >
+> Documentation is also a work in progress. Individual widget reference pages are not yet complete for all widget types.
+>
 > **Feature requests:** use [Discussions](https://github.com/TommySharpNZ/haven/discussions)
 > **Bugs and questions:** use [Issues](https://github.com/TommySharpNZ/haven/issues)
 >
@@ -67,7 +69,7 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 
 ## Quick Start
 
-1. the `haven/` folderOpen `http://your-ha-ip:8123/local/haven/index.html?device=example`
+1. Open `http://your-ha-ip:8123/local/haven/index.html?device=example`
 2. Enter a Long-Lived Access Token when prompted
 3. Edit `devices/example.json` or create your own device config
 
