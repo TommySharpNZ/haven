@@ -13,8 +13,8 @@ HAven device configs are JSON files stored in the `devices/` folder. Each file d
 - [Page 0 - Persistent Overlay](#page-0---persistent-overlay)
 - [Page Background Images](#page-background-images)
 - [Icons](#icons)
-- [Actions](#actions)
-- [Conditional Overrides](#conditional-overrides)
+- [Actions](actions.md)
+- [Conditional Overrides](overrides.md)
 - [Internal Entities](#internal-entities)
 - [Performance Notes](#performance-notes)
 
@@ -262,156 +262,13 @@ Regular spaces work fine in plain text, but flex rendering collapses spaces dire
 
 ## Actions
 
-Tappable widgets (button, rectangle, slider, switch, image, camera) support an `action` property that fires when the widget is tapped.
-
-### Navigate to a page
-
-```json
-"action": { "type": "navigate", "page": 2 }
-```
-
-Directional navigation:
-
-```json
-"action": { "type": "navigate", "direction": "next" }
-"action": { "type": "navigate", "direction": "prev" }
-"action": { "type": "navigate", "direction": "home" }
-```
-
-- `direction: "home"` navigates to the first non-overlay page.
-- At the first or last page, `prev` and `next` do nothing.
-- If both `page` and `direction` are set, `page` takes priority.
-
-### Trigger an automation
-
-```json
-"action": { "type": "automation", "entity_id": "automation.good_night" }
-```
-
-### Call a service
-
-```json
-"action": { "type": "service", "service": "light.turn_on", "entity_id": "light.kitchen" }
-```
-
-With optional service data:
-
-```json
-"action": {
-  "type": "service",
-  "service": "light.turn_on",
-  "entity_id": "light.kitchen",
-  "data": { "brightness": 128, "color_temp": 350 }
-}
-```
-
-### Slider value token
-
-For slider widgets, use `"$value"` in `action.data` to inject the current slider position at call time:
-
-```json
-"action": {
-  "type": "service",
-  "service": "media_player.volume_set",
-  "entity_id": "media_player.living_room",
-  "data": { "volume_level": "$value" }
-}
-```
+See the dedicated [Actions](actions.md) reference for all action types, directional navigation, service calls, value tokens, and `haven_command` events fired from HA automations.
 
 ---
 
 ## Conditional Overrides
 
-Most widget types support an `overrides` array that changes visual properties based on entity state. Rules are evaluated in order and all matching rules are applied. Later rules win on any conflicting property.
-
-```json
-"overrides": [
-  {
-    "when": {
-      "logic": "all",
-      "conditions": [ { "source": "state", "type": "above", "value": 0 } ]
-    },
-    "set": { "color": "primary" }
-  },
-  {
-    "when": {
-      "logic": "all",
-      "conditions": [ { "source": "state", "type": "above", "value": 5000 } ]
-    },
-    "set": { "color": "danger" }
-  }
-]
-```
-
-### Condition logic
-
-| Field | Values | Description |
-|-------|--------|-------------|
-| `logic` | `all`, `any` | `all` requires every condition to match (AND). `any` requires at least one (OR). |
-| `conditions` | array | One or more condition objects. |
-
-### Condition types
-
-| Type | Description |
-|------|-------------|
-| `above` | Numeric value is greater than `value`. |
-| `below` | Numeric value is less than `value`. |
-| `equals` | Value matches `value` exactly (string or number). |
-| `not_equals` | Value does not match `value`. |
-
-### Condition sources
-
-The `source` field controls what value the condition tests against:
-
-| Source | Tests against | Notes |
-|--------|---------------|-------|
-| `state` | Primary entity state | Default when `source` is omitted. |
-| `attribute` | A named attribute of the primary entity | Requires an `"attribute"` key naming the attribute. Returns false if the attribute is missing. |
-| `state2` | Secondary entity (`entity2`) state | Returns false if `entity2` is not configured. |
-| `attribute2` | A named attribute of `entity2` | Requires an `"attribute"` key. Returns false if missing. |
-| `page` | Current page ID | No entity required. Useful for page-aware visibility or styling on overlay widgets. |
-
-Examples:
-
-```json
-{ "source": "state",      "type": "equals", "value": "on" }
-{ "source": "attribute",  "attribute": "hvac_action",   "type": "equals", "value": "heating" }
-{ "source": "attribute",  "attribute": "brightness",    "type": "above",  "value": 128 }
-{ "source": "state2",                                   "type": "above",  "value": 0 }
-{ "source": "attribute2", "attribute": "battery_level", "type": "below",  "value": 20 }
-{ "source": "page",                                     "type": "equals", "value": 2 }
-```
-
-### Controlling visibility
-
-Use `set.visible` in an override rule to show or hide any widget:
-
-```json
-"overrides": [
-  {
-    "when": { "logic": "all", "conditions": [ { "source": "attribute", "attribute": "shuffle", "type": "equals", "value": true } ] },
-    "set": { "visible": true }
-  },
-  {
-    "when": { "logic": "all", "conditions": [ { "source": "attribute", "attribute": "shuffle", "type": "not_equals", "value": true } ] },
-    "set": { "visible": false }
-  }
-]
-```
-
-### Properties settable via overrides
-
-Which properties can be set varies by widget type:
-
-| Widget | Settable via `set` |
-|--------|--------------------|
-| label | `text`, `color`, `background`, `font_size`, `opacity`, `border_color`, `border_width`, `animation`, `visible` |
-| rectangle | `background`, `gradient`, `opacity`, `border_color`, `border_width`, `animation`, `visible` |
-| button | `background`, `icon_color`, `label_color`, `icon`, `label`, `opacity`, `border_color`, `border_width`, `visible` |
-| bar | `color`, `visible` |
-| arc | `color`, `visible` |
-| slider | `background`, `color`, `thumb_color`, `opacity`, `visible` |
-| switch | `color`, `thumb_color`, `icon`, `icon_color`, `icon_scale`, `label`, `label_color`, `label_size`, `radius`, `thumb_radius`, `padding`, `opacity`, `locked`, `visible` |
+See the dedicated [Conditional Overrides](overrides.md) reference for full syntax, condition sources, visibility control, template expressions, and worked examples.
 
 ---
 
@@ -424,7 +281,7 @@ HAven provides a small set of built-in entity IDs that work exactly like HA enti
 | `internal.connectionstatus` | `connected`, `connecting`, or `disconnected` | On WebSocket state change |
 | `internal.currentdtm` | ISO datetime string | Once per minute |
 
-Example:clock label using the internal datetime entity:
+Example: clock label using the internal datetime entity:
 
 ```json
 {
@@ -438,7 +295,7 @@ Example:clock label using the internal datetime entity:
 }
 ```
 
-Example:connection indicator dot using overrides:
+Example: connection indicator dot using overrides:
 
 ```json
 {
