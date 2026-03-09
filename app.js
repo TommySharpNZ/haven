@@ -13,6 +13,8 @@
   var ws = null;
   var wsReconnectTimer = null;
   var wsSubscriptionId = null;
+  var wsCommandSubId   = null;
+  var havenDeviceId    = null;   // ?device= URL param, used to filter haven_command events
   var msgId = 1;
   var entityCallbacks = {};        // entityId -> [callback, ...] for current page
   var page0Callbacks  = {};        // entityId -> [callback, ...] persistent (page 0 widgets)
@@ -22,10 +24,17 @@
   var entityStates = {};      // entityId -> stateObject (cached)
   var INTERNAL_CONN_ENTITY = 'internal.connectionstatus';
   var INTERNAL_TIME_ENTITY = 'internal.currentdtm';
+  var INTERNAL_PAGE_ENTITY = 'internal.currentpage';
   var returnTimer = null;
   var clockTimer = null;
   var internalTimeTimer = null;
+  var screensaverTimer    = null;
+  var screensaverActive   = false;
+  var screensaverRaf      = null;
+  var screensaverEl       = null;
+  var screensaverListenersAdded = false;
   var pageNavTheme = null;
+  var animationPauseBound = false;
   var haUrl = '';
   var haToken = '';
   var configCacheBuster = null;
@@ -42,12 +51,17 @@
     haUrl   = localStorage.getItem('haven_url')   || '';
     haToken = localStorage.getItem('haven_token') || '';
 
+    // If no URL in localStorage, default to the current origin.
+    // HAven is normally hosted inside HA's www/ folder, so window.location.origin
+    // is the HA URL. An explicit ha_url in the device config or localStorage
+    // overrides this for non-standard deployments.
+    if (!haUrl) haUrl = window.location.origin;
+
     console.log('HAven init: url=' + haUrl + ' tokenLength=' + haToken.length);
 
-    if (!haUrl || !haToken) {
-      // No localStorage credentials - try loading config file anyway
-      // in case it has ha.url and ha.token defined
-      console.log('HAven init: no localStorage credentials, checking device config');
+    if (!haToken) {
+      // No token in localStorage - check device config before showing setup
+      console.log('HAven init: no token in localStorage, checking device config');
       loadConfigForCredentials();
       return;
     }
@@ -56,8 +70,8 @@
     loadConfig();
   }
 
-  // Load config purely to extract credentials if present
-  // Falls back to setup screen if config missing or has no credentials
+  // Load config to extract optional credential overrides.
+  // Falls back to setup screen only if no token can be found anywhere.
   function loadConfigForCredentials() {
     var deviceParam = getUrlParam('device') || 'default';
     var base        = window.location.pathname.replace(/\/[^\/]*$/, '/');
@@ -75,20 +89,21 @@
         return;
       }
 
-      var credUrl   = (data.ha && data.ha.url)     || (data.device && data.device.ha_url)   || '';
-      var credToken = (data.ha && data.ha.token)   || (data.device && data.device.ha_token) || '';
+      var credUrl   = (data.device && data.device.ha_url)   || '';
+      var credToken = (data.device && data.device.ha_token) || '';
 
       console.log('HAven init: config loaded, credUrl=' + credUrl + ' credTokenLength=' + credToken.length);
 
-      if (credUrl && credToken) {
-        console.log('HAven init: credentials found in device config');
-        haUrl   = credUrl;
+      if (credToken) {
+        // URL override is optional - fall back to origin if not set
+        if (credUrl) haUrl = credUrl;
         haToken = credToken;
         localStorage.setItem('haven_url',   haUrl);
         localStorage.setItem('haven_token', haToken);
+        console.log('HAven init: credentials from device config, url=' + haUrl);
         loadConfig();
       } else {
-        console.log('HAven init: no credentials in config, showing setup');
+        console.log('HAven init: no token in config, showing setup');
         showSetup();
       }
     });
@@ -104,7 +119,8 @@
     var saveBtn    = document.getElementById('setup-save');
     var errorEl    = document.getElementById('setup-error');
 
-    urlInput.value   = haUrl;
+    // Pre-fill URL from localStorage or current origin as a sensible default
+    urlInput.value   = haUrl || window.location.origin;
     tokenInput.value = haToken;
 
     saveBtn.addEventListener('click', function () {
@@ -112,10 +128,10 @@
       var token = tokenInput.value.trim();
       errorEl.textContent = '';
 
-      if (!url) { errorEl.textContent = 'Please enter your Home Assistant URL.'; return; }
+      if (!url)   { errorEl.textContent = 'Please enter your Home Assistant URL.'; return; }
       if (!token) { errorEl.textContent = 'Please enter your access token.'; return; }
 
-      localStorage.setItem('haven_url', url);
+      localStorage.setItem('haven_url',   url);
       localStorage.setItem('haven_token', token);
 
       // Hard reload for cleanest possible startup with new credentials
@@ -147,6 +163,7 @@
   }
 
   function loadConfigFromUrl(configUrl, deviceParam) {
+    havenDeviceId = deviceParam || null;
     console.log('HAven loadConfig: fetching ' + configUrl);
     fetchJson(configUrl, function (err, data) {
       if (err) {
@@ -164,6 +181,9 @@
     config = data;
     setupCanvas();
     setupPageNav();
+    var connEl = document.getElementById('conn-status');
+    if (connEl && config.device.show_connection_indicator === false) connEl.style.display = 'none';
+    setupAnimationPauseHook();
     renderPage0();   // persistent overlay - renders once, never cleared
     var startPage = config.device.default_page || 1;
     var pageParam = parseInt(getUrlParam('page'), 10);
@@ -180,7 +200,34 @@
     if (!isPreview) connectWebSocket();
     startClock();
     startInternalTime();
+    if (!isPreview) initScreensaver();
     if (isPreview) setConnStatus('disconnected');
+  }
+
+  function setupAnimationPauseHook() {
+    if (animationPauseBound) return;
+    animationPauseBound = true;
+
+    function syncAnimationPause() {
+      var root = document.body || document.documentElement;
+      if (!root) return;
+      if (document.hidden) root.classList.add('haven-anim-paused');
+      else root.classList.remove('haven-anim-paused');
+    }
+
+    function onPageVisible() {
+      if (document.hidden) return;
+      // Device just woke up - dismiss screensaver and reconnect WS if needed
+      resetScreensaverTimer();
+      if (!ws || ws.readyState !== 1) {
+        if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+        connectWebSocket();
+      }
+    }
+
+    document.addEventListener('visibilitychange', syncAnimationPause);
+    document.addEventListener('visibilitychange', onPageVisible);
+    syncAnimationPause();
   }
 
   function showLandingPage(base) {
@@ -324,7 +371,7 @@
     entityCallbacks = savedCallbacks;
 
     // Re-enable pointer events on interactive page 0 widgets
-    var els = overlay.querySelectorAll('.widget-button, .widget-image');
+    var els = overlay.querySelectorAll('.widget-button, .widget-image, .widget-switch');
     for (var e = 0; e < els.length; e++) {
       els[e].style.pointerEvents = 'auto';
     }
@@ -407,9 +454,16 @@
     }
 
     // Render each widget
+    var nEntity = 0, nEntity2 = 0, nOverrides = 0;
     for (var w = 0; w < pageConfig.widgets.length; w++) {
       renderWidget(pageConfig.widgets[w], canvas);
+      var wc = pageConfig.widgets[w];
+      if (wc.entity)    nEntity++;
+      if (wc.entity2)   nEntity2++;
+      if (wc.overrides) nOverrides += wc.overrides.length;
     }
+    console.log('HAven page ' + pageId + ': ' + pageConfig.widgets.length + ' widgets, ' +
+      nEntity + ' entity, ' + nEntity2 + ' entity2, ' + nOverrides + ' override rules');
 
     // Re-attach page 0 overlay on top
     if (page0) {
@@ -419,6 +473,9 @@
     // Re-subscribe to relevant entities for this page
     subscribeToPageEntities(pageConfig);
 
+    // Expose current page as an internal entity for templates/override reactivity.
+    updateInternalEntity(INTERNAL_PAGE_ENTITY, String(pageId));
+
     // Update page nav dots
     updatePageNav(pageId);
 
@@ -427,10 +484,37 @@
   }
 
   // ---- Page navigation --------------------------------------
+  function getPageNavConfig() {
+    var nav = {};
+    var dev = (config && config.device) ? config.device : {};
+    var base = dev.page_nav;
+    var alt = dev.page_navigation;
+
+    if (base && typeof base === 'object') {
+      for (var k in base) {
+        if (base.hasOwnProperty(k)) nav[k] = base[k];
+      }
+    }
+
+    if (alt && typeof alt === 'object') {
+      for (var a in alt) {
+        if (alt.hasOwnProperty(a)) nav[a] = alt[a];
+      }
+    } else if (alt === false) {
+      nav.show = false;
+    } else if (alt === true && nav.show === undefined) {
+      nav.show = true;
+    }
+
+    return nav;
+  }
+
   function getPageNavTheme() {
-    var nav = (config && config.device && config.device.page_nav) ? config.device.page_nav : {};
+    var nav = getPageNavConfig();
     var size = String(nav.size || 'medium').toLowerCase();
     var presets = {
+      micro:  { dot: 4,  hit: 6,  gap: 4,  padY: 6,  padX: 8,  activeScale: 1.2 },
+      tiny:   { dot: 6,  hit: 8,  gap: 6,  padY: 8,  padX: 12, activeScale: 1.2 },
       small:  { dot: 9,  hit: 10, gap: 8,  padY: 12, padX: 16, activeScale: 1.2 },
       medium: { dot: 12, hit: 14, gap: 10, padY: 18, padX: 24, activeScale: 1.25 },
       large:  { dot: 15, hit: 18, gap: 12, padY: 22, padX: 30, activeScale: 1.3 }
@@ -498,6 +582,16 @@
   function setupPageNav() {
     var nav = document.getElementById('page-nav');
     nav.innerHTML = '';
+    nav.style.display = '';
+
+    var navCfg = getPageNavConfig();
+    var showDots = (navCfg.show !== false);
+
+    if (!showDots) {
+      nav.style.display = 'none';
+      setupSwipeNav();
+      return;
+    }
 
     if (config.pages.length <= 1) return;
 
@@ -619,6 +713,46 @@
     }
   }
 
+  function getNavigablePageIds() {
+    if (!config || !config.pages) return [];
+    return config.pages
+      .map(function(p) { return p.id; })
+      .filter(function(id) { return id !== 0; });
+  }
+
+  function resolveNavigatePage(action) {
+    if (!action) return null;
+
+    // Explicit page always wins.
+    if (action.page !== undefined && action.page !== null) {
+      var p = parseInt(action.page, 10);
+      return isNaN(p) ? null : p;
+    }
+
+    var dir = action.direction ? String(action.direction).toLowerCase() : '';
+    if (!dir) return null;
+
+    var pageIds = getNavigablePageIds();
+    if (!pageIds.length) return null;
+
+    if (dir === 'home') return pageIds[0];
+
+    var idx = pageIds.indexOf(currentPage);
+    if (idx === -1) idx = 0;
+
+    if (dir === 'next') {
+      if (idx >= pageIds.length - 1) return null;
+      return pageIds[idx + 1];
+    }
+
+    if (dir === 'prev' || dir === 'previous') {
+      if (idx <= 0) return null;
+      return pageIds[idx - 1];
+    }
+
+    return null;
+  }
+
   // ---- Return-to-default timer ------------------------------
   function resetReturnTimer() {
     if (returnTimer) clearTimeout(returnTimer);
@@ -629,6 +763,109 @@
     returnTimer = setTimeout(function () {
       navigateTo(defaultPage);
     }, seconds * 1000);
+  }
+
+  // ---- Screensaver ------------------------------------------
+  function initScreensaver() {
+    var ss = config.device && config.device.screensaver;
+    if (!ss || !ss.timeout) return;
+    if (!screensaverListenersAdded) {
+      screensaverListenersAdded = true;
+      document.addEventListener('touchstart', resetScreensaverTimer, true);
+      document.addEventListener('mousedown',  resetScreensaverTimer, true);
+      document.addEventListener('keydown',    resetScreensaverTimer, true);
+    }
+    resetScreensaverTimer();
+  }
+
+  function resetScreensaverTimer() {
+    if (screensaverActive) dismissScreensaver();
+    if (screensaverTimer) clearTimeout(screensaverTimer);
+    var ss = config && config.device && config.device.screensaver;
+    if (!ss || !ss.timeout) return;
+    screensaverTimer = setTimeout(activateScreensaver, ss.timeout * 1000);
+  }
+
+  function activateScreensaver() {
+    if (screensaverActive) return;
+    screensaverActive = true;
+
+    var ss       = config.device.screensaver;
+    var opacity  = ss.opacity !== undefined ? ss.opacity : 0.95;
+    var text     = ss.hasOwnProperty('text') ? ss.text : null;
+    var colors   = [
+      '#ffffff',
+      resolveColor('primary'),
+      resolveColor('warning'),
+      resolveColor('danger')
+    ];
+    var colorIdx = 0;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'haven-screensaver';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;' +
+      'background:rgba(0,0,0,' + opacity + ');z-index:10000;cursor:none;' +
+      'transition:opacity 0.6s ease';
+    overlay.style.opacity = '0';
+
+    var label = text ? document.createElement('div') : null;
+    if (label) {
+      label.textContent = text;
+      label.style.cssText = 'position:absolute;font-size:2rem;font-weight:bold;' +
+        'color:#ffffff;pointer-events:none;user-select:none;white-space:nowrap;' +
+        'font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;letter-spacing:0.05em;';
+      overlay.appendChild(label);
+    }
+    document.body.appendChild(overlay);
+    screensaverEl = overlay;
+
+    // Fade in
+    requestAnimationFrame(function() { overlay.style.opacity = '1'; });
+
+    if (label) {
+      // Wait for label to have dimensions before starting animation
+      setTimeout(function() {
+        var x  = Math.random() * Math.max(0, overlay.clientWidth  - label.offsetWidth);
+        var y  = Math.random() * Math.max(0, overlay.clientHeight - label.offsetHeight);
+        var dx = 1.2;
+        var dy = 0.8;
+
+        function animate() {
+          if (!screensaverActive) return;
+          var ow = overlay.clientWidth;
+          var oh = overlay.clientHeight;
+          var lw = label.offsetWidth;
+          var lh = label.offsetHeight;
+          var bounced = false;
+
+          x += dx; y += dy;
+          if (x <= 0)        { x = 0;       dx =  Math.abs(dx); bounced = true; }
+          if (x + lw >= ow)  { x = ow - lw; dx = -Math.abs(dx); bounced = true; }
+          if (y <= 0)        { y = 0;       dy =  Math.abs(dy); bounced = true; }
+          if (y + lh >= oh)  { y = oh - lh; dy = -Math.abs(dy); bounced = true; }
+
+          if (bounced) {
+            colorIdx = (colorIdx + 1) % colors.length;
+            label.style.color = colors[colorIdx];
+          }
+          label.style.left = Math.round(x) + 'px';
+          label.style.top  = Math.round(y) + 'px';
+          screensaverRaf = requestAnimationFrame(animate);
+        }
+        screensaverRaf = requestAnimationFrame(animate);
+      }, 100);
+    }
+  }
+
+  function dismissScreensaver() {
+    screensaverActive = false;
+    if (screensaverRaf) { cancelAnimationFrame(screensaverRaf); screensaverRaf = null; }
+    if (screensaverEl) {
+      var el = screensaverEl;
+      screensaverEl = null;
+      el.style.opacity = '0';
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 650);
+    }
   }
 
   // ---- Clock ------------------------------------------------
@@ -671,8 +908,50 @@
   }
 
   // ---- Widget rendering -------------------------------------
+  function supportsWidgetAnimation(w) {
+    if (!w || !w.type) return false;
+    return (w.type === 'label' || w.type === 'rect' || w.type === 'rectangle');
+  }
+
+  function createWidgetRenderSurface(host, w) {
+    if (!supportsWidgetAnimation(w)) return host;
+    var inner = document.createElement('div');
+    inner.className = 'widget-surface';
+    inner.style.position = 'absolute';
+    inner.style.left = '0';
+    inner.style.top = '0';
+    inner.style.width = '100%';
+    inner.style.height = '100%';
+    host.appendChild(inner);
+    return inner;
+  }
+
+  function normalizeAnimationName(name) {
+    if (name === undefined || name === null) return '';
+    var n = String(name).toLowerCase();
+    if (n === 'pulse' || n === 'pulse_fast' || n === 'blink' || n === 'breathe') return n;
+    if (n === 'none') return '';
+    return '';
+  }
+
+  function applyWidgetAnimation(host, w, overrides) {
+    if (!host || !w || !supportsWidgetAnimation(w)) return;
+    var ovr = overrides || null;
+    var name = normalizeAnimationName((ovr && ovr.animation !== undefined) ? ovr.animation : w.animation);
+
+    host.classList.remove('widget-anim-active', 'widget-anim-pulse', 'widget-anim-pulse-fast', 'widget-anim-blink', 'widget-anim-breathe');
+    if (!name) return;
+
+    host.classList.add('widget-anim-active');
+    if (name === 'pulse') host.classList.add('widget-anim-pulse');
+    else if (name === 'pulse_fast') host.classList.add('widget-anim-pulse-fast');
+    else if (name === 'blink') host.classList.add('widget-anim-blink');
+    else if (name === 'breathe') host.classList.add('widget-anim-breathe');
+  }
+
   function renderWidget(w, canvas) {
     var el = document.createElement('div');
+    var contentEl = createWidgetRenderSurface(el, w);
     el.id        = 'w-' + w.id;
     el.className = 'widget';
     el.style.left   = w.x + 'px';
@@ -681,7 +960,7 @@
     el.style.height = w.h + 'px';
 
     // Apply base opacity if specified
-    if (w.opacity !== undefined) {
+    if (w.opacity !== undefined && !supportsWidgetAnimation(w)) {
       el.style.opacity = w.opacity;
     }
 
@@ -694,26 +973,28 @@
     }
 
     switch (w.type) {
-      case 'label':        renderLabel(el, w);       break;
-      case 'rect':         renderRectangle(el, w);   break;
-      case 'rectangle':    renderRectangle(el, w);   break;
-      case 'bar':          renderBar(el, w);          break;
-      case 'slider':       renderSlider(el, w);       break;
-      case 'scene':        renderScene(el, w);        break;
-      case 'button':       renderButton(el, w);       break;
-      case 'clock':        renderClock(el, w);        break;
-      case 'image':        renderImage(el, w);        break;
-      case 'camera':       renderCamera(el, w);       break;
-      case 'arc':          renderArc(el, w);          break;
-      case 'agenda':       renderAgenda(el, w);       break;
-      case 'history_chart': renderHistoryChart(el, w); break;
+      case 'label':        renderLabel(contentEl, w, el);       break;
+      case 'rect':         renderRectangle(contentEl, w, el);   break;
+      case 'rectangle':    renderRectangle(contentEl, w, el);   break;
+      case 'bar':          renderBar(contentEl, w);          break;
+      case 'slider':       renderSlider(contentEl, w);       break;
+      case 'switch':       renderSwitch(contentEl, w);       break;
+      case 'scene':        renderScene(contentEl, w);        break;
+      case 'button':       renderButton(contentEl, w);       break;
+      case 'clock':        renderClock(contentEl, w);        break;
+      case 'image':        renderImage(contentEl, w);        break;
+      case 'camera':       renderCamera(contentEl, w);       break;
+      case 'arc':          renderArc(contentEl, w);          break;
+      case 'agenda':       renderAgenda(contentEl, w);       break;
+      case 'history_chart': renderHistoryChart(contentEl, w); break;
       default:
-        el.style.background = 'rgba(255,0,0,0.3)';
-        el.textContent = 'Unknown: ' + w.type;
+        contentEl.style.background = 'rgba(255,0,0,0.3)';
+        contentEl.textContent = 'Unknown: ' + w.type;
     }
 
     // Visibility is controlled through conditional overrides using set.visible.
     bindOverrideVisibility(el, w);
+    bindOverrideAnimation(el, w);
 
     canvas.appendChild(el);
   }
@@ -723,6 +1004,39 @@
     for (var i = 0; i < w.overrides.length; i++) {
       var rule = w.overrides[i];
       if (rule && rule.set && rule.set.hasOwnProperty('visible')) return true;
+    }
+    return false;
+  }
+
+  function hasAnimationOverrideRule(w) {
+    if (!w || !w.overrides || !w.overrides.length) return false;
+    for (var i = 0; i < w.overrides.length; i++) {
+      var rule = w.overrides[i];
+      if (rule && rule.set && rule.set.hasOwnProperty('animation')) return true;
+    }
+    return false;
+  }
+
+  function hasOverrideSource(w, sourceName) {
+    if (!w || !w.overrides || !w.overrides.length || !sourceName) return false;
+    for (var i = 0; i < w.overrides.length; i++) {
+      var rule = w.overrides[i];
+      if (!rule || !rule.when) continue;
+      if (whenUsesSource(rule.when, sourceName)) return true;
+    }
+    return false;
+  }
+
+  function whenUsesSource(when, sourceName) {
+    if (!when || !when.conditions || !when.conditions.length) return false;
+    for (var i = 0; i < when.conditions.length; i++) {
+      var cond = when.conditions[i];
+      if (!cond) continue;
+      if (cond.conditions && cond.logic) {
+        if (whenUsesSource(cond, sourceName)) return true;
+        continue;
+      }
+      if ((cond.source || 'state') === sourceName) return true;
     }
     return false;
   }
@@ -741,6 +1055,7 @@
 
     var stateCache = w.entity ? (entityStates[w.entity] || null) : null;
     var state2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+    var hasPageSource = hasOverrideSource(w, 'page');
 
     function updateVisibility() {
       applyOverrideVisibility(el, w, stateCache, state2Cache);
@@ -760,11 +1075,54 @@
       });
     }
 
+    if (hasPageSource) {
+      registerEntityCallback(INTERNAL_PAGE_ENTITY, function() {
+        updateVisibility();
+      });
+    }
+
     updateVisibility();
   }
 
+  function bindOverrideAnimation(el, w) {
+    if (!supportsWidgetAnimation(w)) return;
+    if (!hasAnimationOverrideRule(w)) return;
+
+    var stateCache = w.entity ? (entityStates[w.entity] || null) : null;
+    var state2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+    var hasPageSource = hasOverrideSource(w, 'page');
+
+    function updateAnimation() {
+      var ovr = resolveOverrides(w, stateCache, state2Cache) || {};
+      applyWidgetAnimation(el, w, ovr);
+    }
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        stateCache = state;
+        updateAnimation();
+      });
+    }
+
+    if (w.entity2) {
+      registerEntityCallback(w.entity2, function(state) {
+        state2Cache = state;
+        updateAnimation();
+      });
+    }
+
+    if (hasPageSource) {
+      registerEntityCallback(INTERNAL_PAGE_ENTITY, function() {
+        updateAnimation();
+      });
+    }
+
+    updateAnimation();
+  }
+
   // -- Label --
-  function renderLabel(el, w) {
+  function renderLabel(el, w, hostEl) {
+    var host = hostEl || el;
     el.className += ' widget-label align-' + (w.align || 'left');
     el.style.color          = resolveColor(w.color      || 'text');
     el.style.background     = resolveColor(w.background || 'transparent');
@@ -809,6 +1167,7 @@
     if (!w.action) {
       el.style.pointerEvents = 'none';
     }
+    applyWidgetAnimation(host, w, null);
 
     if (w.entity || w.entity2) {
       // Cache both states so whichever entity fires last can pass both to the update.
@@ -820,7 +1179,7 @@
       // Use var expression, not function declaration — declarations inside if blocks
       // are illegal in ES5 strict mode and behave inconsistently across browsers.
       var doLabelUpdate = function() {
-        updateLabelFromState(el, w, stateCache, state2Cache);
+        updateLabelFromState(el, w, stateCache, state2Cache, host);
       };
 
       if (w.entity) {
@@ -844,7 +1203,8 @@
   //   state2 - secondary entity HA state object (null when entity2 not configured)
   //   Passes state2 through to resolveOverrides and applyTemplate so both the
   //   condition system and template expressions can reference the secondary entity.
-  function updateLabelFromState(el, w, state, state2) {
+  function updateLabelFromState(el, w, state, state2, hostEl) {
+    var host = hostEl || el;
     var val = null;
     if (state) {
       if (w.entity_attribute) {
@@ -862,7 +1222,9 @@
     var s = overrides || {};
     var textOverride = (s.text !== undefined) ? String(s.text) : null;
     var useTemplateText = (w.text && hasTemplate(w.text));
-    var baseText = useTemplateText ? String(w.text) : (textOverride !== null ? textOverride : formatValue(val, w));
+    var hasTextOverrideRule = !!(w.overrides && w.overrides.length && w.overrides.some(function(r) { return r.set && r.set.text !== undefined; }));
+    var baseFallback = (w.text && !w.format && !useTemplateText && hasTextOverrideRule) ? w.text : formatValue(val, w);
+    var baseText = textOverride !== null ? textOverride : (useTemplateText ? String(w.text) : baseFallback);
     var formatted = applyTemplate(baseText, state, state2);
     if (formatted.length === 1 && formatted.charCodeAt(0) >= 0xF000 && formatted.charCodeAt(0) <= 0xF8FF) {
       el.style.fontFamily = 'FontAwesome';
@@ -881,21 +1243,29 @@
     if (s.letter_spacing !== undefined) el.style.letterSpacing = s.letter_spacing + 'px';
     if (s.font_size !== undefined) el.style.fontSize = s.font_size + 'px';
     else el.style.fontSize = (w.font_size || config.theme.font_size || 16) + 'px';
+    applyWidgetAnimation(host, w, s);
   }
 
   // -- Rectangle --
-  function renderRectangle(el, w) {
+  function renderRectangle(el, w, hostEl) {
+    var host = hostEl || el;
     el.className += ' widget-rectangle';
     var radiusPx = (w.radius !== undefined ? w.radius : 0) + 'px';
     el.style.borderRadius = radiusPx;
     // Keep fill clipped to rounded corners even when borders/overlays are used.
     el.style.overflow = 'hidden';
     applyRectangleFill(el, w, null);
+    if (w.opacity !== undefined) el.style.opacity = w.opacity;
+    applyWidgetAnimation(host, w, null);
 
-    if (w.entity) {
-      registerEntityCallback(w.entity, function(state) {
-        var ovr = resolveOverrides(w, state) || {};
+    if (w.entity || w.entity2) {
+      var stateCache  = w.entity  ? (entityStates[w.entity]  || null) : null;
+      var state2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+
+      function doRectUpdate() {
+        var ovr = resolveOverrides(w, stateCache, state2Cache) || {};
         applyRectangleFill(el, w, ovr);
+        applyWidgetAnimation(host, w, ovr);
         if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
         if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
         if (ovr.border_width !== undefined) {
@@ -903,7 +1273,20 @@
           el.style.borderStyle = 'solid';
           el.style.boxSizing   = 'border-box';
         }
-      });
+      }
+
+      if (w.entity) {
+        registerEntityCallback(w.entity, function(state) {
+          stateCache = state;
+          doRectUpdate();
+        });
+      }
+      if (w.entity2) {
+        registerEntityCallback(w.entity2, function(state) {
+          state2Cache = state;
+          doRectUpdate();
+        });
+      }
     }
 
     // If no action, pass pointer events through so taps reach widgets below
@@ -958,14 +1341,23 @@
     fill.style.background   = resolveColor(w.color || 'primary');
     el.appendChild(fill);
 
-    if (w.entity) {
-      registerEntityCallback(w.entity, function (state) {
-        updateBarFromState(fill, w, state);
-      });
+    if (w.entity || w.entity2) {
+      var stateCache  = w.entity  ? (entityStates[w.entity]  || null) : null;
+      var state2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+
+      function doBarUpdate() {
+        updateBarFromState(fill, w, stateCache, state2Cache);
+      }
+
+      if (w.entity)  registerEntityCallback(w.entity,  function(s) { stateCache  = s; doBarUpdate(); });
+      if (w.entity2) registerEntityCallback(w.entity2, function(s) { state2Cache = s; doBarUpdate(); });
+
+      // Apply cached state immediately (handles page nav after WS already connected)
+      if (stateCache || state2Cache) doBarUpdate();
     }
   }
 
-  function updateBarFromState(fill, w, state) {
+  function updateBarFromState(fill, w, state, state2) {
     var val = state ? parseFloat(state.state) : 0;
     if (isNaN(val)) val = 0;
 
@@ -975,7 +1367,7 @@
     fill.style.width = pct + '%';
 
     var thresholdColor = getThresholdColor(w, val, (w.color || 'primary'));
-    var ovr = resolveOverrides(w, state) || {};
+    var ovr = resolveOverrides(w, state, state2) || {};
     fill.style.background = resolveColor(ovr.color !== undefined ? ovr.color : thresholdColor);
   }
 
@@ -1005,6 +1397,7 @@
     var baseMax    = max;
     var currentValue = min;
     var isDragging = false;
+    var sliderLocked = !!w.locked;
     var lastSentValue = null;
     var latestState = null;
 
@@ -1102,9 +1495,13 @@
       var bg = (ovr.background !== undefined) ? ovr.background : (w.background || 'surface2');
       var fg = (ovr.color !== undefined) ? ovr.color : (w.color || 'primary');
       var th = (ovr.thumb_color !== undefined) ? ovr.thumb_color : (w.thumb_color || 'text');
+      sliderLocked = (ovr.locked !== undefined) ? !!ovr.locked : !!w.locked;
       track.style.background = resolveColor(bg);
       fill.style.background = resolveColor(fg);
       thumb.style.background = resolveColor(th);
+      thumb.style.pointerEvents = sliderLocked ? 'none' : 'auto';
+      thumb.style.cursor = sliderLocked ? 'not-allowed' : 'pointer';
+      el.style.cursor = sliderLocked ? 'not-allowed' : 'default';
       if (ovr.opacity !== undefined) el.style.opacity = ovr.opacity;
       else if (w.opacity !== undefined) el.style.opacity = w.opacity;
     }
@@ -1171,6 +1568,7 @@
     }
 
     function sendSliderValue(value) {
+      if (sliderLocked) return;
       if (!w.action) return;
       handleAction(w.action, value);
     }
@@ -1223,6 +1621,7 @@
     }
 
     function startDrag(e) {
+      if (sliderLocked) return;
       e.preventDefault();
       isDragging = true;
       lastSentValue = null;
@@ -1317,6 +1716,269 @@
     }
   }
 
+  // -- Switch --
+  // Binary left/right toggle switch.
+  // Required config: on_value, off_value.
+  // Icon is rendered in the thumb via icon. Use overrides to change color/icon when on.
+  function renderSwitch(el, w) {
+    el.className += ' widget-switch';
+    el.style.overflow = 'hidden';
+
+    var track = document.createElement('div');
+    track.className = 'switch-track';
+    el.appendChild(track);
+
+    var thumb = document.createElement('div');
+    thumb.className = 'switch-thumb';
+    var thumbIcon = document.createElement('span');
+    thumbIcon.className = 'switch-icon switch-icon-thumb';
+    thumb.appendChild(thumbIcon);
+    el.appendChild(thumb);
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'switch-label';
+    el.appendChild(labelEl);
+
+    var latestState = null;
+    var currentKnown = false;
+    var currentIsOn = false;
+    var hasRequiredValues = !(w.on_value === undefined || w.off_value === undefined);
+
+    function normalizeSwitchIcon(icon) {
+      if (icon === undefined || icon === null) return '';
+      var str = String(icon);
+      if (!str) return '';
+      if (str.indexOf('[mdi:') === 0 || str.indexOf('[small:') === 0) return str;
+      if (/^mdi:[\w-]+$/i.test(str)) return '[mdi:' + str.replace(/^mdi:/i, '') + ']';
+      return str;
+    }
+
+    function readSwitchValue(state, attrName) {
+      if (!state) return null;
+      if (attrName && state.attributes && state.attributes[attrName] !== undefined && state.attributes[attrName] !== null) {
+        return state.attributes[attrName];
+      }
+      if (state.state === undefined || state.state === null) return null;
+      return state.state;
+    }
+
+    function resolveSwitchConfig(state) {
+      var ovr = resolveOverrides(w, state) || {};
+      var out = {
+        on_value: (ovr.on_value !== undefined) ? ovr.on_value : w.on_value,
+        off_value: (ovr.off_value !== undefined) ? ovr.off_value : w.off_value,
+        value_attribute: (ovr.value_attribute !== undefined) ? ovr.value_attribute : w.value_attribute,
+        color: (ovr.color !== undefined) ? ovr.color : (w.color !== undefined ? w.color : 'surface2'),
+        thumb_color: (ovr.thumb_color !== undefined) ? ovr.thumb_color : (w.thumb_color !== undefined ? w.thumb_color : 'text'),
+        icon: (ovr.icon !== undefined) ? ovr.icon : (w.icon !== undefined ? w.icon : ''),
+        icon_color: (ovr.icon_color !== undefined) ? ovr.icon_color : (w.icon_color !== undefined ? w.icon_color : 'text_muted'),
+        icon_scale: (ovr.icon_scale !== undefined) ? ovr.icon_scale : w.icon_scale,
+        label_size: (ovr.label_size !== undefined) ? ovr.label_size : w.label_size,
+        radius: (ovr.radius !== undefined) ? ovr.radius : w.radius,
+        thumb_radius: (ovr.thumb_radius !== undefined) ? ovr.thumb_radius : w.thumb_radius,
+        padding: (ovr.padding !== undefined) ? ovr.padding : w.padding,
+        label: (ovr.label !== undefined) ? ovr.label : w.label,
+        label_color: (ovr.label_color !== undefined) ? ovr.label_color : (w.label_color !== undefined ? w.label_color : 'text_muted'),
+        opacity: (ovr.opacity !== undefined) ? ovr.opacity : w.opacity,
+        locked: (ovr.locked !== undefined) ? !!ovr.locked : !!w.locked
+      };
+      return out;
+    }
+
+    function evaluateSwitchState(state, cfg) {
+      var raw = readSwitchValue(state, cfg.value_attribute);
+      if (raw === null || raw === undefined) return { known: false, isOn: false, raw: raw };
+      var rawStr = String(raw);
+      var onStr = String(cfg.on_value);
+      var offStr = String(cfg.off_value);
+      if (rawStr === onStr) return { known: true, isOn: true, raw: raw };
+      if (rawStr === offStr) return { known: true, isOn: false, raw: raw };
+      return { known: false, isOn: false, raw: raw };
+    }
+
+    function applySwitchVisual(isOn, known, cfg, state) {
+      var width = Math.max(10, w.w);
+      var height = Math.max(10, w.h);
+      var pad = parseFloat(cfg.padding);
+      if (isNaN(pad)) pad = 3;
+      if (pad < 0) pad = 0;
+      if (pad > Math.floor(height / 3)) pad = Math.floor(height / 3);
+
+      var radius = parseFloat(cfg.radius);
+      if (isNaN(radius)) radius = Math.round(height / 2);
+
+      var thumbSize = height - (pad * 2);
+      var maxThumb = Math.max(8, width - (pad * 2));
+      if (thumbSize > maxThumb) thumbSize = maxThumb;
+      if (thumbSize < 8) thumbSize = 8;
+      var travel = Math.max(0, width - (pad * 2) - thumbSize);
+      var thumbLeft = pad + (isOn ? travel : 0);
+
+      var iconScale = (cfg.icon_scale !== undefined) ? parseFloat(cfg.icon_scale) : 1;
+      if (isNaN(iconScale) || iconScale <= 0) iconScale = 1;
+      if (iconScale > 2) iconScale = 2;
+      var iconSize = Math.round(thumbSize * 0.52 * iconScale);
+      if (iconSize < 8) iconSize = 8;
+
+      var icon = normalizeSwitchIcon(cfg.icon);
+
+      el.style.borderRadius = radius + 'px';
+      track.style.borderRadius = radius + 'px';
+      track.style.background = resolveColor(cfg.color);
+      track.style.opacity = known ? '1' : '0.7';
+
+      thumb.style.width = thumbSize + 'px';
+      thumb.style.height = thumbSize + 'px';
+      thumb.style.left = thumbLeft + 'px';
+      thumb.style.top = pad + 'px';
+      var thumbRadius = cfg.thumb_radius !== undefined ? parseFloat(cfg.thumb_radius) : Math.round(thumbSize / 2);
+      if (isNaN(thumbRadius)) thumbRadius = Math.round(thumbSize / 2);
+      if (thumbRadius < 0) thumbRadius = 0;
+      thumb.style.borderRadius = thumbRadius + 'px';
+      thumb.style.background = resolveColor(cfg.thumb_color);
+      thumb.style.opacity = known ? '1' : '0.9';
+
+      thumbIcon.style.fontSize = iconSize + 'px';
+      thumbIcon.style.color = resolveColor(cfg.icon_color);
+
+      if (icon) {
+        thumbIcon.style.display = 'inline-flex';
+        setContent(thumbIcon, icon);
+      } else {
+        thumbIcon.style.display = 'none';
+        thumbIcon.textContent = '';
+      }
+
+      var labelText = (cfg.label !== undefined && cfg.label !== null) ? String(cfg.label) : '';
+      if (labelText) {
+        var labelSize = cfg.label_size !== undefined ? parseFloat(cfg.label_size) : Math.round(height * 0.34);
+        if (isNaN(labelSize) || labelSize < 9) labelSize = 9;
+        labelEl.style.display = 'flex';
+        labelEl.style.fontSize = labelSize + 'px';
+        labelEl.style.color = resolveColor(cfg.label_color);
+        setContent(labelEl, applyTemplate(labelText, state));
+      } else {
+        labelEl.style.display = 'none';
+        labelEl.textContent = '';
+      }
+
+      if (cfg.opacity !== undefined) el.style.opacity = cfg.opacity;
+      else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+
+      el.style.cursor = cfg.locked ? 'not-allowed' : 'pointer';
+
+      el.classList.remove('switch-on', 'switch-off', 'switch-unknown');
+      if (!known) el.classList.add('switch-unknown');
+      else if (isOn) el.classList.add('switch-on');
+      else el.classList.add('switch-off');
+    }
+
+    function renderMissingConfig() {
+      el.style.background = 'rgba(217,83,79,0.14)';
+      el.style.border = '1px solid ' + resolveColor('danger');
+      el.style.borderRadius = (w.radius !== undefined ? w.radius : Math.round(w.h / 2)) + 'px';
+      track.style.display = 'none';
+      thumb.style.display = 'none';
+      labelEl.style.display = 'block';
+      labelEl.style.color = resolveColor('danger');
+      labelEl.style.fontSize = '11px';
+      labelEl.style.textAlign = 'center';
+      labelEl.style.padding = '0 6px';
+      labelEl.style.whiteSpace = 'normal';
+      labelEl.style.lineHeight = '1.2';
+      labelEl.textContent = 'Switch needs on_value/off_value';
+    }
+
+    function applyFromState(state) {
+      var cfg = resolveSwitchConfig(state);
+      var st = evaluateSwitchState(state, cfg);
+      currentKnown = st.known;
+      currentIsOn = st.isOn;
+      applySwitchVisual(st.isOn, st.known, cfg, state);
+    }
+
+    function getDefaultAction() {
+      if (!w.entity) return null;
+      return { type: 'service', service: 'homeassistant.toggle', entity_id: w.entity };
+    }
+
+    function onSwitchTap() {
+      if (!hasRequiredValues) return;
+      var cfg = resolveSwitchConfig(latestState);
+      if (cfg.locked) return;
+      var nextIsOn = currentKnown ? !currentIsOn : true;
+      var nextValue = nextIsOn ? cfg.on_value : cfg.off_value;
+      var action = w.action || getDefaultAction();
+      if (!action) return;
+
+      if (w.optimistic !== false) {
+        currentKnown = true;
+        currentIsOn = nextIsOn;
+        applySwitchVisual(nextIsOn, true, cfg, latestState);
+      }
+
+      handleAction(action, nextValue, {
+        '$on_value': cfg.on_value,
+        '$off_value': cfg.off_value,
+        '$is_on': nextIsOn ? 'true' : 'false'
+      });
+      resetReturnTimer();
+    }
+
+    if (!hasRequiredValues) {
+      renderMissingConfig();
+      return;
+    }
+
+    var initialCfg = resolveSwitchConfig(null);
+    applySwitchVisual(false, false, initialCfg, null);
+
+    if (w.entity) {
+      registerEntityCallback(w.entity, function(state) {
+        latestState = state;
+        applyFromState(state);
+      });
+
+      if (entityStates[w.entity]) {
+        latestState = entityStates[w.entity];
+        applyFromState(latestState);
+      }
+    }
+
+    if (w.action || w.entity) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', onSwitchTap);
+      el.addEventListener('mousedown', function() {
+        var cfg = resolveSwitchConfig(latestState);
+        if (cfg.locked) return;
+        el.style.opacity = '0.82';
+      });
+      el.addEventListener('mouseup', function() {
+        var cfg = resolveSwitchConfig(latestState);
+        if (cfg.opacity !== undefined) el.style.opacity = cfg.opacity;
+        else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+        else el.style.opacity = '1';
+      });
+      el.addEventListener('mouseleave', function() {
+        var cfg = resolveSwitchConfig(latestState);
+        if (cfg.opacity !== undefined) el.style.opacity = cfg.opacity;
+        else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+        else el.style.opacity = '1';
+      });
+      el.addEventListener('touchstart', function() {
+        var cfg = resolveSwitchConfig(latestState);
+        if (cfg.locked) return;
+        el.style.opacity = '0.82';
+      }, { passive: true });
+      el.addEventListener('touchend', function() {
+        var cfg = resolveSwitchConfig(latestState);
+        if (cfg.opacity !== undefined) el.style.opacity = cfg.opacity;
+        else if (w.opacity !== undefined) el.style.opacity = w.opacity;
+        else el.style.opacity = '1';
+      });
+    }
+  }
+
   // -- Scene --
   // Generic option selector bound to an entity state/attribute.
   // v1 supports static options with three layouts:
@@ -1340,6 +2002,7 @@
 
     var options = normalizeSceneOptions(w.options);
     var currentValue = null;
+    var sceneLocked = !!w.locked;
     var controls = [];
     var pickerButton = null;
     var pickerClose = null;
@@ -1398,7 +2061,9 @@
       var state = w.entity ? entityStates[w.entity] : null;
       var ovr = resolveOverrides(w, state) || {};
       var bg = (ovr.background !== undefined) ? ovr.background : (w.background || 'transparent');
+      sceneLocked = (ovr.locked !== undefined) ? !!ovr.locked : !!w.locked;
       el.style.background = resolveColor(bg);
+      el.style.cursor = sceneLocked ? 'not-allowed' : 'default';
       if (ovr.opacity !== undefined) el.style.opacity = ovr.opacity;
       else if (w.opacity !== undefined) el.style.opacity = w.opacity;
     }
@@ -1418,21 +2083,34 @@
         var c = controls[i];
         if (c.kind === 'button') {
           optionVisual(c.el, String(c.option.value) === String(currentValue));
+          c.el.disabled = sceneLocked;
+          c.el.style.cursor = sceneLocked ? 'not-allowed' : 'pointer';
+          c.el.style.opacity = sceneLocked ? '0.6' : '1';
         } else if (c.kind === 'select') {
           c.el.value = currentValue !== null && currentValue !== undefined ? String(currentValue) : '';
+          c.el.disabled = sceneLocked;
+          c.el.style.cursor = sceneLocked ? 'not-allowed' : 'pointer';
+          c.el.style.opacity = sceneLocked ? '0.65' : '1';
         }
       }
       if (pickerButton) {
         var opt = findOptionByValue(currentValue);
         setContent(pickerButton, opt ? optionText(opt) : (w.placeholder || 'Select'));
+        pickerButton.disabled = sceneLocked;
+        pickerButton.style.cursor = sceneLocked ? 'not-allowed' : 'pointer';
+        pickerButton.style.opacity = sceneLocked ? '0.65' : '1';
       }
     }
 
     function selectOption(value) {
-      currentValue = String(value);
+      if (sceneLocked) return;
+      var selected = String(value);
+      if (w.action) {
+        // Always send the clicked option directly to avoid any stale-value races.
+        handleAction(w.action, undefined, { '$option': selected });
+      }
+      currentValue = selected;
       updateControls();
-      if (!w.action) return;
-      handleAction(w.action, undefined, { '$option': currentValue });
       resetReturnTimer();
     }
 
@@ -1515,6 +2193,7 @@
     }
 
     function openPickerModal() {
+      if (sceneLocked) return;
       if (pickerClose) return;
       var overlay = document.createElement('div');
       overlay.style.position = 'fixed';
@@ -1644,6 +2323,7 @@
 
     var iconEl  = document.createElement('div');
     var labelEl = document.createElement('div');
+    var buttonLocked = !!w.locked;
     iconEl.className  = 'btn-icon';
     labelEl.className = 'btn-label';
 
@@ -1717,9 +2397,23 @@
     iconEl.style.color  = resolveColor(w.icon_color  || 'text');
     labelEl.style.color = resolveColor(w.label_color || 'text_dim');
 
+    function applyButtonLockState(locked) {
+      buttonLocked = !!locked;
+      if (buttonLocked) {
+        el.style.cursor = 'not-allowed';
+      } else if (w.action) {
+        el.style.cursor = 'pointer';
+      } else {
+        el.style.cursor = 'default';
+      }
+    }
+
+    applyButtonLockState(buttonLocked);
+
     if (w.entity) {
       registerEntityCallback(w.entity, function (state) {
         var ovr = resolveOverrides(w, state) || {};
+        applyButtonLockState((ovr.locked !== undefined) ? !!ovr.locked : !!w.locked);
         el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
         iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
         labelEl.style.color = resolveColor(ovr.label_color !== undefined ? ovr.label_color : (w.label_color || 'text_dim'));
@@ -1739,14 +2433,14 @@
 
     if (w.action) {
       el.addEventListener('click', function () {
+        if (buttonLocked) return;
         handleAction(w.action);
         resetReturnTimer();
       });
-      el.style.cursor = 'pointer';
-      el.addEventListener('mousedown',  function() { el.style.opacity = '0.75'; });
+      el.addEventListener('mousedown',  function() { if (!buttonLocked) el.style.opacity = '0.75'; });
       el.addEventListener('mouseup',    function() { el.style.opacity = '1'; });
       el.addEventListener('mouseleave', function() { el.style.opacity = '1'; });
-      el.addEventListener('touchstart', function() { el.style.opacity = '0.75'; }, { passive: true });
+      el.addEventListener('touchstart', function() { if (!buttonLocked) el.style.opacity = '0.75'; }, { passive: true });
       el.addEventListener('touchend',   function() { el.style.opacity = '1'; });
     }
   }
@@ -1756,6 +2450,11 @@
   //
   // Config:
   //   entity        - HA entity providing the numeric value
+  //   value_attribute - optional entity attribute to read value from (falls back to state)
+  //   marker_value_attribute - optional second value shown as marker on the arc
+  //   marker_color  - marker color (default text)
+  //   marker_size   - marker size in px (dot diameter / tick length, default based on line_width)
+  //   marker_style  - "dot" (default) or "tick"
   //   min           - value at start of arc (default 0)
   //   max           - value at end of arc (default 100)
   //   start_angle   - degrees, 0 = top, clockwise (default 135)
@@ -1782,6 +2481,7 @@
 
     var min        = w.min !== undefined ? w.min : 0;
     var max        = w.max !== undefined ? w.max : 100;
+    var valueAttr  = w.value_attribute;
     var startAngle = w.start_angle !== undefined ? w.start_angle : 135;
     var endAngle   = w.end_angle   !== undefined ? w.end_angle   : 405;
     var lineWidth  = w.line_width  !== undefined ? w.line_width  : 12;
@@ -1818,6 +2518,17 @@
     valuePath.setAttribute('stroke-linecap', 'round');
     svg.appendChild(valuePath);
 
+    var markerDot = document.createElementNS(ns, 'circle');
+    markerDot.setAttribute('r', 0);
+    markerDot.style.display = 'none';
+    svg.appendChild(markerDot);
+
+    var markerTick = document.createElementNS(ns, 'path');
+    markerTick.setAttribute('fill', 'none');
+    markerTick.setAttribute('stroke-linecap', 'round');
+    markerTick.style.display = 'none';
+    svg.appendChild(markerTick);
+
     el.appendChild(svg);
 
     // Centre value label
@@ -1849,17 +2560,33 @@
 
     el.appendChild(valueEl);
 
+    function readArcValue(state, attrName) {
+      if (!state) return null;
+      var raw;
+      if (attrName && state.attributes && state.attributes[attrName] !== undefined && state.attributes[attrName] !== null) {
+        raw = state.attributes[attrName];
+      } else {
+        raw = state.state;
+      }
+      if (raw === undefined || raw === null) return null;
+      return raw;
+    }
+
     // Update function - called on entity state change
-    function updateArc(state) {
+    function updateArc(state, state2) {
       if (!state) return;
-      var raw = parseFloat(state.state);
-      if (isNaN(raw)) { numEl.textContent = state.state; return; }
+      var s = resolveOverrides(w, state, state2) || {};
+      var rawValue = readArcValue(state, valueAttr);
+      if (rawValue === null) { setContent(numEl, '--'); valuePath.setAttribute('d', ''); return; }
+      var raw = parseFloat(rawValue);
+      if (isNaN(raw)) { setContent(numEl, String(rawValue)); valuePath.setAttribute('d', ''); return; }
 
       var val     = Math.max(min, Math.min(max, raw));
-      var pct     = (val - min) / (max - min);
+      var spanVal = (max - min);
+      if (spanVal === 0) spanVal = 1;
+      var pct     = (val - min) / spanVal;
       var fillEnd = startAngle + pct * (endAngle - startAngle);
 
-      var s = resolveOverrides(w, state) || {};
       var thresholdColor = getThresholdColor(w, raw, (w.color || 'primary'));
       var arcColor = resolveColor(s.color !== undefined ? s.color : thresholdColor);
 
@@ -1873,8 +2600,44 @@
         valuePath.setAttribute('d', describeArc(cx, cy, r, startAngle, fillEnd));
       }
 
-      setContent(numEl, formatValue(state.state, w));
+      setContent(numEl, formatValue(rawValue, w));
       numEl.style.color = arcColor;
+
+      var markerAttr = (s.marker_value_attribute !== undefined) ? s.marker_value_attribute : w.marker_value_attribute;
+      var markerRaw = readArcValue(state, markerAttr);
+      var markerNum = parseFloat(markerRaw);
+      var markerStyle = String((s.marker_style !== undefined) ? s.marker_style : (w.marker_style || 'dot')).toLowerCase();
+      if (markerStyle !== 'tick') markerStyle = 'dot';
+      var markerColor = resolveColor((s.marker_color !== undefined) ? s.marker_color : (w.marker_color || 'text'));
+      var markerSize = parseFloat((s.marker_size !== undefined) ? s.marker_size : (w.marker_size !== undefined ? w.marker_size : Math.max(8, Math.round(lineWidth * 0.9))));
+      if (isNaN(markerSize) || markerSize <= 0) markerSize = Math.max(8, Math.round(lineWidth * 0.9));
+
+      if (markerAttr && !isNaN(markerNum)) {
+        var mVal = Math.max(min, Math.min(max, markerNum));
+        var mPct = (mVal - min) / spanVal;
+        var mAng = startAngle + mPct * (endAngle - startAngle);
+        if (markerStyle === 'tick') {
+          var halfLen = markerSize / 2;
+          var p1 = polarToCartesian(cx, cy, r - halfLen, mAng);
+          var p2 = polarToCartesian(cx, cy, r + halfLen, mAng);
+          markerTick.setAttribute('d', 'M ' + p1.x + ' ' + p1.y + ' L ' + p2.x + ' ' + p2.y);
+          markerTick.setAttribute('stroke', markerColor);
+          markerTick.setAttribute('stroke-width', Math.max(2, Math.round(lineWidth * 0.22)));
+          markerTick.style.display = '';
+          markerDot.style.display = 'none';
+        } else {
+          var mp = polarToCartesian(cx, cy, r, mAng);
+          markerDot.setAttribute('cx', mp.x);
+          markerDot.setAttribute('cy', mp.y);
+          markerDot.setAttribute('r', Math.max(2, markerSize / 2));
+          markerDot.setAttribute('fill', markerColor);
+          markerDot.style.display = '';
+          markerTick.style.display = 'none';
+        }
+      } else {
+        markerDot.style.display = 'none';
+        markerTick.style.display = 'none';
+      }
 
       // Apply remaining overrideable properties
       var tColor = s.background !== undefined ? s.background : (w.background || 'surface2');
@@ -1887,8 +2650,19 @@
       }
     }
 
-    if (w.entity) {
-      registerEntityCallback(w.entity, updateArc);
+    if (w.entity || w.entity2) {
+      var arcStateCache  = w.entity  ? (entityStates[w.entity]  || null) : null;
+      var arcState2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
+
+      function doArcUpdate() {
+        updateArc(arcStateCache, arcState2Cache);
+      }
+
+      if (w.entity)  registerEntityCallback(w.entity,  function(s) { arcStateCache  = s; doArcUpdate(); });
+      if (w.entity2) registerEntityCallback(w.entity2, function(s) { arcState2Cache = s; doArcUpdate(); });
+
+      // Apply cached state immediately (handles page nav after WS already connected)
+      if (arcStateCache) doArcUpdate();
     }
   }
 
@@ -1923,7 +2697,7 @@
     el.style.overflow     = 'hidden';
     var radiusPx = (w.radius !== undefined ? w.radius : 0) + 'px';
     el.style.borderRadius = radiusPx;
-    el.style.background   = '#000';
+    el.style.background   = w.background ? resolveColor(w.background) : 'transparent';
     el.style.cursor       = w.fullscreen_on_tap ? 'pointer' : 'default';
 
     var img = document.createElement('img');
@@ -1972,26 +2746,38 @@
       return u;
     }
 
+    function resolveUrl(state) {
+      var ovr = (w.entity && state) ? (resolveOverrides(w, state) || {}) : {};
+      if (ovr.url !== undefined) return normalizeImageUrl(String(ovr.url));
+      var raw = w.url || '';
+      return normalizeImageUrl(hasTemplate(raw) ? applyTemplate(raw, state) : raw);
+    }
+
     function updateImageFromState(state) {
-      if (!state || !w.entity_attribute) return;
-      var attrs = state.attributes || {};
-      var attrVal = attrs[w.entity_attribute];
-      if (!attrVal) return;
-
-      var nextUrl = normalizeImageUrl(attrVal);
-      if (!nextUrl) return;
-
-      // Avoid stale album-art cache when track changes but path is reused.
-      var cacheKey = state.last_updated || state.last_changed || Date.now();
-      nextUrl += (nextUrl.indexOf('?') !== -1 ? '&' : '?') + '_t=' + encodeURIComponent(cacheKey);
-
-      if (nextUrl !== currentImageUrl) {
+      var nextUrl;
+      if (w.entity_attribute && state) {
+        var attrs = state.attributes || {};
+        var attrVal = attrs[w.entity_attribute];
+        if (attrVal) {
+          nextUrl = normalizeImageUrl(attrVal);
+          // Avoid stale album-art cache when track changes but path is reused.
+          var cacheKey = state.last_updated || state.last_changed || Date.now();
+          nextUrl += (nextUrl.indexOf('?') !== -1 ? '&' : '?') + '_t=' + encodeURIComponent(cacheKey);
+        }
+      } else {
+        nextUrl = resolveUrl(state);
+      }
+      if (nextUrl && nextUrl !== currentImageUrl) {
         currentImageUrl = nextUrl;
         img.src = currentImageUrl;
       }
     }
 
-    if (w.entity && w.entity_attribute) {
+    // Apply template/overrides to initial url
+    var initialUrl = resolveUrl(w.entity ? (entityStates[w.entity] || null) : null);
+    if (initialUrl) { currentImageUrl = initialUrl; img.src = initialUrl; }
+
+    if (w.entity) {
       registerEntityCallback(w.entity, function(state) {
         updateImageFromState(state);
       });
@@ -2030,6 +2816,11 @@
     var todayIndicator = (w.today_indicator === true);
     var showBlankDays = (w.show_blank_days === true);
     var calendars = (w.calendars && Object.prototype.toString.call(w.calendars) === '[object Array]') ? w.calendars : [];
+    var showLegend = (w.legend === true);
+    var selectedCalendarKey = null;
+    var cachedEvents = [];
+    var cachedRangeStart = null;
+    var cachedRangeEnd = null;
 
     el.style.background = resolveColor(w.background || 'surface');
     el.style.borderRadius = radius + 'px';
@@ -2069,8 +2860,11 @@
     }
     list.addEventListener('scroll', updateOverflowFade);
 
-    function setAgendaEmpty(text) {
+    function setAgendaEmpty(text, monthDate) {
       list.innerHTML = '';
+      if (showLegend && monthDate && w.show_month_headers !== false) {
+        list.appendChild(renderMonthHeaderRow(getMonthHeader(monthDate), true, 0, s(8)));
+      }
       var empty = document.createElement('div');
       empty.style.color = resolveColor(w.muted_color || 'text_muted');
       empty.style.fontSize = s((w.font_size || 15)) + 'px';
@@ -2135,6 +2929,146 @@
       return months[d.getMonth()];
     }
 
+    function titleCaseWords(str) {
+      var inStr = String(str || '');
+      var parts = inStr.split(/\s+/);
+      var out = [];
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (!p) continue;
+        out.push(p.charAt(0).toUpperCase() + p.slice(1));
+      }
+      return out.join(' ');
+    }
+
+    function getCalendarDisplayName(calCfg) {
+      if (calCfg && calCfg.name !== undefined && calCfg.name !== null && String(calCfg.name).trim() !== '') {
+        return String(calCfg.name).trim();
+      }
+      var entity = (calCfg && calCfg.entity) ? String(calCfg.entity) : '';
+      var raw = entity.indexOf('.') !== -1 ? entity.split('.').slice(1).join('.') : entity;
+      raw = raw.replace(/^m365calendar_/, '');
+      raw = raw.replace(/^local_/, '');
+      raw = raw.replace(/_/g, ' ').trim();
+      if (!raw) return entity || 'Calendar';
+      return titleCaseWords(raw);
+    }
+
+    function getLegendItems() {
+      var items = [];
+      var seen = {};
+      for (var i = 0; i < calendars.length; i++) {
+        var cfg = calendars[i];
+        if (!cfg || !cfg.entity) continue;
+        var key = String(cfg.entity);
+        if (seen[key]) continue;
+        seen[key] = true;
+        items.push({
+          key: key,
+          name: getCalendarDisplayName(cfg),
+          color: resolveColor(cfg.color || 'primary')
+        });
+      }
+      return items;
+    }
+
+    function getFilteredEvents(events) {
+      if (!selectedCalendarKey) return events;
+      var out = [];
+      for (var i = 0; i < events.length; i++) {
+        if (events[i] && events[i].calendarKey === selectedCalendarKey) out.push(events[i]);
+      }
+      return out;
+    }
+
+    function rerenderFromCache() {
+      if (!cachedRangeStart || !cachedRangeEnd) return;
+      renderEvents(getFilteredEvents(cachedEvents), cachedRangeStart, cachedRangeEnd);
+    }
+
+    function renderLegend(container) {
+      if (!showLegend) return;
+      var items = getLegendItems();
+      if (!items.length) return;
+
+      var wrap = document.createElement('div');
+      wrap.style.display = 'flex';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = 'flex-end';
+      wrap.style.flexWrap = 'wrap';
+      wrap.style.gap = s(8) + 'px';
+      wrap.style.marginLeft = s(10) + 'px';
+      wrap.style.minWidth = '0';
+      container.appendChild(wrap);
+
+      for (var i = 0; i < items.length; i++) {
+        (function(it) {
+          var entry = document.createElement('button');
+          entry.type = 'button';
+          entry.style.display = 'inline-flex';
+          entry.style.alignItems = 'center';
+          entry.style.gap = s(6) + 'px';
+          entry.style.padding = s(3) + 'px ' + s(7) + 'px';
+          entry.style.borderRadius = s(8) + 'px';
+          entry.style.border = 'none';
+          entry.style.background = 'transparent';
+          entry.style.cursor = 'pointer';
+          entry.style.color = resolveColor(w.detail_color || 'text_muted');
+          entry.style.fontSize = s((w.detail_size || 12)) + 'px';
+          entry.style.lineHeight = '1';
+          entry.style.whiteSpace = 'nowrap';
+          entry.style.opacity = (selectedCalendarKey && selectedCalendarKey !== it.key) ? '0.55' : '1';
+          if (selectedCalendarKey === it.key) {
+            entry.style.background = rgbaWithAlpha(it.color, 0.16);
+          }
+
+          var swatch = document.createElement('span');
+          swatch.style.width = s(9) + 'px';
+          swatch.style.height = s(9) + 'px';
+          swatch.style.borderRadius = s(2) + 'px';
+          swatch.style.display = 'inline-block';
+          swatch.style.background = it.color;
+          entry.appendChild(swatch);
+
+          var label = document.createElement('span');
+          label.textContent = it.name;
+          entry.appendChild(label);
+
+          entry.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectedCalendarKey = (selectedCalendarKey === it.key) ? null : it.key;
+            rerenderFromCache();
+            resetReturnTimer();
+          });
+
+          wrap.appendChild(entry);
+        })(items[i]);
+      }
+    }
+
+    function renderMonthHeaderRow(monthText, withLegend, topMarginPx, bottomMarginPx) {
+      var row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.minWidth = '0';
+      row.style.margin = topMarginPx + 'px 0 ' + bottomMarginPx + 'px 0';
+
+      var month = document.createElement('div');
+      month.style.color = resolveColor(w.month_color || 'primary');
+      month.style.fontSize = s((w.month_size || 13)) + 'px';
+      month.style.letterSpacing = s(2) + 'px';
+      month.style.opacity = '0.95';
+      month.style.whiteSpace = 'nowrap';
+      month.textContent = monthText;
+      row.appendChild(month);
+
+      if (withLegend) {
+        renderLegend(row);
+      }
+      return row;
+    }
+
     function isAllDayEvent(rawEvent, startRaw) {
       if (!rawEvent) return false;
       if (rawEvent.all_day === true || rawEvent.is_all_day === true) return true;
@@ -2176,6 +3110,8 @@
         endIsDateOnly: (typeof endRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(endRaw)),
         dayKey: formatDateKey(startDt),
         allDay: isAllDayEvent(rawEvent, startRaw),
+        calendarKey: String(calCfg.entity || ''),
+        calendarName: getCalendarDisplayName(calCfg),
         color: resolveColor(calCfg.color || 'primary'),
         fullDayHighlight: (calCfg.full_day_highlight === true),
         icon: calCfg.icon || '',
@@ -2429,7 +3365,7 @@
     function renderEventsList(events, rangeStartDay, rangeEndExclusive) {
       list.innerHTML = '';
       if (!events.length && !showBlankDays) {
-        setAgendaEmpty('No upcoming events');
+        setAgendaEmpty('No upcoming events', rangeStartDay);
         return;
       }
 
@@ -2437,7 +3373,7 @@
       var byDay = data.byDay;
       var dayDates = data.dayDates;
       if (!dayDates.length) {
-        setAgendaEmpty('No upcoming events');
+        setAgendaEmpty('No upcoming events', rangeStartDay);
         return;
       }
 
@@ -2453,14 +3389,14 @@
         var monthKey = dayDate.getFullYear() + '-' + (dayDate.getMonth() + 1);
         if (w.show_month_headers !== false && monthKey !== lastMonthKey) {
           lastMonthKey = monthKey;
-          var month = document.createElement('div');
-          month.style.color = resolveColor(w.month_color || 'primary');
-          month.style.fontSize = s((w.month_size || 13)) + 'px';
-          month.style.letterSpacing = s(2) + 'px';
-          month.style.margin = (i === 0 ? 0 : s(14)) + 'px 0 ' + s(8) + 'px 0';
-          month.style.opacity = '0.95';
-          month.textContent = getMonthHeader(dayDate);
-          list.appendChild(month);
+          var withLegend = (i === 0 && showLegend);
+          var monthRow = renderMonthHeaderRow(
+            getMonthHeader(dayDate),
+            withLegend,
+            (i === 0 ? 0 : s(14)),
+            s(8)
+          );
+          list.appendChild(monthRow);
         }
 
         var row = document.createElement('div');
@@ -2537,7 +3473,7 @@
       var byDay = data.byDay;
       var dayDates = data.dayDates;
       if (!dayDates.length) {
-        setAgendaEmpty('No upcoming events');
+        setAgendaEmpty('No upcoming events', rangeStartDay);
         return;
       }
 
@@ -2736,7 +3672,10 @@
           }
         }
 
-        renderEvents(allEvents, startDay, end);
+        cachedEvents = allEvents.slice(0);
+        cachedRangeStart = new Date(startDay.getTime());
+        cachedRangeEnd = new Date(end.getTime());
+        renderEvents(getFilteredEvents(cachedEvents), cachedRangeStart, cachedRangeEnd);
       }
 
       for (var i = 0; i < calendars.length; i++) {
@@ -2792,9 +3731,9 @@
     if (preview === 'mjpeg') {
       renderCameraMjpeg(el, w, streamEntity);
     } else if (preview === 'snapshot') {
-      renderCameraSnapshot(el, w, snapshotEntity, w.refresh_interval || 3000);
+      renderCameraSnapshot(el, w, snapshotEntity, (w.refresh_interval || 3) * 1000);
     } else if (preview === 'poster') {
-      renderCameraSnapshot(el, w, snapshotEntity, w.refresh_interval || 60000, true);
+      renderCameraSnapshot(el, w, snapshotEntity, (w.refresh_interval || 60) * 1000, true);
     } else if (preview === 'url') {
       renderCameraDirectUrl(el, w);
     }
@@ -2859,6 +3798,9 @@
     var active = true;
     var pendingSignIds = [];
 
+    var mode = showPlayButton ? 'poster' : 'snapshot';
+    console.log('HAven camera [' + (w.id || entity) + ']: ' + mode + ' init, entity=' + entity + ', interval=' + (interval / 1000) + 's');
+
     var fetchSnapshot = function() {
       if (!active || !entity) return;
 
@@ -2877,6 +3819,7 @@
         };
         nextImg.onerror = function() {
           if (!active) return;
+          console.warn('HAven camera [' + (w.id || entity) + ']: snapshot fetch failed, token may be stale - clearing to force sign_path fallback');
           if (entityStates[entity] && entityStates[entity].attributes) {
             entityStates[entity].attributes.access_token = null;
           }
@@ -2887,16 +3830,33 @@
         // Use a flag on the element to avoid hammering fetchEntityState every tick
         if (!el._stateFetched) {
           el._stateFetched = true;
+          console.log('HAven camera [' + (w.id || entity) + ']: no access_token in cache, fetching entity state + sign_path fallback');
           fetchEntityState(entity);
+          // Also register a one-time entity callback so that when the state arrives
+          // (e.g. after WS connects and get_states completes), we immediately retry
+          // fetchSnapshot rather than waiting up to one full interval cycle (can be 60s).
+          var onStateArrived = function(state) {
+            var cbs = entityCallbacks[entity];
+            if (cbs) { var idx = cbs.indexOf(onStateArrived); if (idx !== -1) cbs.splice(idx, 1); }
+            if (active && state && state.attributes && state.attributes.access_token) {
+              fetchSnapshot();
+            }
+          };
+          registerEntityCallback(entity, onStateArrived);
         }
         var path   = '/api/camera_proxy/' + entity;
         var ttl    = Math.ceil(interval / 1000) + 5;
         var signId = requestSignedUrl(path, ttl, function(signedUrl) {
           var i = pendingSignIds.indexOf(signId);
           if (i !== -1) pendingSignIds.splice(i, 1);
-          if (!signedUrl || !active) return;
+          if (!active) return;
+          if (!signedUrl) {
+            console.warn('HAven camera [' + (w.id || entity) + ']: sign_path returned no URL');
+            return;
+          }
           var fb = new Image();
           fb.onload = function() { if (!active) return; img.src = fb.src; loader.style.display = 'none'; };
+          fb.onerror = function() { console.warn('HAven camera [' + (w.id || entity) + ']: sign_path image load failed'); };
           fb.src = signedUrl;
         });
         pendingSignIds.push(signId);
@@ -2950,7 +3910,7 @@
     doFetch();
 
     if (w.refresh_interval) {
-      var timer = setInterval(doFetch, w.refresh_interval);
+      var timer = setInterval(doFetch, w.refresh_interval * 1000);
       activePageTimers.push({ id: timer, stop: function() { active = false; } });
     }
 
@@ -2990,12 +3950,15 @@
     document.body.appendChild(overlay.el);
 
     var streamMsgId = msgId++;
+    console.log('HAven camera [' + (w.id || entity) + ']: requesting HLS stream, entity=' + entity + ', msgId=' + streamMsgId);
     pendingStreamRequests[streamMsgId] = function(result) {
       if (!result || !result.url) {
+        console.warn('HAven camera [' + (w.id || entity) + ']: camera/stream result has no URL. result=', result);
         loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
         return;
       }
       var streamUrl = haUrl + result.url;
+      console.log('HAven camera [' + (w.id || entity) + ']: stream URL received:', streamUrl);
       loader.style.display = 'none';
 
       var video = document.createElement('video');
@@ -3012,39 +3975,61 @@
       overlay.content.appendChild(video);
 
       function startPlayback() {
-        video.play().catch(function() {
+        console.log('HAven camera [' + (w.id || entity) + ']: starting playback');
+        video.play().catch(function(err) {
+          console.log('HAven camera [' + (w.id || entity) + ']: autoplay blocked, retrying muted:', err.message);
           video.muted = true;
-          video.play();
+          video.play().catch(function(err2) {
+            console.warn('HAven camera [' + (w.id || entity) + ']: muted play also failed:', err2.message);
+          });
         });
       }
 
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS - Safari and iOS
+        console.log('HAven camera [' + (w.id || entity) + ']: using native HLS (Safari/iOS)');
         video.src = streamUrl;
         startPlayback();
       } else if (window.Hls && window.Hls.isSupported()) {
+        console.log('HAven camera [' + (w.id || entity) + ']: using HLS.js (already loaded)');
         var hls = new window.Hls();
         hls.loadSource(streamUrl);
         hls.attachMedia(video);
-        hls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+        hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+          console.log('HAven camera [' + (w.id || entity) + ']: HLS manifest parsed');
+          startPlayback();
+        });
+        hls.on(window.Hls.Events.ERROR, function(event, data) {
+          if (data.fatal) console.warn('HAven camera [' + (w.id || entity) + ']: HLS.js fatal error:', data.type, data.details);
+        });
         overlay.el.addEventListener('overlay-close', function() { hls.destroy(); });
       } else {
         // Load HLS.js dynamically - only fetched once then cached by browser
+        console.log('HAven camera [' + (w.id || entity) + ']: loading HLS.js dynamically');
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js';
         script.onload = function() {
           if (window.Hls.isSupported()) {
+            console.log('HAven camera [' + (w.id || entity) + ']: HLS.js loaded OK');
             var hls = new window.Hls();
             hls.loadSource(streamUrl);
             hls.attachMedia(video);
-            hls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+            hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+              console.log('HAven camera [' + (w.id || entity) + ']: HLS manifest parsed');
+              startPlayback();
+            });
+            hls.on(window.Hls.Events.ERROR, function(event, data) {
+              if (data.fatal) console.warn('HAven camera [' + (w.id || entity) + ']: HLS.js fatal error:', data.type, data.details);
+            });
             overlay.el.addEventListener('overlay-close', function() { hls.destroy(); });
           } else {
+            console.warn('HAven camera [' + (w.id || entity) + ']: HLS.js loaded but not supported in this browser');
             loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
             loader.style.display = 'flex';
           }
         };
         script.onerror = function() {
+          console.warn('HAven camera [' + (w.id || entity) + ']: failed to load HLS.js script from CDN');
           loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
           loader.style.display = 'flex';
         };
@@ -3614,7 +4599,7 @@
   //   haState2 is the secondary entity state (entity2) - optional, pass null if unused.
   //   All matching rules are merged (last-wins per property), so rule order matters.
   function resolveOverrides(w, haState, haState2) {
-    if (!w.overrides || !w.overrides.length || (!haState && !haState2)) return null;
+    if (!w.overrides || !w.overrides.length) return null;
     var out = {};
     for (var i = 0; i < w.overrides.length; i++) {
       var rule = w.overrides[i];
@@ -3659,9 +4644,22 @@
   //   "attribute"            - haState.attributes[x]  (primary entity attribute)
   //   "state2"               - haState2.state          (secondary entity, requires entity2)
   //   "attribute2"           - haState2.attributes[x]  (secondary entity attribute)
+  //   "page"                - current page id (non-overlay page number)
   function evalCondition(cond, haState, haState2) {
     if (!cond) return false;
     var src = cond.source || 'state';
+
+    if (src === 'page') {
+      var pageNum = parseFloat(currentPage);
+      var pageStr = String(currentPage);
+      switch (cond.type) {
+        case 'above':      return (!isNaN(pageNum) && pageNum > cond.value);
+        case 'below':      return (!isNaN(pageNum) && pageNum < cond.value);
+        case 'equals':     return (pageStr === String(cond.value));
+        case 'not_equals': return (pageStr !== String(cond.value));
+        default:           return false;
+      }
+    }
 
     // Determine which state object to test against
     var useSecondary = (src === 'state2' || src === 'attribute2');
@@ -3903,7 +4901,6 @@
   }
 
   function handleWsMessage(msg) {
-    console.log('HAven WS:', msg.type);
     switch (msg.type) {
       case 'auth_required':
         console.log('HAven: authenticating, token length:', haToken.length);
@@ -3914,6 +4911,7 @@
         setConnStatus('connected');
         fetchAllStates();
         subscribeStateChanged();
+        subscribeHavenCommand();
         break;
 
       case 'auth_invalid':
@@ -3977,6 +4975,9 @@
             }
           }
         }
+        if (msg.event && msg.event.event_type === 'haven_command') {
+          handleHavenCommand(msg.event.data);
+        }
         break;
     }
   }
@@ -3992,6 +4993,43 @@
     wsSend({ id: id, type: 'subscribe_events', event_type: 'state_changed' });
   }
 
+  function subscribeHavenCommand() {
+    if (wsCommandSubId) return;
+    var id = msgId++;
+    wsCommandSubId = id;
+    wsSend({ id: id, type: 'subscribe_events', event_type: 'haven_command' });
+  }
+
+  function handleHavenCommand(data) {
+    if (!data) return;
+    // Device filter: if the command names a device, ignore it unless it matches ours
+    if (data.device && havenDeviceId && data.device !== havenDeviceId) return;
+
+    var action = data.action;
+
+    if (action === 'navigate') {
+      var page = parseInt(data.page, 10);
+      resetScreensaverTimer();
+      if (!isNaN(page)) navigateTo(page);
+
+    } else if (action === 'wake') {
+      resetScreensaverTimer();
+
+    } else if (action === 'dim') {
+      activateScreensaver();
+
+    } else if (action === 'speak') {
+      if (!data.text || !window.speechSynthesis) return;
+      // Cancel any current speech before starting new utterance
+      window.speechSynthesis.cancel();
+      var utt = new SpeechSynthesisUtterance(String(data.text));
+      if (data.volume !== undefined) utt.volume = parseFloat(data.volume);
+      if (data.rate   !== undefined) utt.rate   = parseFloat(data.rate);
+      if (data.pitch  !== undefined) utt.pitch  = parseFloat(data.pitch);
+      window.speechSynthesis.speak(utt);
+    }
+  }
+
   function callService(serviceDomain, entityId) {
     var parts = serviceDomain.split('.');
     wsSend({ id: msgId++, type: 'call_service', domain: parts[0], service: parts[1], target: { entity_id: entityId } });
@@ -4005,7 +5043,8 @@
     var type = action.type || 'service';
 
     if (type === 'navigate') {
-      navigateTo(action.page);
+      var targetPage = resolveNavigatePage(action);
+      if (targetPage !== null) navigateTo(targetPage);
       return;
     }
 
@@ -4072,6 +5111,7 @@
   function scheduleReconnect() {
     if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
     wsSubscriptionId = null;
+    wsCommandSubId   = null;
     wsReconnectTimer = setTimeout(function () {
       connectWebSocket();
     }, 5000);

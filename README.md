@@ -22,6 +22,7 @@ Written in vanilla ES5 JavaScript with no framework dependencies, HAven tries re
   - [rectangle](#rectangle)
   - [bar](#bar)
   - [slider](#slider)
+  - [switch](#switch)
   - [scene](#scene)
   - [button](#button)
   - [clock](#clock)
@@ -35,6 +36,7 @@ Written in vanilla ES5 JavaScript with no framework dependencies, HAven tries re
 - [Connection Status](#connection-status)
 - [Internal Entities](#internal-entities)
 - [Visual Designer](#visual-designer)
+- [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 
 ---
@@ -125,7 +127,38 @@ config/
 | `canvas.height` | Design height in pixels |
 | `default_page` | Page ID to show on load and return to after inactivity |
 | `return_to_default` | Seconds of inactivity before returning to default page |
-| `page_nav` | Optional nav dot style (`background_color`, `primary_color`, `secondary_color`, `size`) |
+| `screensaver` | Optional. Object with `timeout` (seconds), `opacity` (0.0–1.0, default 0.2), `text` (optional overlay label). Set `timeout: 0` or omit to disable. |
+| `page_nav` | Optional nav dot config (`show`, `background_color`, `primary_color`, `secondary_color`, `size`) |
+| `page_navigation` | Optional alias for `page_nav` (same fields). Useful if you prefer a clearer name. |
+
+---
+
+## Design Considerations
+
+HAven scales a fixed design canvas to fit the screen, so you usually do **not** need to design at native panel resolution.
+
+- Prefer a practical tablet-friendly base like `1024x768`, `1280x800`, or `1366x768`.
+- Use native resolutions (for example iPad Pro `2723x2048`) only when you truly need very dense layouts.
+- Lower design resolutions are easier to build/maintain and generally produce better touch ergonomics (larger tap targets).
+- The same config can then scale cleanly across different devices.
+
+### Things worth keeping an eye on as your config grows
+
+HAven is designed to be lightweight, but a few patterns can quietly add overhead on a busy HA instance:
+
+**Override rules** — Every HA state_changed event that matches a registered entity re-evaluates all of that widget's override rules. A page with 50 widgets each having 5 override rules runs 250 condition checks per relevant event. Keep override lists short; use `logic: "any"` where possible to short-circuit early.
+
+**`entity2` bindings** — Each `entity2` registers an additional callback independent of `entity`. A page with many widgets using both doubles the number of registered entity callbacks. Use `entity2` only where you genuinely need a second entity to drive appearance.
+
+**`history_chart` widgets** — Each chart makes a `recorder/statistics_during_period` WebSocket request on page load and again on its `refresh_interval` timer. Multiple charts with short refresh intervals generate sustained WS traffic. Default `refresh_interval` is 3600 (1 hour); only lower it when you need near-real-time charting.
+
+**Camera poster/snapshot intervals** — Each camera in `poster` or `snapshot` mode polls HA at its `refresh_interval`. With many cameras and short intervals this can generate noticeable bandwidth and CPU load. Prefer `mjpeg` for live feeds (one persistent connection); use `poster` with a longer interval (60 s+) for off-screen or rarely-checked cameras.
+
+**Console diagnostic** — When a page loads, HAven logs a summary to the browser console:
+```
+HAven page 1: 24 widgets, 18 entity, 3 entity2, 41 override rules
+```
+Use this to spot pages that have grown unexpectedly large.
 
 ---
 
@@ -213,6 +246,19 @@ Any tappable widget can have an `action` property. Three types are supported:
 "action": { "type": "navigate", "page": 2 }
 ```
 
+Directional navigation is also supported:
+
+```json
+"action": { "type": "navigate", "direction": "next" }
+"action": { "type": "navigate", "direction": "prev" }
+"action": { "type": "navigate", "direction": "home" }
+```
+
+Notes:
+- `direction: "home"` navigates to the first non-overlay page.
+- At the first/last page, `prev`/`next` does nothing.
+- If both `page` and `direction` are set, `page` wins.
+
 ### Trigger an automation : Still to be tested!!!
 ```json
 "action": { "type": "automation", "entity_id": "automation.good_night" }
@@ -287,6 +333,7 @@ The `source` field controls what value a condition tests against:
 | `attribute` | A specific attribute of the primary entity | Requires an `"attribute"` key. Returns false if attribute is missing. |
 | `state2` | Secondary entity (`entity2`) state value | Returns false if `entity2` not configured |
 | `attribute2` | An attribute of `entity2` | Requires an `"attribute"` key. Returns false if attribute is missing. |
+| `page` | Current page id | No entity required. Useful for page-aware visibility/styling. |
 
 ```json
 { "source": "state",      "type": "equals", "value": "on" }
@@ -294,6 +341,7 @@ The `source` field controls what value a condition tests against:
 { "source": "attribute",  "attribute": "brightness",    "type": "above",  "value": 128 }
 { "source": "state2",     "type": "above",  "value": 0 }
 { "source": "attribute2", "attribute": "battery_level", "type": "below",  "value": 20 }
+{ "source": "page",       "type": "equals", "value": 1 }
 ```
 
 **Visibility via overrides (`set.visible`)**
@@ -368,6 +416,7 @@ Displays text. Can be bound to a HA entity for live updates with state-based sty
 | `background` | Background color - token or hex |
 | `letter_spacing` | Letter spacing in px |
 | `font_weight` | CSS font-weight value (e.g. `400`, `600`, `bold`) |
+| `animation` | Optional animation: `none`, `pulse`, `pulse_fast`, `blink`, `breathe` |
 | `entity` | Primary HA entity ID for live value |
 | `entity_attribute` | Optional primary entity attribute key to use as value source (e.g. `media_title`, `media_artist`) |
 | `entity2` | Secondary HA entity ID. Label re-renders when either entity changes. |
@@ -430,7 +479,16 @@ Use `entity_attribute` when the displayed value lives in a HA attribute instead 
 
 **Conditional overrides — label-specific `set` properties:**
 
-`text`, `color`, `background`, `font_size`, `opacity`, `border_color`, `border_width`.
+`text`, `color`, `background`, `font_size`, `opacity`, `border_color`, `border_width`, `animation`.
+
+**Label animation**
+
+Labels support optional `animation` values:
+- `none` (default)
+- `pulse` (gentle ~2s fade)
+- `pulse_fast` (~0.8s)
+- `blink` (hard on/off)
+- `breathe` (subtle scale 1.0 → 1.05 → 1.0)
 
 See [Conditional Overrides](#conditional-overrides) for full condition syntax including `attribute`, `state2`, and `attribute2` sources.
 
@@ -491,7 +549,7 @@ Labels can include `{{ ... }}` expressions in their `text` and `color` fields. E
 
 ### rectangle
 
-A rectangle fill layer for cards, overlays, and decorative elements. Supports solid color or a simple two-color linear gradient.
+A rectangle fill layer for cards, overlays, and decorative elements. Supports solid color, a linear gradient, and full entity-driven conditional styling via `overrides`.
 
 ```json
 {
@@ -522,16 +580,43 @@ Gradient example (mostly transparent, fading to solid near the bottom):
 }
 ```
 
+Entity-driven example — card border glows red when an alarm is triggered, using a secondary entity to also test an attribute:
+```json
+{
+  "id": "alarm_card",
+  "type": "rectangle",
+  "x": 0, "y": 0, "w": 390, "h": 130,
+  "background": "surface",
+  "radius": 10,
+  "entity": "alarm_control_panel.home",
+  "entity2": "binary_sensor.motion_lounge",
+  "overrides": [
+    {
+      "when": { "logic": "any", "conditions": [
+        { "source": "state",  "type": "equals", "value": "triggered" },
+        { "source": "state2", "type": "equals", "value": "on" }
+      ]},
+      "set": { "border_width": 3, "border_color": "danger" }
+    }
+  ]
+}
+```
+
 | Property | Description |
 |----------|-------------|
-| `background` | Fill color - token or hex |
-| `gradient` | Optional linear gradient object `{ from, to, angle, start_pct, end_pct }` |
+| `background` | Fill color — theme token or hex |
+| `gradient` | Linear gradient object `{ from, to, angle, start_pct, end_pct }` |
 | `radius` | Corner radius in px |
 | `border_width` | Border thickness in px |
-| `border_color` | Border color - token or hex |
-| `action` | Optional action to perform on tap |
-| `entity` | Optional HA entity to drive state-based styling |
-| `overrides` | Ordered conditional style overrides (`background`, `gradient`, `opacity`, `border_width`, `border_color`) |
+| `border_color` | Border color — theme token or hex |
+| `opacity` | Widget opacity 0–1 |
+| `action` | Action to perform on tap |
+| `entity` | Primary HA entity. Drives `state` and `attribute` override conditions |
+| `entity2` | Secondary HA entity. Enables `state2` and `attribute2` override conditions. Both entities trigger a re-evaluate when their state changes |
+| `animation` | Optional animation: `none`, `pulse`, `pulse_fast`, `blink`, `breathe` |
+| `overrides` | Ordered conditional style overrides. Settable: `background`, `gradient`, `opacity`, `border_width`, `border_color`, `animation` |
+
+Override condition `source` values follow the same rules as `label` — see [Conditional Overrides](#conditional-overrides).
 
 ---
 
@@ -558,10 +643,12 @@ A horizontal progress bar driven by a numeric entity value.
 | Property | Description |
 |----------|-------------|
 | `entity` | HA entity providing the numeric value |
+| `entity2` | Secondary entity. Enables `state2`/`attribute2` override conditions. Both trigger re-evaluation. |
 | `max` | Value that represents 100% fill |
 | `radius` | Corner radius in px |
 | `background` | Track background color (token or hex, default `surface2`) |
 | `thresholds` | Array of color rules. First matching `below` (raw entity value) wins. `default` applies when no rule matches. |
+| `overrides` | Conditional style rules. Settable: `color`. Supports all `source` values including `state2`, `attribute2`. |
 
 ---
 
@@ -634,6 +721,121 @@ An interactive slider for controlling numeric Home Assistant service values (bri
     "entity_id": "media_player.office",
     "data": { "seek_position": "$value" }
   }
+}
+```
+
+---
+
+### switch
+
+A binary toggle switch — a sliding thumb on a track that reflects an entity's on/off state and toggles it on tap. Works with any entity whose state (or an attribute) has two distinct values: not just `switch.*` and `input_boolean.*`, but also `sun.sun`, `climate.*` attributes, or anything else with a clear on/off pair.
+
+The switch follows the same pattern as `button`: **base properties define the default (off) appearance**, and `overrides` rules change colors, icons, and labels when the entity reaches the on state.
+
+```json
+{
+  "id": "kitchen_light",
+  "type": "switch",
+  "x": 40, "y": 120, "w": 160, "h": 36,
+  "entity": "switch.kitchen",
+  "on_value": "on",
+  "off_value": "off",
+  "color": "surface2",
+  "thumb_color": "text",
+  "icon": "mdi:lightbulb-outline",
+  "icon_color": "text_muted",
+  "radius": 18,
+  "padding": 3,
+  "overrides": [
+    {
+      "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+      "set": { "color": "primary", "icon": "mdi:lightbulb", "icon_color": "background" }
+    }
+  ]
+}
+```
+
+`on_value` and `off_value` are **required**. If either is missing the switch renders a red error instead. All other properties are optional.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `entity` | — | HA entity to bind to |
+| `on_value` | *(required)* | State value (or attribute value) that means "on" |
+| `off_value` | *(required)* | State value (or attribute value) that means "off" |
+| `value_attribute` | — | Read this attribute instead of `state`. E.g. `hvac_action` on a climate entity |
+| `color` | `surface2` | Track color (default/off state — override for on state) |
+| `thumb_color` | `text` | Thumb color |
+| `icon` | — | Icon shown in the thumb. Supports `[mdi:name]` or bare `mdi:name`. Override for on state |
+| `icon_color` | `text_muted` | Thumb icon color. Override for on state |
+| `icon_scale` | `1` | Multiplier for icon size (1 = auto-fit to thumb, max 2) |
+| `radius` | `h / 2` | Track corner radius in px. Defaults to fully rounded pill |
+| `thumb_radius` | `thumbSize / 2` | Thumb corner radius in px. Defaults to circular |
+| `padding` | `3` | Gap in px between thumb and track edge |
+| `label` | — | Text overlaid on the switch. Supports `{{ }}` templates |
+| `label_color` | `text_muted` | Label text color |
+| `label_size` | auto | Label font size in px. Defaults to ~34% of widget height |
+| `locked` | `false` | When `true`, taps are disabled and the cursor shows `not-allowed` |
+| `optimistic` | `true` | When `true` (default) the thumb moves immediately on tap without waiting for HA to confirm. Set to `false` to wait for the state_changed event |
+| `action` | `homeassistant.toggle` | Action to fire on tap. If `entity` is set and `action` is omitted, defaults to calling `homeassistant.toggle` on the entity |
+| `overrides` | — | Conditional style overrides (see below) |
+
+**Unknown state:** If the current entity state matches neither `on_value` nor `off_value`, the switch shows in the off position at reduced opacity until a known state arrives.
+
+**Optimistic vs confirmed toggle**
+
+By default (`optimistic: true`) the thumb slides immediately when tapped — responsive but briefly out of sync if the service call fails. Set `optimistic: false` to hold the thumb in place until HA sends back the updated state.
+
+**Reading an attribute instead of state**
+
+Use `value_attribute` when the relevant value lives in an attribute rather than `state`. Common examples:
+
+```json
+{ "entity": "climate.lounge", "value_attribute": "hvac_action", "on_value": "heating", "off_value": "idle" }
+{ "entity": "media_player.tv",  "value_attribute": "is_volume_muted", "on_value": "True",   "off_value": "False" }
+```
+
+**Non-standard on/off values**
+
+`on_value` and `off_value` are compared as strings, so they work with any entity state:
+
+```json
+{ "entity": "sun.sun", "on_value": "above_horizon", "off_value": "below_horizon" }
+```
+
+**Custom action with tokens**
+
+The following tokens are available in `action.data` when using a custom action:
+
+| Token | Value |
+|-------|-------|
+| `$on_value` | The configured `on_value` |
+| `$off_value` | The configured `off_value` |
+| `$is_on` | `"true"` or `"false"` after the tap |
+
+**Conditional overrides**
+
+The following properties can be set via `overrides`:
+
+`color`, `thumb_color`, `icon`, `icon_color`, `icon_scale`, `label`, `label_color`, `label_size`, `radius`, `thumb_radius`, `padding`, `opacity`, `locked`
+
+Example — a door sensor that changes colour and label when open:
+
+```json
+{
+  "type": "switch",
+  "entity": "binary_sensor.front_door",
+  "on_value": "on", "off_value": "off",
+  "color": "surface2",
+  "thumb_color": "text",
+  "icon": "mdi:door-closed-lock",
+  "icon_color": "text_muted",
+  "label": "Closed", "label_color": "text_muted",
+  "overrides": [
+    {
+      "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+      "set": { "color": "danger", "icon": "mdi:door-open", "label": "OPEN", "label_color": "text" }
+    }
+  ]
 }
 ```
 
@@ -864,7 +1066,7 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
 | `entity` | HA camera entity (used as fallback if snapshot/stream not specified) |
 | `snapshot_entity` | HA entity for snapshot images |
 | `stream_entity` | HA entity for HLS stream |
-| `refresh_interval` | Milliseconds between snapshot refreshes (snapshot/poster modes) |
+| `refresh_interval` | Seconds between snapshot refreshes (snapshot/poster/url modes). Default: `3` for snapshot, `60` for poster |
 | `url` | Direct camera URL for `url` mode |
 | `fit` | `cover` (default) or `contain` |
 | `radius` | Corner radius in px |
@@ -874,9 +1076,9 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
 | Mode | Description | Network cost | Best for |
 |------|-------------|--------------|----------|
 | `mjpeg` | Persistent MJPEG stream via HA proxy (`/api/camera_proxy_stream/`). One connection, browser renders frames continuously. | Ongoing stream bandwidth | Featured single camera |
-| `snapshot` | Polls snapshot via HA proxy at `refresh_interval` (default 3s). Uses camera entity `access_token` - no per-request auth overhead. | 1 request per interval | Secondary cameras |
-| `poster` | Same as snapshot but defaults to 60s refresh. Overlays a ▶ play button to make the widget clearly tappable. | Minimal - 1 request/minute | Multi-camera grids |
-| `url` | Direct URL, bypasses HA entirely. Optional `refresh_interval` for polling. Add `&_t={timestamp}` is handled automatically as a cache buster. | Depends on interval | Reolink/ONVIF direct |
+| `snapshot` | Polls snapshot via HA proxy at `refresh_interval` seconds (default `3`). Uses camera entity `access_token` - no per-request auth overhead. | 1 request per interval | Secondary cameras |
+| `poster` | Same as snapshot but defaults to `60` s refresh. Overlays a ▶ play button to make the widget clearly tappable. | Minimal - 1 request/minute | Multi-camera grids |
+| `url` | Direct URL, bypasses HA entirely. Optional `refresh_interval` seconds for polling. `&_t={timestamp}` cache buster appended automatically. | Depends on interval | Reolink/ONVIF direct |
 
 **Fullscreen stream:** tapping any camera widget sends a `camera/stream` WebSocket request to HA, which returns an HLS URL. On Safari/iOS HLS plays natively. On Chrome/Firefox, HLS.js is loaded on-demand from a CDN (once per session, then cached).
 
@@ -886,7 +1088,7 @@ Displays a camera feed with configurable preview mode. Tapping always opens a fu
   "type": "camera",
   "preview": "url",
   "url": "https://192.168.1.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=haven&user=guest&password=yourpassword",
-  "refresh_interval": 5000,
+  "refresh_interval": 5,
   "stream_entity": "camera.front_door"
 }
 ```
@@ -926,6 +1128,7 @@ An SVG-based circular gauge driven by a numeric entity value.
 | Property | Description |
 |----------|-------------|
 | `entity` | HA entity providing the numeric value |
+| `entity2` | Secondary entity. Enables `state2`/`attribute2` override conditions. Both trigger re-evaluation. |
 | `min` | Minimum value (default `0`) |
 | `max` | Maximum value (default `100`) |
 | `start_angle` | Start angle in degrees (default `135`) |
@@ -937,6 +1140,7 @@ An SVG-based circular gauge driven by a numeric entity value.
 | `label` | Optional label shown under the value |
 | `label_color` | Label color (token or hex, default `text_muted`) |
 | `format` | Value format (same as label widget) |
+| `overrides` | Conditional style rules. Supports all `source` values including `state2`, `attribute2`. |
 
 ---
 
@@ -1063,6 +1267,7 @@ Set `device.page_nav` to tune navigation visibility for each device/browser:
 ```json
 "device": {
   "page_nav": {
+    "show": true,
     "background_color": "rgba(0,0,0,0.20)",
     "primary_color": "text",
     "secondary_color": "#6f7781",
@@ -1073,6 +1278,9 @@ Set `device.page_nav` to tune navigation visibility for each device/browser:
 
 `size` supports `small`, `medium`, `large` (`medium` default).
 Colors accept theme tokens or literal color values.
+Set `"show": false` to hide built-in navigation dots when using your own nav controls.
+
+`page_navigation` is also supported as an alias to `page_nav` (same fields).
 
 ### Page 0 (persistent overlay)
 
@@ -1088,21 +1296,23 @@ If you define a page with `"id": 0`, it renders once as a persistent overlay and
 
 HAven looks for HA credentials in this order:
 
-1. **localStorage** (per device) - set via the setup screen on first run, persists across reloads
-2. **Device config file** - `ha.url` and `ha.token` in the device JSON (convenient for initial setup)
-3. **Setup screen** - shown if neither are found
+1. **localStorage** (per device) — set via the setup screen on first run, persists across reloads
+2. **Device config file** — `device.ha_token` (and optionally `device.ha_url`) in the device JSON
+3. **Setup screen** — shown if no token is found anywhere
 
-**Config file credentials** (less secure - visible to anyone on your network):
+**HA URL** defaults to `window.location.origin` — no configuration needed when HAven is hosted inside HA's `www/` folder. Only set `device.ha_url` for non-standard deployments where HAven is served from a different host.
+
+**Config file token** (optional, set via the designer's Device Properties):
 ```json
 {
-  "version": "1.0",
-  "ha": {
-    "url":   "http://192.168.1.100:8123",
-    "token": "your-long-lived-access-token"
-  },
-  "device": { ... }
+  "device": {
+    "ha_token": "your-long-lived-access-token",
+    "ha_url":   "http://192.168.1.100:8123"
+  }
 }
 ```
+
+The token can be embedded temporarily so a new tablet auto-connects on first load without a setup screen. Once the device has saved it to localStorage you can remove it from the JSON — it won't be needed again unless the browser storage is cleared. Note that `devices/` JSON files are served without authentication, so anyone on your local network can read them.
 
 **Resetting credentials** - open the browser console on the device and run:
 ```javascript
@@ -1139,6 +1349,96 @@ Example (icon + time):
   "format": "time_24"
 }
 ```
+
+---
+
+## HA-triggered Commands (`haven_command`)
+
+HAven listens for a custom HA event called `haven_command`. Fire it from any automation, script, or the developer tools **Events** tab to control HAven panels remotely.
+
+### Navigate to a page
+
+```yaml
+action: event
+event_type: haven_command
+event_data:
+  action: navigate
+  page: 2
+  device: kitchen-lenovo   # optional — omit to broadcast to all panels
+```
+
+### Speak a voice announcement
+
+Uses the browser's built-in Web Speech API (no extra dependencies). Works in Chrome, Edge, Safari, Firefox, and most tablet/TV browsers.
+
+```yaml
+action: event
+event_type: haven_command
+event_data:
+  action: speak
+  text: "Someone is at the front door"
+  device: kitchen-lenovo   # optional
+  volume: 1.0              # optional, 0.0–1.0 (default: browser default)
+  rate: 1.0                # optional, 0.1–10 (default: 1.0)
+  pitch: 1.0               # optional, 0–2 (default: 1.0)
+```
+
+### Wake or dim the screensaver
+
+```yaml
+action: event
+event_type: haven_command
+event_data:
+  action: wake             # dismiss screensaver and reset idle timer
+  device: kitchen-lenovo   # optional
+
+action: event
+event_type: haven_command
+event_data:
+  action: dim              # activate screensaver immediately
+  device: kitchen-lenovo   # optional
+```
+
+Useful automations:
+- PIR sensor detects motion → fire `wake` to brighten a TV panel
+- "Goodnight" script → fire `dim` to blank all panels immediately
+
+### Device filtering
+
+If `device` is included in the event data, HAven compares it against the `?device=` URL parameter. Panels that don't match silently ignore the command. Omit `device` to broadcast to all open panels.
+
+### Testing from HA Developer Tools
+
+Go to **Developer Tools → Events**, set event type to `haven_command`, paste your event data JSON, and fire it. You'll see the result immediately.
+
+---
+
+## Screensaver
+
+HAven can dim the screen after a period of inactivity. Configure it in the `device` block:
+
+```json
+"device": {
+  "screensaver": {
+    "timeout": 300,
+    "opacity": 0.95,
+    "text": "HAven Dashboard"
+  }
+}
+```
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `timeout` | — | Seconds of inactivity before activating. Required — omit the block entirely to disable. |
+| `opacity` | `0.95` | Overlay darkness. `0.0` = transparent, `1.0` = fully black. |
+| `text` | _(none)_ | Text to bounce around the screen. Omit for a plain dark overlay with no text. |
+
+**Behaviour:**
+- Any touch, click, or keypress dismisses the screensaver and resets the timer
+- When text is shown it bounces around the screen DVD-logo style, changing colour on each wall bounce
+- `haven_command` with `action: wake` dismisses it remotely (e.g. PIR sensor → HA automation → wake panel)
+- `haven_command` with `action: dim` activates it immediately (e.g. "Goodnight" automation)
+- If the device wakes from sleep with a broken WebSocket connection, HAven reconnects immediately rather than waiting for the normal retry cycle
 
 ---
 
@@ -1181,29 +1481,42 @@ Widgets are placed at absolute pixel positions on the canvas — the same coordi
 - **Right-click drag** to pan the canvas
 - **Scroll** to zoom in/out
 
-### Widget tree (left sidebar)
+### Widget tree (left panel)
 
-The sidebar lists all widgets on the current page in z-order. Each row shows:
+The left panel lists all widgets on the current page in z-order. Each row shows:
 - **Eye button** — toggle widget visibility on canvas (hidden widgets still export to JSON)
 - **Lock button** — lock a widget so it can't be accidentally moved or selected on canvas
 - **Type badge** — coloured letter indicating widget type
 - **Name / ID** — widget name if set, otherwise ID + type
-- **Z-index** — position in the stacking order
 
-Drag rows to reorder widgets (changes z-order). Use the search box to filter by name, ID, or type.
+Drag rows to reorder widgets (changes z-order). Use the search box to filter by name, ID, or type. Add widget buttons at the bottom create a new widget of that type at the centre of the canvas.
 
-### Properties panel (right sidebar)
+The left panel is **resizable** — drag the right edge handle to adjust width. Width is saved in localStorage.
+
+### Properties panel (right panel)
 
 Select a widget to edit its properties:
 - **Position/size** — X, Y, W, H fields
-- **Common properties** — label text, entity, format, color, background, etc. (fields vary by widget type)
-- **Overrides editor** — add, edit, and remove conditional override rules visually
+- **Widget Settings** — all type-specific properties (entity, format, color, background, font_size, etc.)
+- **Overrides editor** — add, edit, and remove conditional override rules. **Insert Example** fills a sensible starting rule for the widget type.
+- **Theme Colors** — click any swatch to copy its token name. **Edit Theme** opens the theme editor for colors and font size.
+
+The right panel is also **resizable** — drag the left edge handle to adjust. Width is saved in localStorage.
+
+### Entity search
+
+`entity`, `entity2`, `snapshot_entity`, and `stream_entity` fields show a magnifying glass button. Clicking it opens an entity search modal that connects directly to your HA instance. On first use it prompts for a Long-Lived Access Token (stored separately as `haven_designer_token` — distinct from device credentials). The entity list is cached for the session and can be filtered by domain and device class. The `history_chart` entity field pre-filters to sensors with long-term statistics enabled.
+
+### Attribute browse
+
+The `entity_attribute` field shows a magnifying glass button that opens the same modal in attribute mode, listing all attributes of the currently selected entity with their live values. Set `entity` first — the button shows a message if no entity is selected.
 
 ### Page management
 
 Click **Pages…** to open the page manager:
-- **Left column** — page list with drag-to-reorder, widget count, delete button
+- **Left column** — page list with drag-to-reorder, widget count, delete button. Drag rows to change display order — page IDs stay stable so navigation actions are unaffected.
 - **Right column** — page properties: label, background image (upload to `images/` folder), opacity, fit mode, default page selector
+- **Overlay page** — click **+ Add Overlay Page** at the bottom of the list to create page 0. Its widgets render on top of every other page at runtime. Select it in the page picker to add and position widgets. Background image is not supported for the overlay page.
 
 ### Alignment tools
 
@@ -1249,7 +1562,36 @@ Click **Preview** to open a live preview iframe next to the canvas. The preview 
 - [x] History chart widget (long-term statistics bar chart)
 - [x] Visual drag-and-drop designer with undo/redo, preview, page management, and image upload
 
+---
+
+## Troubleshooting
+
+### Connection indicator stays red
+
+The connection indicator in the bottom-right corner shows the WebSocket state: green = connected, amber = connecting/retrying, red = failed.
+
+**Check the basics first**
+- Open the HA URL directly in the same browser tab — if it doesn't load, the problem is network/URL not HAven
+- Confirm the long-lived access token was copied in full with no extra spaces
+
+**HTTP/HTTPS mismatch (most common cause)**
+Browsers silently block WebSocket connections from an HTTPS page to an HTTP HA instance. If your dashboard is served over HTTPS (e.g. via Nabu Casa or a reverse proxy) but your HA URL is set to `http://192.168.x.x:8123`, the connection will fail with no visible error message.
+
+Fix: use the same protocol for both, or access the dashboard over HTTP when connecting to a local HTTP HA instance.
+
+**Check the browser console**
+Open developer tools (F12) → Console tab. The exact failure reason will be there:
+- `ERR_CONNECTION_REFUSED` — wrong IP or port
+- `401` — token invalid or expired
+- `Mixed Content` — HTTP/HTTPS mismatch (see above)
+
+**Reset credentials**
+If the stored URL or token is corrupted, clear localStorage for the page in browser settings and re-enter them on the setup screen.
+
+---
+
 **Coming**
-- [ ] HA event-triggered page navigation (fire `haven_command` from automations)
-- [ ] Screensaver / idle screen dimming
+- [x] HA event-triggered commands via `haven_command` event (`navigate`, `speak`, `wake`, `dim`)
+- [x] Screensaver / idle screen dimming with bouncing text and `haven_command` integration
 - [ ] HACS frontend distribution
+- [ ] Flow dots widget for energy/power direction visuals (animated dots along a path, with conservative defaults for low-end devices: capped dot count, throttled FPS, reduced-motion fallback)

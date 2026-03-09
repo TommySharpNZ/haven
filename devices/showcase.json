@@ -1,12 +1,7 @@
 {
   "version": "1.0",
-  "ha": {
-    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
-    "url": "http://192.168.11.95:8123",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
-  },
   "device": {
-    "name": "WebHASP Showcase",
+    "name": "HAven Showcase",
     "canvas": {
       "width": 800,
       "height": 480
@@ -42,7 +37,7 @@
           "y": 60,
           "w": 800,
           "h": 80,
-          "text": "WebHASP",
+          "text": "HAven",
           "font_size": 72,
           "align": "center",
           "color": "primary",
@@ -210,7 +205,7 @@
           "y": 118,
           "w": 340,
           "h": 40,
-          "text": "Hello, WebHASP!",
+          "text": "Hello, HAven!",
           "font_size": 28,
           "align": "left",
           "color": "text",

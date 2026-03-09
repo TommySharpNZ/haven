@@ -13,11 +13,16 @@
     },
     "default_page": 1,
     "return_to_default": 0,
+    "screensaver": {
+      "timeout": 120,
+      "opacity": 0.95
+    },
     "page_nav": {
+      "show": false,
+      "size": "small",
       "background_color": "surface",
       "primary_color": "text",
-      "secondary_color": "text_dim",
-      "size": "small"
+      "secondary_color": "text_dim"
     }
   },
   "theme": {
@@ -66,6 +71,7 @@
           "font_size": 18,
           "align": "center",
           "background": "",
+          "color": "warning",
           "entity": "internal.connectionstatus",
           "overrides": [
             {
@@ -117,7 +123,112 @@
               }
             }
           ],
-          "name": "Connection Header"
+          "name": "Connection Header",
+          "h": 20
+        },
+        {
+          "id": "button_7",
+          "type": "button",
+          "x": 16,
+          "y": 1224,
+          "w": 40,
+          "h": 40,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:home]",
+          "radius": 10,
+          "action": {
+            "type": "navigate",
+            "direction": "home"
+          },
+          "name": "Home",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "page",
+                    "type": "equals",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "button_11",
+          "type": "button",
+          "x": 652,
+          "y": 1224,
+          "w": 132,
+          "h": 40,
+          "background": "surface",
+          "icon_color": "text",
+          "radius": 10,
+          "action": {
+            "type": "navigate",
+            "direction": "next"
+          },
+          "name": "Next Page",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "page",
+                    "type": "not_equals",
+                    "value": 7
+                  }
+                ]
+              },
+              "set": {
+                "visible": true
+              }
+            }
+          ],
+          "label": "NEXT&nbsp;[mdi:arrow-right-thick]",
+          "label_size": 18
+        },
+        {
+          "id": "button_12",
+          "type": "button",
+          "x": 72,
+          "y": 1224,
+          "w": 132,
+          "h": 40,
+          "background": "surface",
+          "icon_color": "text",
+          "radius": 10,
+          "action": {
+            "type": "navigate",
+            "direction": "prev"
+          },
+          "name": "Previous Page",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "page",
+                    "type": "equals",
+                    "value": 1
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ],
+          "label": "BACK&nbsp;[mdi:arrow-left-thick]",
+          "label_size": 18
         }
       ]
     },
@@ -125,6 +236,16 @@
       "id": 1,
       "label": "Main Page",
       "widgets": [
+        {
+          "id": "rectangle_7",
+          "type": "rectangle",
+          "x": 16,
+          "y": 620,
+          "w": 248,
+          "h": 416,
+          "background": "surface2",
+          "radius": 6
+        },
         {
           "id": "rectangle_6",
           "type": "rectangle",
@@ -305,158 +426,6 @@
           "color": "text",
           "entity": "sensor.daily_energy_import_total",
           "format": "kwh"
-        },
-        {
-          "id": "image_floorplan",
-          "type": "image",
-          "x": 16,
-          "y": 620,
-          "w": 768,
-          "h": 416,
-          "url": "images/floorplan.jpg",
-          "fit": "stretch",
-          "radius": 8,
-          "name": "Floorplan"
-        },
-        {
-          "id": "btn_floor_light_1",
-          "type": "button",
-          "x": 208,
-          "y": 780,
-          "w": 64,
-          "h": 64,
-          "radius": 32,
-          "background": "surface2",
-          "icon_color": "icon_inactive",
-          "icon": "[mdi:lightbulb-outline]",
-          "entity": "light.esphome_mfa03_03_light",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "type": "equals",
-                    "value": "on"
-                  }
-                ]
-              },
-              "set": {
-                "background": "#493416",
-                "icon_color": "#ffdd66",
-                "icon": "[mdi:lightbulb]"
-              }
-            }
-          ],
-          "action": {
-            "service": "homeassistant.toggle",
-            "entity_id": "light.esphome_mfa03_03_light"
-          }
-        },
-        {
-          "id": "btn_floor_light_2",
-          "type": "button",
-          "x": 360,
-          "y": 776,
-          "w": 64,
-          "h": 64,
-          "radius": 32,
-          "background": "surface2",
-          "icon_color": "icon_inactive",
-          "icon": "[mdi:lightbulb-outline]",
-          "entity": "light.esphome_mfa05_01_light",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "type": "equals",
-                    "value": "on"
-                  }
-                ]
-              },
-              "set": {
-                "background": "#493416",
-                "icon_color": "#ffdd66",
-                "icon": "[mdi:lightbulb]"
-              }
-            }
-          ],
-          "action": {
-            "service": "homeassistant.toggle",
-            "entity_id": "light.esphome_mfa05_01_light"
-          }
-        },
-        {
-          "id": "btn_floor_light_3",
-          "type": "button",
-          "x": 572,
-          "y": 728,
-          "w": 64,
-          "h": 64,
-          "radius": 32,
-          "background": "surface2",
-          "icon_color": "icon_inactive",
-          "icon": "[mdi:lightbulb-outline]",
-          "entity": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "type": "equals",
-                    "value": "on"
-                  }
-                ]
-              },
-              "set": {
-                "background": "#493416",
-                "icon_color": "#ffdd66",
-                "icon": "[mdi:lightbulb]"
-              }
-            }
-          ],
-          "action": {
-            "service": "homeassistant.toggle",
-            "entity_id": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2"
-          }
-        },
-        {
-          "id": "btn_floor_light_4",
-          "type": "button",
-          "x": 532,
-          "y": 864,
-          "w": 64,
-          "h": 64,
-          "radius": 32,
-          "background": "surface2",
-          "icon_color": "icon_inactive",
-          "icon": "[mdi:lightbulb-outline]",
-          "entity": "switch.esphome_tx_ultimate_02_l1",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "type": "equals",
-                    "value": "on"
-                  }
-                ]
-              },
-              "set": {
-                "background": "#493416",
-                "icon_color": "#ffdd66",
-                "icon": "[mdi:lightbulb]"
-              }
-            }
-          ],
-          "action": {
-            "service": "homeassistant.toggle",
-            "entity_id": "switch.esphome_tx_ultimate_02_l1"
-          }
         },
         {
           "id": "rectangle_1",
@@ -723,6 +692,7 @@
           "text": "[mdi:help-circle-outline]",
           "color": "icon_inactive",
           "entity": "sensor.battery_mode",
+          "animation": "blink",
           "overrides": [
             {
               "when": {
@@ -751,7 +721,8 @@
               },
               "set": {
                 "text": "[mdi:arrow-right-thick]",
-                "color": "danger"
+                "color": "danger",
+                "animation": "blink"
               }
             },
             {
@@ -1062,7 +1033,7 @@
           "color": "text",
           "align": "left",
           "valign": "center",
-          "entity": "sensor.master_house_phase_3_power",
+          "entity": "sensor.master_house_phase3_import_power",
           "text": "[mdi:numeric-3-box]&nbsp;&nbsp;{{ state }} w",
           "overrides": [
             {
@@ -1093,7 +1064,7 @@
           "color": "text",
           "align": "left",
           "valign": "center",
-          "entity": "sensor.master_house_phase_2_power",
+          "entity": "sensor.master_house_phase2_import_power",
           "text": "[mdi:numeric-2-box]&nbsp;&nbsp;{{ state }} w",
           "overrides": [
             {
@@ -1124,7 +1095,7 @@
           "color": "text",
           "align": "left",
           "valign": "center",
-          "entity": "sensor.master_house_phase_1_power",
+          "entity": "sensor.master_house_phase1_import_power",
           "text": "[mdi:numeric-1-box]&nbsp;&nbsp;{{ state }} w",
           "overrides": [
             {
@@ -1157,7 +1128,7 @@
           "label": "Whole House",
           "start_angle": 270,
           "end_angle": 450,
-          "line_width": 16,
+          "line_width": 20,
           "color": "danger",
           "format": "power",
           "track_color": "surface",
@@ -1250,19 +1221,22 @@
             }
           ],
           "track_color": "surface",
-          "background": "text_dim"
+          "background": "surface"
         },
         {
-          "id": "label_27",
+          "id": "label_28",
           "type": "label",
-          "x": 24,
+          "x": 204,
           "y": 540,
-          "w": 168,
+          "w": 172,
           "h": 24,
-          "text": "[mdi:car] Charger",
+          "text": "99.99 kW  |  99.99 kWh",
           "font_size": 20,
           "color": "text",
-          "entity": "binary_sensor.openevse_vehicle_connected",
+          "align": "right",
+          "valign": "center",
+          "entity": "sensor.openevse_current_power_usage_actual",
+          "entity2": "sensor.openevse_usage_today",
           "overrides": [
             {
               "when": {
@@ -1271,12 +1245,12 @@
                   {
                     "source": "state",
                     "type": "equals",
-                    "value": "off"
+                    "value": 0
                   }
                 ]
               },
               "set": {
-                "text": "[mdi:car]&nbsp;&nbsp;EV Charger"
+                "text": "0[small:W]&nbsp;&nbsp;|&nbsp;&nbsp;0[small:kWh]"
               }
             },
             {
@@ -1285,17 +1259,17 @@
                 "conditions": [
                   {
                     "source": "state",
-                    "type": "equals",
-                    "value": "on"
+                    "type": "above",
+                    "value": 0
                   }
                 ]
               },
               "set": {
-                "text": "[mdi:car]&nbsp;&nbsp;EV Charger&nbsp;&nbsp;[mdi:ev-plug-type2]"
+                "color": "primary",
+                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
               }
             }
-          ],
-          "valign": "center"
+          ]
         },
         {
           "id": "bar_1",
@@ -1383,62 +1357,15 @@
             }
           ],
           "track_color": "surface",
-          "background": "text_muted"
-        },
-        {
-          "id": "label_28",
-          "type": "label",
-          "x": 208,
-          "y": 540,
-          "w": 136,
-          "h": 24,
-          "text": "3.5 kW  |  29.9 kWh",
-          "font_size": 20,
-          "color": "text",
-          "align": "right",
-          "valign": "center",
-          "entity": "sensor.openevse_current_power_usage_actual",
-          "entity2": "sensor.openevse_usage_today",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "color": "green"
-              }
-            },
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "source": "state",
-                    "type": "above",
-                    "value": 0
-                  }
-                ]
-              },
-              "set": {
-                "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
-              }
-            }
-          ]
+          "background": "surface"
         },
         {
           "id": "label_29",
           "type": "label",
           "x": 24,
           "y": 572,
-          "w": 168,
-          "h": 24,
+          "w": 180,
+          "h": 28,
           "text": "[mdi:shower]&nbsp;&nbsp;Boiler {{ Math.round(state) }} °C",
           "font_size": 20,
           "color": "text",
@@ -1493,13 +1420,13 @@
                 "conditions": [
                   {
                     "source": "state",
-                    "type": "above",
+                    "type": "equals",
                     "value": 0
                   }
                 ]
               },
               "set": {
-                "color": "green"
+                "text": "0[small:W]&nbsp;&nbsp;|&nbsp;&nbsp;0[small:kWh]"
               }
             },
             {
@@ -1514,6 +1441,7 @@
                 ]
               },
               "set": {
+                "color": "primary",
                 "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
               }
             }
@@ -1525,7 +1453,7 @@
           "x": 464,
           "y": 572,
           "w": 168,
-          "h": 24,
+          "h": 28,
           "text": "[mdi:air-conditioner]&nbsp;&nbsp;Bedrooms",
           "font_size": 20,
           "color": "text",
@@ -1538,7 +1466,7 @@
           "x": 464,
           "y": 540,
           "w": 168,
-          "h": 24,
+          "h": 28,
           "text": "[mdi:air-conditioner]&nbsp;&nbsp;Living",
           "font_size": 20,
           "color": "text",
@@ -1562,15 +1490,16 @@
         {
           "type": "history_chart",
           "id": "chart_power_7d",
-          "x": 320,
-          "y": 376,
-          "w": 252,
-          "h": 132,
-          "entity": "sensor.house_water_daily",
+          "x": 328,
+          "y": 380,
+          "w": 240,
+          "h": 128,
+          "entity": "sensor.daily_energy_use",
           "stat_type": "change",
           "period": "day",
           "count": 7,
           "fullscreen_on_tap": true,
+          "background": "surface2",
           "fullscreen_views": [
             {
               "label": "24h",
@@ -1597,17 +1526,17 @@
               "stat_type": "change"
             },
             {
-              "label": "3y",
-              "period": "year",
-              "count": 3,
+              "label": "24m",
+              "period": "month",
+              "count": 24,
               "stat_type": "change"
             }
           ],
-          "color": "#80C5D1",
-          "today_color": "#489BE8",
+          "color": "primary",
+          "today_color": "primary",
           "radius": 2,
           "show_values": true,
-          "show_labels": true
+          "show_labels": false
         },
         {
           "id": "label_34",
@@ -1630,13 +1559,13 @@
                 "conditions": [
                   {
                     "source": "state",
-                    "type": "above",
+                    "type": "equals",
                     "value": 0
                   }
                 ]
               },
               "set": {
-                "color": "green"
+                "text": "0[small:W]&nbsp;&nbsp;|&nbsp;&nbsp;0[small:kWh]"
               }
             },
             {
@@ -1651,6 +1580,7 @@
                 ]
               },
               "set": {
+                "color": "primary",
                 "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
               }
             }
@@ -1659,9 +1589,9 @@
         {
           "id": "label_30",
           "type": "label",
-          "x": 208,
+          "x": 204,
           "y": 572,
-          "w": 136,
+          "w": 172,
           "h": 24,
           "text": "3.5 kW  |  29.9 kWh",
           "font_size": 20,
@@ -1677,13 +1607,13 @@
                 "conditions": [
                   {
                     "source": "state",
-                    "type": "above",
+                    "type": "equals",
                     "value": 0
                   }
                 ]
               },
               "set": {
-                "color": "green"
+                "text": "0[small:W]&nbsp;&nbsp;|&nbsp;&nbsp;0[small:kWh]"
               }
             },
             {
@@ -1698,26 +1628,29 @@
                 ]
               },
               "set": {
+                "color": "primary",
                 "text": "{{ state >= 1000 ? round(state/1000, 1) + ' [small:kW]' : round(state) + ' [small:W]' }}&nbsp;&nbsp;|&nbsp;&nbsp;{{ state2 !== null ? round(state2, 1) : '--' }} [small:kWh]"
               }
             }
           ]
         },
         {
-          "id": "camera_front",
+          "id": "camera_05",
           "type": "camera",
           "x": 280,
           "y": 1052,
           "w": 248,
           "h": 156,
-          "entity": "camera.seccam05_snapshots_fluent",
+          "entity": "camera.seccam05_fluent",
+          "snapshot_entity": "camera.seccam05_snapshots_fluent",
+          "stream_entity": "camera.seccam05_fluent",
           "preview": "poster",
           "fit": "cover",
           "radius": 6,
           "name": "SecCam05"
         },
         {
-          "id": "camera_kitchen",
+          "id": "camera_10",
           "type": "camera",
           "x": 16,
           "y": 1052,
@@ -1725,11 +1658,11 @@
           "h": 156,
           "radius": 6,
           "label": "Sec Cam 10",
-          "preview": "poster",
+          "preview": "snapshot",
           "entity": "camera.seccam10_fluent",
           "snapshot_entity": "camera.seccam10_snapshots_fluent",
           "stream_entity": "camera.seccam10_fluent",
-          "refresh_interval": 60000,
+          "refresh_interval": 15,
           "fit": "cover",
           "name": "SecCam10"
         },
@@ -1744,19 +1677,6 @@
           "fit": "stretch",
           "radius": 8,
           "name": "Nissan Leaf"
-        },
-        {
-          "id": "label_38",
-          "type": "label",
-          "x": 16,
-          "y": 1232,
-          "w": 100,
-          "h": 32,
-          "align": "left",
-          "valign": "top",
-          "text": "Import",
-          "font_size": 28,
-          "color": "text"
         },
         {
           "id": "label_39",
@@ -1850,151 +1770,496 @@
               }
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "label": "Test Page",
-      "widgets": [
-        {
-          "id": "slider_1",
-          "type": "slider",
-          "entity": "media_player.kitchen_sonos",
-          "value_attribute": "volume_level",
-          "min": 0,
-          "max": 1,
-          "step": 0.01,
-          "orientation": "horizontal",
-          "update_mode": "release",
-          "action": {
-            "type": "service",
-            "service": "media_player.volume_set",
-            "entity_id": "media_player.kitchen_sonos",
-            "data": {
-              "volume_level": "$value"
-            }
-          },
-          "x": 52,
-          "y": 72,
-          "w": 220,
-          "h": 20,
-          "name": "Volume Slider",
-          "radius": 5,
-          "color": "primary",
-          "background": "danger",
-          "thumb_color": "warning",
-          "thumb_size": 42
-        },
-        {
-          "id": "album_art",
-          "type": "image",
-          "x": 56,
-          "y": 144,
-          "w": 604,
-          "h": 604,
-          "entity": "media_player.kitchen_sonos",
-          "entity_attribute": "entity_picture",
-          "fit": "cover",
-          "radius": 8,
-          "name": "Album Art",
-          "fullscreen_on_tap": true
-        },
-        {
-          "id": "slider_2",
-          "type": "slider",
-          "entity": "media_player.kitchen_sonos",
-          "value_attribute": "volume_level",
-          "min": 0,
-          "max": 1,
-          "step": 0.01,
-          "orientation": "vertical",
-          "update_mode": "drag",
-          "action": {
-            "type": "service",
-            "service": "media_player.volume_set",
-            "entity_id": "media_player.kitchen_sonos",
-            "data": {
-              "volume_level": "$value"
-            }
-          },
-          "x": 680,
-          "y": 144,
-          "w": 20,
-          "h": 180,
-          "name": "Volume Slider",
-          "radius": 5,
-          "color": "primary",
-          "background": "danger",
-          "thumb_color": "warning",
-          "thumb_size": 42
         },
         {
           "id": "label_38",
           "type": "label",
-          "x": 56,
-          "y": 760,
-          "w": 604,
-          "h": 40,
-          "text": "New Label",
-          "entity": "media_player.kitchen_sonos",
-          "entity_attribute": "media_title",
-          "font_size": 28,
+          "x": 28,
+          "y": 628,
+          "w": 228,
+          "h": 32,
           "align": "left",
+          "valign": "top",
+          "text": "Lighting",
+          "font_size": 28,
           "color": "text",
-          "name": "Media Title"
+          "name": "Header : Lights"
         },
         {
-          "id": "label_39",
-          "type": "label",
-          "x": 56,
-          "y": 808,
-          "w": 604,
-          "h": 40,
-          "text": "New Label",
-          "entity": "media_player.kitchen_sonos",
-          "entity_attribute": "title",
-          "font_size": 28,
-          "align": "left",
-          "color": "text",
-          "name": "Media Title"
+          "id": "switch_2",
+          "type": "switch",
+          "x": 24,
+          "y": 668,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2",
+          "label": "Kitchen Main",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
         },
         {
-          "id": "label_40",
-          "type": "label",
-          "x": 56,
-          "y": 856,
-          "w": 604,
-          "h": 40,
-          "text": "New Label",
-          "entity": "media_player.kitchen_sonos",
-          "entity_attribute": "media_artist",
-          "font_size": 28,
-          "align": "left",
-          "color": "text",
-          "name": "Media Title"
+          "id": "switch_3",
+          "type": "switch",
+          "x": 24,
+          "y": 720,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "switch.esphome_tx_ultimate_02_l1",
+          "label": "Kitchen Spots",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
         },
         {
-          "id": "label_41",
+          "id": "switch_7",
+          "type": "switch",
+          "x": 24,
+          "y": 772,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "light.esphome_mfa05_01_light",
+          "label": "Lounge",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
+        },
+        {
+          "id": "switch_8",
+          "type": "switch",
+          "x": 24,
+          "y": 824,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "switch.mfa03_02",
+          "label": "Main Porch",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
+        },
+        {
+          "id": "switch_9",
+          "type": "switch",
+          "x": 24,
+          "y": 876,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "light.esphome_mfa03_03_light",
+          "label": "Office",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
+        },
+        {
+          "id": "switch_10",
+          "type": "switch",
+          "x": 24,
+          "y": 928,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "light.esphome_mfa03_12_light",
+          "label": "Shed Main",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
+        },
+        {
+          "id": "switch_4",
+          "type": "switch",
+          "x": 24,
+          "y": 980,
+          "w": 232,
+          "h": 44,
+          "on_value": "on",
+          "off_value": "off",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "radius": 20,
+          "padding": 5,
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "#493416",
+                "label_color": "surface",
+                "icon_color": "#ffdd66"
+              }
+            }
+          ],
+          "entity": "light.esphome_mfa03_13_light",
+          "label": "Shed Floodlight",
+          "label_color": "text",
+          "label_size": 18,
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "surface",
+          "icon_scale": 1
+        },
+        {
+          "id": "agenda_1",
+          "type": "agenda",
+          "x": 280,
+          "y": 620,
+          "w": 504,
+          "h": 416,
+          "days_ahead": 30,
+          "refresh_interval": 120,
+          "time_format": "12h",
+          "show_month_headers": true,
+          "combine_duplicates": true,
+          "background": "surface2",
+          "event_background": "surface",
+          "title_color": "text",
+          "detail_color": "text_muted",
+          "date_color": "text",
+          "month_color": "primary",
+          "today_indicator": true,
+          "show_blank_days": false,
+          "agenda_scale": 1,
+          "legend": true,
+          "calendars": [
+            {
+              "entity": "calendar.m365calendar_sharp_family_calendar",
+              "color": "primary",
+              "full_day_highlight": true,
+              "name": "Family",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_hhs_linita",
+              "color": "warning",
+              "name": "Hillcrest",
+              "show": [
+                "time",
+                "location"
+              ]
+            },
+            {
+              "entity": "calendar.m365calendar_puketaha",
+              "color": "#4FC3F7",
+              "name": "Puketaha",
+              "show": [
+                "time"
+              ]
+            }
+          ],
+          "name": "Agenga One"
+        },
+        {
+          "id": "label_27",
           "type": "label",
-          "x": 56,
-          "y": 904,
-          "w": 604,
-          "h": 40,
-          "text": "New Label",
-          "entity": "media_player.kitchen_sonos",
-          "entity_attribute": "album",
-          "font_size": 28,
-          "align": "left",
+          "x": 24,
+          "y": 540,
+          "w": 180,
+          "h": 28,
+          "text": "[mdi:car] Charger",
+          "font_size": 20,
           "color": "text",
-          "name": "Media Title"
+          "entity": "binary_sensor.openevse_vehicle_connected",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "off"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:car]&nbsp;&nbsp;EV Charger"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:car]&nbsp;&nbsp;EV Charger&nbsp;&nbsp;[mdi:ev-plug-type2]"
+              }
+            }
+          ],
+          "valign": "center"
+        },
+        {
+          "id": "rectangle_8",
+          "type": "rectangle",
+          "x": 600,
+          "y": 1160,
+          "w": 124,
+          "h": 40,
+          "background": "text_dim",
+          "radius": 6,
+          "opacity": 0.8,
+          "entity": "binary_sensor.openevse_vehicle_connected",
+          "entity2": "sensor.openevse_current_power_usage_actual",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#a7dbd2"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state2",
+                    "type": "above",
+                    "value": "0"
+                  }
+                ]
+              },
+              "set": {
+                "background": "primary"
+              }
+            }
+          ]
+        },
+        {
+          "id": "label_42",
+          "type": "label",
+          "x": 604,
+          "y": 1164,
+          "w": 116,
+          "h": 32,
+          "text": "Unplugged",
+          "font_size": 18,
+          "color": "surface",
+          "valign": "center",
+          "align": "center",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "text": "Plugged In"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state2",
+                    "type": "above",
+                    "value": "0"
+                  }
+                ]
+              },
+              "set": {
+                "text": "Charging"
+              }
+            }
+          ],
+          "entity": "binary_sensor.openevse_vehicle_connected",
+          "entity2": "sensor.openevse_current_power_usage_actual"
         }
-      ],
-      "background_image": "images/wallpaper-test.png"
+      ]
     },
     {
       "id": 3,
-      "label": "Test Page 3",
+      "label": "Media Players",
       "widgets": [
         {
           "id": "mp3_panel_a",
@@ -2312,45 +2577,6 @@
           }
         },
         {
-          "id": "mp3_b_playpause",
-          "type": "button",
-          "x": 32,
-          "y": 592,
-          "w": 220,
-          "h": 108,
-          "background": "surface",
-          "icon_color": "text",
-          "label_color": "text_dim",
-          "icon": "[mdi:play]",
-          "label": "Play / Pause",
-          "radius": 10,
-          "entity": "media_player.kitchen_sonos",
-          "overrides": [
-            {
-              "when": {
-                "logic": "all",
-                "conditions": [
-                  {
-                    "type": "equals",
-                    "value": "playing"
-                  }
-                ]
-              },
-              "set": {
-                "icon": "[mdi:pause]",
-                "background": "primary",
-                "icon_color": "background",
-                "label_color": "background"
-              }
-            }
-          ],
-          "action": {
-            "type": "service",
-            "service": "media_player.media_play_pause",
-            "entity_id": "media_player.kitchen_sonos"
-          }
-        },
-        {
           "id": "mp3_b_hint",
           "type": "label",
           "x": 268,
@@ -2368,7 +2594,7 @@
           "x": 16,
           "y": 736,
           "w": 768,
-          "h": 516,
+          "h": 480,
           "background": "surface2",
           "radius": 10
         },
@@ -2387,10 +2613,10 @@
         {
           "id": "mp3_c_slider",
           "type": "slider",
-          "x": 56,
-          "y": 796,
-          "w": 30,
-          "h": 236,
+          "x": 52,
+          "y": 832,
+          "w": 32,
+          "h": 316,
           "entity": "media_player.kitchen_sonos",
           "value_attribute": "volume_level",
           "min": 0,
@@ -2416,8 +2642,8 @@
           "id": "mp3_c_vol_25",
           "type": "button",
           "x": 116,
-          "y": 802,
-          "w": 146,
+          "y": 800,
+          "w": 92,
           "h": 84,
           "background": "surface",
           "icon_color": "text",
@@ -2433,14 +2659,15 @@
             "data": {
               "volume_level": 0.25
             }
-          }
+          },
+          "name": "Volume 25%"
         },
         {
           "id": "mp3_c_vol_50",
           "type": "button",
-          "x": 274,
-          "y": 802,
-          "w": 146,
+          "x": 220,
+          "y": 800,
+          "w": 92,
           "h": 84,
           "background": "surface",
           "icon_color": "text",
@@ -2459,34 +2686,11 @@
           }
         },
         {
-          "id": "mp3_c_vol_75",
-          "type": "button",
-          "x": 432,
-          "y": 802,
-          "w": 146,
-          "h": 84,
-          "background": "surface",
-          "icon_color": "text",
-          "label_color": "text_dim",
-          "icon": "[mdi:volume-high]",
-          "label": "75%",
-          "radius": 10,
-          "entity": "media_player.kitchen_sonos",
-          "action": {
-            "type": "service",
-            "service": "media_player.volume_set",
-            "entity_id": "media_player.kitchen_sonos",
-            "data": {
-              "volume_level": 0.75
-            }
-          }
-        },
-        {
           "id": "mp3_c_mute_on",
           "type": "button",
-          "x": 590,
-          "y": 802,
-          "w": 178,
+          "x": 572,
+          "y": 800,
+          "w": 92,
           "h": 84,
           "background": "surface",
           "icon_color": "warning",
@@ -2507,9 +2711,9 @@
         {
           "id": "mp3_c_mute_off",
           "type": "button",
-          "x": 590,
-          "y": 896,
-          "w": 178,
+          "x": 676,
+          "y": 800,
+          "w": 92,
           "h": 84,
           "background": "surface",
           "icon_color": "primary",
@@ -2543,15 +2747,15 @@
         {
           "id": "mp3_c_state_chip",
           "type": "button",
-          "x": 116,
+          "x": 220,
           "y": 952,
-          "w": 456,
+          "w": 320,
           "h": 84,
           "background": "surface",
           "icon_color": "text",
           "label_color": "text",
           "icon": "[mdi:music-note]",
-          "label": "{{ state_str }}",
+          "label": "Player State {{ state_str }}",
           "radius": 10,
           "entity": "media_player.kitchen_sonos",
           "overrides": [
@@ -2595,12 +2799,286 @@
             "service": "media_player.media_play_pause",
             "entity_id": "media_player.kitchen_sonos"
           }
+        },
+        {
+          "id": "button_5",
+          "type": "button",
+          "x": 116,
+          "y": 952,
+          "w": 92,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "primary",
+          "label_color": "text_dim",
+          "icon": "[mdi:power]",
+          "label": "Power Off",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_mute",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "is_volume_muted": false
+            }
+          },
+          "name": "Power Button",
+          "overrides": []
+        },
+        {
+          "id": "label_45",
+          "type": "label",
+          "x": 280,
+          "y": 1176,
+          "w": 496,
+          "h": 32,
+          "text": "Player Current State : {{ state_str }}",
+          "font_size": 18,
+          "color": "text_dim",
+          "entity": "media_player.kitchen_sonos",
+          "align": "right",
+          "valign": "center"
+        },
+        {
+          "id": "button_6",
+          "type": "button",
+          "x": 220,
+          "y": 1052,
+          "w": 92,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:shuffle]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": true
+                  }
+                ]
+              },
+              "set": {
+                "visible": true
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": false
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.shuffle_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "shuffle": false
+            }
+          },
+          "label_color": "text_dim",
+          "label": "Shuffle"
+        },
+        {
+          "id": "button_8",
+          "type": "button",
+          "x": 324,
+          "y": 800,
+          "w": 92,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-plus]",
+          "label": "Increase",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_up",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "label_46",
+          "type": "label",
+          "x": 280,
+          "y": 1144,
+          "w": 496,
+          "h": 32,
+          "text": "Player Volume : {{ attr.volume_level }}",
+          "font_size": 18,
+          "color": "text_dim",
+          "entity": "media_player.kitchen_sonos",
+          "align": "right",
+          "valign": "center"
+        },
+        {
+          "id": "button_9",
+          "type": "button",
+          "x": 428,
+          "y": 800,
+          "w": 92,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:volume-minus]",
+          "label": "Decrease",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.volume_down",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "label_47",
+          "type": "label",
+          "x": 36,
+          "y": 808,
+          "w": 64,
+          "h": 20,
+          "text": "Volume",
+          "font_size": 18,
+          "color": "text",
+          "background": "surface",
+          "align": "center",
+          "valign": "bottom"
+        },
+        {
+          "id": "mp3_b_playpause",
+          "type": "button",
+          "x": 560,
+          "y": 952,
+          "w": 208,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "label_color": "text_dim",
+          "icon": "[mdi:play]",
+          "label": "Play / Pause",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "playing"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:pause]",
+                "background": "primary",
+                "icon_color": "background",
+                "label_color": "background"
+              }
+            }
+          ],
+          "action": {
+            "type": "service",
+            "service": "media_player.media_play_pause",
+            "entity_id": "media_player.kitchen_sonos"
+          }
+        },
+        {
+          "id": "label_48",
+          "type": "label",
+          "x": 36,
+          "y": 1164,
+          "w": 64,
+          "h": 20,
+          "entity": "media_player.kitchen_sonos",
+          "format": "duration",
+          "font_size": 16,
+          "align": "center",
+          "color": "text_dim",
+          "text": "{{ round((attr.volume_level || 0) * 100, 0) }}%"
+        },
+        {
+          "id": "button_10",
+          "type": "button",
+          "x": 116,
+          "y": 1052,
+          "w": 92,
+          "h": 84,
+          "background": "surface",
+          "icon_color": "text",
+          "icon": "[mdi:shuffle-disabled]",
+          "radius": 10,
+          "entity": "media_player.kitchen_sonos",
+          "action": {
+            "type": "service",
+            "service": "media_player.shuffle_set",
+            "entity_id": "media_player.kitchen_sonos",
+            "data": {
+              "shuffle": true
+            }
+          },
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": false
+                  }
+                ]
+              },
+              "set": {
+                "visible": true
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": true
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ],
+          "label_color": "text_dim",
+          "label": "Shuffle"
         }
       ]
     },
     {
       "id": 4,
-      "label": "Test Page 4",
+      "label": "Media Players 2",
       "widgets": [
         {
           "id": "mp4_card2_art",
@@ -3103,7 +3581,7 @@
         {
           "id": "button_3",
           "type": "button",
-          "x": 208,
+          "x": 204,
           "y": 784,
           "w": 108,
           "h": 64,
@@ -3112,20 +3590,54 @@
           "icon": "[mdi:shuffle]",
           "radius": 32,
           "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": true
+                  }
+                ]
+              },
+              "set": {
+                "visible": true
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": false
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ],
           "action": {
             "type": "service",
             "service": "media_player.shuffle_set",
             "entity_id": "media_player.kitchen_sonos",
             "data": {
-              "shuffle": true
+              "shuffle": false
             }
           }
         },
         {
           "id": "button_4",
           "type": "button",
-          "x": 208,
-          "y": 712,
+          "x": 188,
+          "y": 784,
           "w": 108,
           "h": 64,
           "background": "surface",
@@ -3133,6 +3645,40 @@
           "icon": "[mdi:shuffle-disabled]",
           "radius": 32,
           "entity": "media_player.kitchen_sonos",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": false
+                  }
+                ]
+              },
+              "set": {
+                "visible": true
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "shuffle",
+                    "type": "equals",
+                    "value": true
+                  }
+                ]
+              },
+              "set": {
+                "visible": false
+              }
+            }
+          ],
           "action": {
             "type": "service",
             "service": "media_player.shuffle_set",
@@ -3146,7 +3692,7 @@
     },
     {
       "id": 5,
-      "label": "Test Page 5",
+      "label": "Media Players 3",
       "widgets": [
         {
           "id": "mp5_card1_bg",
@@ -3644,40 +4190,16 @@
     },
     {
       "id": 6,
-      "label": "Calendar",
+      "label": "Agenda",
       "widgets": [
-        {
-          "id": "agenda_bg_1",
-          "type": "rectangle",
-          "x": 16,
-          "y": 48,
-          "w": 768,
-          "h": 484,
-          "background": "surface2",
-          "radius": 14
-        },
-        {
-          "id": "agenda_title_1",
-          "type": "label",
-          "x": 32,
-          "y": 64,
-          "w": 736,
-          "h": 44,
-          "text": "[mdi:calendar-month] Upcoming",
-          "font_size": 28,
-          "font_weight": 600,
-          "align": "left",
-          "color": "text",
-          "background": "transparent"
-        },
         {
           "id": "agenda_main_1",
           "type": "agenda",
-          "x": 32,
-          "y": 116,
-          "w": 736,
-          "h": 416,
-          "days_ahead": 14,
+          "x": 16,
+          "y": 52,
+          "w": 768,
+          "h": 1164,
+          "days_ahead": 30,
           "refresh_interval": 120,
           "time_format": "12h",
           "show_month_headers": true,
@@ -3690,12 +4212,14 @@
           "month_color": "primary",
           "today_indicator": true,
           "show_blank_days": true,
+          "agenda_scale": 1.1,
+          "legend": true,
           "calendars": [
             {
               "entity": "calendar.m365calendar_sharp_family_calendar",
               "color": "primary",
-              "icon": "mdi:home-heart",
               "full_day_highlight": true,
+              "name": "Family",
               "show": [
                 "time",
                 "location"
@@ -3704,7 +4228,7 @@
             {
               "entity": "calendar.m365calendar_hhs_linita",
               "color": "warning",
-              "icon": "mdi:briefcase",
+              "name": "Hillcrest",
               "show": [
                 "time",
                 "location"
@@ -3713,7 +4237,7 @@
             {
               "entity": "calendar.m365calendar_puketaha",
               "color": "#4FC3F7",
-              "icon": "mdi:school",
+              "name": "Puketaha",
               "show": [
                 "time"
               ]
@@ -3723,222 +4247,11 @@
               "color": "#1283EA",
               "icon": "mdi:wallet-travel",
               "full_day_highlight": true,
+              "name": "TEST",
               "show": [
                 "time",
                 "location",
                 "description_icon"
-              ]
-            }
-          ],
-          "name": "Agenga One"
-        },
-        {
-          "id": "rectangle_7",
-          "type": "rectangle",
-          "x": 16,
-          "y": 544,
-          "w": 768,
-          "h": 380,
-          "background": "surface2",
-          "radius": 14
-        },
-        {
-          "id": "label_42",
-          "type": "label",
-          "x": 32,
-          "y": 560,
-          "w": 736,
-          "h": 44,
-          "text": "[mdi:calendar-month] Upcoming (0.75 scale)",
-          "font_size": 28,
-          "font_weight": 600,
-          "align": "left",
-          "color": "text",
-          "background": "transparent"
-        },
-        {
-          "id": "agenda_1",
-          "type": "agenda",
-          "x": 32,
-          "y": 612,
-          "w": 736,
-          "h": 312,
-          "days_ahead": 14,
-          "refresh_interval": 120,
-          "time_format": "12h",
-          "show_month_headers": true,
-          "combine_duplicates": true,
-          "background": "surface2",
-          "event_background": "surface",
-          "title_color": "text",
-          "detail_color": "text_muted",
-          "date_color": "text",
-          "month_color": "primary",
-          "scale": 0.75,
-          "calendars": [
-            {
-              "entity": "calendar.m365calendar_sharp_family_calendar",
-              "color": "primary",
-              "icon": "mdi:home-heart",
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_hhs_linita",
-              "color": "warning",
-              "icon": "mdi:briefcase",
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_puketaha",
-              "color": "#4FC3F7",
-              "icon": "mdi:school",
-              "show": [
-                "time"
-              ]
-            }
-          ],
-          "name": "Agenga One"
-        },
-        {
-          "id": "rectangle_8",
-          "type": "rectangle",
-          "x": 16,
-          "y": 940,
-          "w": 768,
-          "h": 324,
-          "background": "surface2",
-          "radius": 14
-        },
-        {
-          "id": "agenda_2",
-          "type": "agenda",
-          "x": 32,
-          "y": 1008,
-          "w": 364,
-          "h": 256,
-          "days_ahead": 1,
-          "refresh_interval": 12,
-          "time_format": "12h",
-          "show_month_headers": true,
-          "combine_duplicates": true,
-          "background": "surface2",
-          "event_background": "surface",
-          "title_color": "text",
-          "detail_color": "text_muted",
-          "date_color": "text",
-          "month_color": "primary",
-          "scale": 0.5,
-          "calendars": [
-            {
-              "entity": "calendar.m365calendar_sharp_family_calendar",
-              "color": "primary",
-              "icon": "mdi:home-heart",
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_hhs_linita",
-              "color": "warning",
-              "icon": "mdi:briefcase",
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_puketaha",
-              "color": "#4FC3F7",
-              "icon": "mdi:school",
-              "show": [
-                "time"
-              ]
-            }
-          ],
-          "name": "Agenga One"
-        },
-        {
-          "id": "label_43",
-          "type": "label",
-          "x": 32,
-          "y": 956,
-          "w": 364,
-          "h": 44,
-          "text": "[mdi:calendar-month] Upcoming (0.50 scale)",
-          "font_size": 28,
-          "font_weight": 600,
-          "align": "left",
-          "color": "text",
-          "background": "transparent"
-        },
-        {
-          "id": "label_44",
-          "type": "label",
-          "x": 404,
-          "y": 956,
-          "w": 364,
-          "h": 44,
-          "text": "[mdi:calendar-month] Upcoming (1.25 scale)",
-          "font_size": 28,
-          "font_weight": 600,
-          "align": "left",
-          "color": "text",
-          "background": "transparent"
-        },
-        {
-          "id": "agenda_3",
-          "type": "agenda",
-          "x": 404,
-          "y": 1008,
-          "w": 364,
-          "h": 256,
-          "days_ahead": 7,
-          "refresh_interval": 120,
-          "time_format": "12h",
-          "agenda_scale": 1.25,
-          "today_indicator": true,
-          "show_blank_days": true,
-          "show_month_headers": true,
-          "combine_duplicates": true,
-          "background": "surface2",
-          "event_background": "surface",
-          "title_color": "text",
-          "detail_color": "text_muted",
-          "date_color": "text",
-          "month_color": "primary",
-          "calendars": [
-            {
-              "entity": "calendar.m365calendar_sharp_family_calendar",
-              "color": "primary",
-              "icon": "mdi:home-heart",
-              "full_day_highlight": true,
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_hhs_linita",
-              "color": "warning",
-              "icon": "mdi:briefcase",
-              "show": [
-                "time",
-                "location"
-              ]
-            },
-            {
-              "entity": "calendar.m365calendar_puketaha",
-              "color": "#4FC3F7",
-              "icon": "mdi:school",
-              "show": [
-                "time"
               ]
             }
           ],
@@ -3948,7 +4261,7 @@
     },
     {
       "id": 7,
-      "label": "Calendar Variants",
+      "label": "Agenda 2",
       "widgets": [
         {
           "id": "agenda_var_bg",
@@ -3956,7 +4269,7 @@
           "x": 16,
           "y": 48,
           "w": 768,
-          "h": 1216,
+          "h": 1168,
           "background": "surface2",
           "radius": 14
         },
@@ -4065,9 +4378,9 @@
           "id": "agenda_var_3",
           "type": "agenda",
           "x": 28,
-          "y": 826,
+          "y": 828,
           "w": 744,
-          "h": 426,
+          "h": 376,
           "days_ahead": 14,
           "refresh_interval": 240,
           "time_format": "12h",
@@ -4098,6 +4411,164 @@
               "show": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "label": "Floor Plan",
+      "widgets": [
+        {
+          "id": "image_2",
+          "type": "image",
+          "x": 16,
+          "y": 56,
+          "w": 768,
+          "h": 416,
+          "url": "images/floorplan.jpg",
+          "fit": "stretch",
+          "radius": 8,
+          "name": "Floorplan"
+        },
+        {
+          "id": "button_13",
+          "type": "button",
+          "x": 268,
+          "y": 208,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
+          "entity": "light.esphome_mfa03_03_light",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
+            }
+          ],
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_mfa03_03_light"
+          }
+        },
+        {
+          "id": "button_14",
+          "type": "button",
+          "x": 420,
+          "y": 204,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
+          "entity": "light.esphome_mfa05_01_light",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
+            }
+          ],
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_mfa05_01_light"
+          }
+        },
+        {
+          "id": "button_15",
+          "type": "button",
+          "x": 632,
+          "y": 152,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_color": "icon_inactive",
+          "icon": "mdi:lightbulb-outline",
+          "entity": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
+            }
+          ],
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "light.esphome_tx_ultimate_02_esphome_tx_ultimate_02_l2"
+          }
+        },
+        {
+          "id": "button_16",
+          "type": "button",
+          "x": 592,
+          "y": 292,
+          "w": 64,
+          "h": 64,
+          "radius": 32,
+          "background": "surface2",
+          "icon_color": "icon_inactive",
+          "icon": "[mdi:lightbulb-outline]",
+          "entity": "switch.esphome_tx_ultimate_02_l1",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "on"
+                  }
+                ]
+              },
+              "set": {
+                "background": "#493416",
+                "icon_color": "#ffdd66",
+                "icon": "[mdi:lightbulb]"
+              }
+            }
+          ],
+          "action": {
+            "service": "homeassistant.toggle",
+            "entity_id": "switch.esphome_tx_ultimate_02_l1"
+          }
         }
       ]
     }

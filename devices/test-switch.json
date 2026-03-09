@@ -1,0 +1,214 @@
+{
+  "version": "1.0",
+"ha": {
+    "_comment": "Optional - remove this block if you prefer the setup screen or want per-device localStorage auth",
+    "url": "http://192.168.11.95:8123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MjViY2EwNzZlZWM0ZWFkOTA5YjJjMDIyMDUzYzIzZCIsImlhdCI6MTc3MjA4NDI3NCwiZXhwIjoyMDg3NDQ0Mjc0fQ.0r_91p_U7LGHeSt9CQ3-v1o7xJWbLDLueCU8s2YK9L0"
+  },
+  "device": {
+    "name": "Switch Test",
+    "canvas": {
+      "width": 900,
+      "height": 760
+    },
+    "default_page": 1,
+    "return_to_default": 0
+  },
+  "theme": {
+    "colors": {
+      "background": "#161C23",
+      "surface": "#272E36",
+      "surface2": "#363f4a",
+      "primary": "#8ADF45",
+      "warning": "#F0AD4E",
+      "danger": "#D9534F",
+      "text": "#FFFFFF",
+      "text_dim": "#e6e6e6",
+      "text_muted": "#9fa5ad",
+      "icon_inactive": "#464c53"
+    },
+    "font_size": 16
+  },
+  "pages": [
+    {
+      "id": 1,
+      "label": "Switch Tests",
+      "widgets": [
+        { "id": "hdr_case", "type": "label", "x": 0, "y": 0, "w": 200, "h": 32, "text": "Case", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_config", "type": "label", "x": 200, "y": 0, "w": 400, "h": 32, "text": "Config / intent", "font_size": 13, "align": "left", "color": "text_muted", "background": "surface2" },
+        { "id": "hdr_render", "type": "label", "x": 600, "y": 0, "w": 300, "h": 32, "text": "Rendered", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface2" },
+
+        { "id": "s1_hdr", "type": "label", "x": 0, "y": 40, "w": 200, "h": 56, "text": "1. Basic thumb icon", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s1_desc", "type": "label", "x": 200, "y": 40, "w": 400, "h": 56, "text": "Base = off state. Override sets on state colors.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s1",
+          "type": "switch",
+          "x": 650, "y": 50, "w": 190, "h": 36,
+          "entity": "switch.athom_smart_plug_v3_50dee8_switch",
+          "on_value": "on", "off_value": "off",
+          "color": "surface2",
+          "thumb_color": "surface",
+          "icon": "mdi:lightbulb-outline",
+          "icon_color": "text_muted",
+          "padding": 3, "radius": 18,
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "primary", "icon": "mdi:lightbulb", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s2_hdr", "type": "label", "x": 0, "y": 104, "w": 200, "h": 56, "text": "2. Large thumb icon", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s2_desc", "type": "label", "x": 200, "y": 104, "w": 400, "h": 56, "text": "icon_scale: 1.25, warning color on, locked.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s2",
+          "type": "switch",
+          "x": 650, "y": 114, "w": 190, "h": 36,
+          "entity": "switch.athom_smart_plug_v3_50dee8_switch",
+          "on_value": "on", "off_value": "off",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:radiator-disabled",
+          "icon_color": "text_muted",
+          "icon_scale": 1.25,
+          "locked": true, "padding": 8,
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "warning", "icon": "mdi:radiator", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s3_hdr", "type": "label", "x": 0, "y": 168, "w": 200, "h": 56, "text": "3. Overlay label", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s3_desc", "type": "label", "x": 200, "y": 168, "w": 400, "h": 56, "text": "Static label + dim palette for status style toggle.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s3",
+          "type": "switch",
+          "x": 650, "y": 178, "w": 190, "h": 22,
+          "entity": "input_boolean.away_mode",
+          "on_value": "on", "off_value": "off",
+          "label": "Away", "label_color": "text_dim",
+          "color": "icon_inactive",
+          "thumb_color": "text",
+          "icon": "mdi:shield-off",
+          "icon_color": "text_muted",
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "primary", "icon": "mdi:shield-home", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s4_hdr", "type": "label", "x": 0, "y": 232, "w": 200, "h": 56, "text": "4. Non-standard values", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s4_desc", "type": "label", "x": 200, "y": 232, "w": 400, "h": 56, "text": "sun.sun: above_horizon / below_horizon.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s4",
+          "type": "switch",
+          "x": 650, "y": 242, "w": 190, "h": 36,
+          "entity": "sun.sun",
+          "on_value": "above_horizon", "off_value": "below_horizon",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:weather-night",
+          "icon_color": "text_muted",
+          "action": { "type": "navigate", "page": 1 },
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "above_horizon" }] },
+              "set": { "color": "warning", "icon": "mdi:white-balance-sunny", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s5_hdr", "type": "label", "x": 0, "y": 296, "w": 200, "h": 56, "text": "5. value_attribute", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s5_desc", "type": "label", "x": 200, "y": 296, "w": 400, "h": 56, "text": "Read attribute 'hvac_action': heating=on, idle=off.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s5",
+          "type": "switch",
+          "x": 650, "y": 306, "w": 190, "h": 36,
+          "entity": "climate.lounge",
+          "value_attribute": "hvac_action",
+          "on_value": "heating", "off_value": "idle",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:snowflake-off",
+          "icon_color": "text_muted",
+          "action": { "type": "navigate", "page": 1 },
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "heating" }] },
+              "set": { "color": "danger", "icon": "mdi:fire", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s6_hdr", "type": "label", "x": 0, "y": 360, "w": 200, "h": 72, "text": "6. Overrides", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s6_desc", "type": "label", "x": 200, "y": 360, "w": 400, "h": 72, "text": "Overrides changing color, label, radius, padding per state.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s6",
+          "type": "switch",
+          "x": 650, "y": 378, "w": 190, "h": 36,
+          "entity": "switch.athom_smart_plug_v3_50dee8_switch",
+          "on_value": "on", "off_value": "off",
+          "label": "Closed",
+          "label_color": "text",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:door-closed-lock",
+          "icon_color": "text_muted",
+          "radius": 18, "padding": 4,
+          "action": { "type": "navigate", "page": 1 },
+          "overrides": [
+            {
+              "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "danger", "icon": "mdi:door-open", "label": "OPEN", "label_color": "surface2", "radius": 10, "padding": 2 }
+            }
+          ]
+        },
+
+        { "id": "s7_hdr", "type": "label", "x": 0, "y": 440, "w": 200, "h": 56, "text": "7. optimistic true", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s7_desc", "type": "label", "x": 200, "y": 440, "w": 400, "h": 56, "text": "Default behavior. Switch animates immediately on tap. thumb_radius: 4", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s7",
+          "type": "switch",
+          "x": 650, "y": 450, "w": 190, "h": 36,
+          "entity": "switch.garden_lights",
+          "on_value": "on", "off_value": "off",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:string-lights-off",
+          "icon_color": "text_muted",
+          "thumb_radius": 4,
+          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.garden_lights" },
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "primary", "icon": "mdi:string-lights", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s8_hdr", "type": "label", "x": 0, "y": 504, "w": 200, "h": 56, "text": "8. optimistic false", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s8_desc", "type": "label", "x": 200, "y": 504, "w": 400, "h": 56, "text": "Waits for HA state update before visual toggle.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s8",
+          "type": "switch",
+          "x": 650, "y": 514, "w": 190, "h": 36,
+          "entity": "switch.garden_lights",
+          "on_value": "on", "off_value": "off",
+          "color": "surface2",
+          "thumb_color": "text",
+          "icon": "mdi:string-lights-off",
+          "icon_color": "text_muted",
+          "optimistic": false,
+          "action": { "type": "service", "service": "homeassistant.toggle", "entity_id": "switch.garden_lights" },
+          "overrides": [
+            { "when": { "logic": "all", "conditions": [{ "type": "equals", "value": "on" }] },
+              "set": { "color": "primary", "icon": "mdi:string-lights", "icon_color": "background" } }
+          ]
+        },
+
+        { "id": "s9_hdr", "type": "label", "x": 0, "y": 568, "w": 200, "h": 64, "text": "9. Required values check", "font_size": 13, "align": "center", "color": "text_muted", "background": "surface" },
+        { "id": "s9_desc", "type": "label", "x": 200, "y": 568, "w": 400, "h": 64, "text": "Missing on_value/off_value should render config warning.", "font_size": 13, "align": "left", "color": "text_dim", "background": "surface" },
+        {
+          "id": "s9",
+          "type": "switch",
+          "x": 650, "y": 582, "w": 190, "h": 36,
+          "entity": "switch.bad_example",
+          "icon": "mdi:alert-circle-outline"
+        }
+      ]
+    }
+  ]
+}

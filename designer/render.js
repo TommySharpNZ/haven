@@ -125,6 +125,33 @@ export function createWidgetGroup(w, theme) {
       listening: false
     }));
   }
+  // For switch widgets, draw track + thumb in the "on" position.
+  if (w.type === 'switch') {
+    label.visible(false);
+    var sw = w.w || 10;
+    var sh = w.h || 10;
+    var pad = (w.padding !== undefined) ? parseFloat(w.padding) : 3;
+    if (isNaN(pad) || pad < 0) pad = 3;
+    var radius = (w.radius !== undefined) ? w.radius : Math.round(sh / 2);
+    var thumbSize = Math.max(8, sh - pad * 2);
+    var travel = Math.max(0, sw - pad * 2 - thumbSize);
+    var thumbRadius = (w.thumb_radius !== undefined) ? parseFloat(w.thumb_radius) : Math.round(thumbSize / 2);
+    if (isNaN(thumbRadius) || thumbRadius < 0) thumbRadius = Math.round(thumbSize / 2);
+
+    bg.fill(resolveColor(w.color, theme) || '#363f4a');
+    bg.cornerRadius(radius);
+
+    group.add(new Konva.Rect({
+      x: pad + travel,
+      y: pad,
+      width: thumbSize,
+      height: thumbSize,
+      fill: resolveColor(w.thumb_color, theme) || '#ffffff',
+      cornerRadius: thumbRadius,
+      listening: false
+    }));
+  }
+
   group._rect = bg;
   group._label = label;
   group._data = w;

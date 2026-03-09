@@ -1,9 +1,16 @@
-export function updateProps(container, selection, onChange, onDelete, onDuplicate, onAlign, theme) {
+export function updateProps(container, selection, onChange, onDelete, onDuplicate, onAlign, theme, onEditTheme, onEntitySearch, onAttributeSearch) {
+  _onEntitySearch    = onEntitySearch    || null;
+  _onAttributeSearch = onAttributeSearch || null;
   container.innerHTML = '';
 
-  addThemePalette(container, theme);
+  // Update panel header title and clear action buttons
+  var headerTitle   = document.getElementById('propsHeaderTitle');
+  var headerActions = document.getElementById('propsHeaderActions');
+  if (headerActions) headerActions.innerHTML = '';
 
   if (!selection || !selection.length) {
+    if (headerTitle) headerTitle.innerHTML = 'Selection';
+    addThemePalette(container, theme, onEditTheme);
     var noSel = document.createElement('div');
     noSel.className = 'prop';
     noSel.textContent = 'No selection';
@@ -11,22 +18,50 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     return;
   }
 
-  var reorderTitle = document.createElement('div');
-  reorderTitle.className = 'prop';
-  reorderTitle.innerHTML = '<strong>Reorder</strong>';
-  container.appendChild(reorderTitle);
+  if (selection.length > 1) {
+    if (headerTitle) headerTitle.innerHTML = '<span class="prop-header-id">' + selection.length + ' widgets selected</span>';
+  } else {
+    var hw = selection[0];
+    if (headerTitle) {
+      headerTitle.innerHTML =
+        '<span class="prop-type-badge">' + (hw.type || 'widget') + '</span>' +
+        '<span class="prop-header-id">' + (hw.id || '') + '</span>';
+    }
+  }
 
+  addThemePalette(container, theme, onEditTheme);
+
+  // Reorder — compact icon button row
   var reorderRow = document.createElement('div');
-  reorderRow.className = 'prop';
-  reorderRow.appendChild(makeAlignButton('Bring To Front', function () { onAlign('front'); }));
-  reorderRow.appendChild(makeAlignButton('Send To Back', function () { onAlign('back'); }));
+  reorderRow.style.cssText = 'display:flex;gap:4px;margin:4px 0 6px;';
+  function makeReorderBtn(icon, tip, action) {
+    var b = document.createElement('button');
+    b.className = 'prop-icon-btn';
+    b.title = tip;
+    b.innerHTML = '<span class="fa-icon">' + icon + '</span>';
+    b.addEventListener('click', function() { onAlign(action); });
+    return b;
+  }
+  reorderRow.appendChild(makeReorderBtn('&#xf102;', 'Bring to Front', 'front'));
+  reorderRow.appendChild(makeReorderBtn('&#xf103;', 'Send to Back',   'back'));
+  reorderRow.appendChild(makeReorderBtn('&#xf106;', 'Move Up',        'up'));
+  reorderRow.appendChild(makeReorderBtn('&#xf107;', 'Move Down',      'down'));
+  var reorderSpacer = document.createElement('div');
+  reorderSpacer.style.flex = '1';
+  reorderRow.appendChild(reorderSpacer);
+  var dupBtnR = document.createElement('button');
+  dupBtnR.className = 'prop-icon-btn';
+  dupBtnR.title = 'Duplicate';
+  dupBtnR.innerHTML = '<span class="fa-icon">&#xf0c5;</span>';
+  dupBtnR.addEventListener('click', function() { onDuplicate(); });
+  reorderRow.appendChild(dupBtnR);
+  var delBtnR = document.createElement('button');
+  delBtnR.className = 'prop-icon-btn danger';
+  delBtnR.title = 'Delete';
+  delBtnR.innerHTML = '<span class="fa-icon">&#xf1f8;</span>';
+  delBtnR.addEventListener('click', function() { onDelete(); });
+  reorderRow.appendChild(delBtnR);
   container.appendChild(reorderRow);
-
-  var reorderRow2 = document.createElement('div');
-  reorderRow2.className = 'prop';
-  reorderRow2.appendChild(makeAlignButton('Move Up', function () { onAlign('up'); }));
-  reorderRow2.appendChild(makeAlignButton('Move Down', function () { onAlign('down'); }));
-  container.appendChild(reorderRow2);
 
   if (selection.length > 1) {
     var headerMulti = document.createElement('div');
@@ -34,18 +69,6 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     headerMulti.innerHTML = '<strong>Multiple selection</strong> <span class="meta">' + selection.length + ' items</span>';
     container.appendChild(headerMulti);
 
-    var actionsMulti = document.createElement('div');
-    actionsMulti.className = 'prop';
-    var delBtnM = document.createElement('button');
-    delBtnM.textContent = 'Delete Selected';
-    delBtnM.addEventListener('click', function () { onDelete(); });
-    var dupBtnM = document.createElement('button');
-    dupBtnM.textContent = 'Duplicate Selected';
-    dupBtnM.style.marginLeft = '6px';
-    dupBtnM.addEventListener('click', function () { onDuplicate(); });
-    actionsMulti.appendChild(delBtnM);
-    actionsMulti.appendChild(dupBtnM);
-    container.appendChild(actionsMulti);
 
     var alignTitle = document.createElement('div');
     alignTitle.className = 'prop';
@@ -69,29 +92,37 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
   }
 
   var w = selection[0];
-  addRawJsonButton(container, w, onChange);
 
-  var header = document.createElement('div');
-  header.className = 'prop';
-  header.innerHTML = '<strong>' + (w.id || '(no id)') + '</strong> <span class="meta">' + (w.type || 'unknown') + '</span>';
-  container.appendChild(header);
+  // Raw JSON button — inject into panel header
+  if (headerActions) {
+    var rawBtn = document.createElement('button');
+    rawBtn.className = 'prop-icon-btn';
+    rawBtn.title = 'Edit Raw JSON';
+    rawBtn.innerHTML = '<span class="fa-icon">&#xf121;</span>';
+    rawBtn.addEventListener('click', function() { openRawWidgetJsonModal(w, onChange); });
+    headerActions.appendChild(rawBtn);
+  }
 
-  // Friendly display name — designer-only hint, stored as w.name in JSON.
-  // Shown in the widget tree as the primary label instead of the bare ID.
-  addText(container, 'name', w.name, onChange);
+  addSectionHeader(container, 'Widget Settings');
 
-  var actions = document.createElement('div');
-  actions.className = 'prop';
-  var delBtn = document.createElement('button');
-  delBtn.textContent = 'Delete';
-  delBtn.addEventListener('click', function () { onDelete(); });
-  var dupBtn = document.createElement('button');
-  dupBtn.textContent = 'Duplicate';
-  dupBtn.style.marginLeft = '6px';
-  dupBtn.addEventListener('click', function () { onDuplicate(); });
-  actions.appendChild(delBtn);
-  actions.appendChild(dupBtn);
-  container.appendChild(actions);
+  // Name field + delete/duplicate icons on same row
+  var nameLbl = document.createElement('div');
+  nameLbl.style.cssText = 'font-size:11px;color:var(--muted);margin:4px 0 2px;';
+  nameLbl.textContent = 'name';
+  container.appendChild(nameLbl);
+
+  var nameRow = document.createElement('div');
+  nameRow.className = 'prop-name-row';
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'name (designer label)';
+  nameInput.value = w.name !== undefined ? String(w.name) : '';
+  nameInput.addEventListener('change', function() {
+    var v = nameInput.value === '' ? undefined : nameInput.value;
+    onChange('name', v);
+  });
+  nameRow.appendChild(nameInput);
+  container.appendChild(nameRow);
 
   addXYWHRow(container, w, onChange);
 
@@ -99,7 +130,7 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addSectionHeader(container, 'Content');
     addText(container, 'text', w.text, onChange);
     addText(container, 'entity', w.entity, onChange);
-    addText(container, 'entity_attribute', w.entity_attribute, onChange);
+    addText(container, 'entity_attribute', w.entity_attribute, onChange, { getEntity: function() { return w.entity; } });
     addText(container, 'entity2', w.entity2, onChange);
     addSelect(container, 'format', w.format,
       ['', 'power', 'power_abs', 'power_prefix', 'kwh', 'percent',
@@ -125,14 +156,34 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     );
     addNumber(container, 'opacity', w.opacity, onChange);
 
+    addSectionHeader(container, 'Border');
+    addPairRow(container,
+      'border_width', makeNumberInput(w.border_width, function(v) { onChange('border_width', v); }),
+      'border_color', makeTextInput(w.border_color,   function(v) { onChange('border_color', v); })
+    );
+
     addOverridesButton(container, w, onChange);
   }
 
   if (w.type === 'rectangle') {
-    addSectionHeader(container, 'Content');
-    addText(container, 'background', w.background, onChange);
-    addNumber(container, 'radius', w.radius, onChange);
+    addSectionHeader(container, 'Entity');
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'entity2', w.entity2, onChange);
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); }),
+      'radius',     makeNumberInput(w.radius,    function(v) { onChange('radius', v); })
+    );
+    addNumber(container, 'opacity', w.opacity, onChange);
     addJsonObjectButton(container, 'Gradient', w, 'gradient', onChange);
+
+    addSectionHeader(container, 'Border');
+    addPairRow(container,
+      'border_width', makeNumberInput(w.border_width, function(v) { onChange('border_width', v); }),
+      'border_color', makeTextInput(w.border_color,   function(v) { onChange('border_color', v); })
+    );
+
     addSectionHeader(container, 'Action');
     addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
@@ -143,6 +194,7 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addText(container, 'label', w.label, onChange);
     addText(container, 'icon', w.icon, onChange);
     addText(container, 'entity', w.entity, onChange);
+    addText(container, 'entity2', w.entity2, onChange);
 
     addSectionHeader(container, 'Appearance');
     addPairRow(container,
@@ -163,6 +215,12 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     );
     addNumber(container, 'opacity', w.opacity, onChange);
 
+    addSectionHeader(container, 'Border');
+    addPairRow(container,
+      'border_width', makeNumberInput(w.border_width, function(v) { onChange('border_width', v); }),
+      'border_color', makeTextInput(w.border_color,   function(v) { onChange('border_color', v); })
+    );
+
     addSectionHeader(container, 'Action');
     addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
@@ -172,7 +230,7 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addSectionHeader(container, 'Source');
     addText(container, 'url', w.url, onChange);
     addText(container, 'entity', w.entity, onChange);
-    addText(container, 'entity_attribute', w.entity_attribute, onChange);
+    addText(container, 'entity_attribute', w.entity_attribute, onChange, { getEntity: function() { return w.entity; } });
     addSelect(container, 'fit', w.fit, ['cover', 'contain', 'stretch'], onChange);
     addCheckbox(container, 'fullscreen_on_tap', !!w.fullscreen_on_tap, function(checked) {
       onChange('fullscreen_on_tap', checked ? true : undefined);
@@ -182,26 +240,44 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addNumber(container, 'radius', w.radius, onChange);
     addJsonObjectButton(container, 'Gradient', w, 'gradient', onChange);
     addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Border');
+    addPairRow(container,
+      'border_width', makeNumberInput(w.border_width, function(v) { onChange('border_width', v); }),
+      'border_color', makeTextInput(w.border_color,   function(v) { onChange('border_color', v); })
+    );
+
+    addOverridesButton(container, w, onChange);
   }
 
   if (w.type === 'bar') {
     addSectionHeader(container, 'Data');
     addText(container, 'entity', w.entity, onChange);
-    addNumber(container, 'max', w.max, onChange);
+    addText(container, 'entity2', w.entity2, onChange);
+    addText(container, 'value_attribute', w.value_attribute, onChange);
+    addPairRow(container,
+      'min', makeNumberInput(w.min, function(v) { onChange('min', v); }),
+      'max', makeNumberInput(w.max, function(v) { onChange('max', v); })
+    );
 
     addSectionHeader(container, 'Appearance');
     addPairRow(container,
-      'color',      makeTextInput(w.color,      function(v) { onChange('color', v); }),
-      'background', makeTextInput(w.background, function(v) { onChange('background', v); })
+      'color',       makeTextInput(w.color,       function(v) { onChange('color', v); }),
+      'track_color', makeTextInput(w.track_color, function(v) { onChange('track_color', v); })
     );
+    addText(container, 'background', w.background, onChange);
     addNumber(container, 'radius', w.radius, onChange);
+    addNumber(container, 'opacity', w.opacity, onChange);
 
     addThresholdsButton(container, w, onChange);
+    addOverridesButton(container, w, onChange);
   }
 
   if (w.type === 'arc') {
     addSectionHeader(container, 'Data');
     addText(container, 'entity', w.entity, onChange);
+    addText(container, 'entity2', w.entity2, onChange);
+    addText(container, 'value_attribute', w.value_attribute, onChange);
     addSelect(container, 'format', w.format,
       ['', 'power', 'power_abs', 'power_prefix', 'kwh', 'percent',
        'time_24', 'time_12', 'date_iso', 'date_short', 'datetime_24', 'datetime_12'],
@@ -227,6 +303,15 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
       'label',       makeTextInput(w.label,       function(v) { onChange('label', v); }),
       'label_color', makeTextInput(w.label_color, function(v) { onChange('label_color', v); })
     );
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Marker');
+    addText(container, 'marker_value_attribute', w.marker_value_attribute, onChange);
+    addPairRow(container,
+      'marker_color', makeTextInput(w.marker_color,   function(v) { onChange('marker_color', v); }),
+      'marker_style', makeSelectInput(w.marker_style, ['dot', 'tick'], function(v) { onChange('marker_style', v); })
+    );
+    addNumber(container, 'marker_size', w.marker_size, onChange);
 
     addThresholdsButton(container, w, onChange);
     addOverridesButton(container, w, onChange);
@@ -258,6 +343,58 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addNumber(container, 'radius', w.radius, onChange);
     addNumber(container, 'opacity', w.opacity, onChange);
 
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
+    addOverridesButton(container, w, onChange);
+  }
+
+  if (w.type === 'switch') {
+    addSectionHeader(container, 'Required');
+    addPairRow(container,
+      'on_value',  makeTextInput(w.on_value,  function(v) { onChange('on_value', v); }),
+      'off_value', makeTextInput(w.off_value, function(v) { onChange('off_value', v); })
+    );
+
+    addSectionHeader(container, 'Entity');
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'value_attribute', w.value_attribute, onChange);
+
+    addSectionHeader(container, 'Track');
+    addText(container, 'color', w.color, onChange);
+    addPairRow(container,
+      'radius',  makeNumberInput(w.radius,  function(v) { onChange('radius', v); }),
+      'padding', makeNumberInput(w.padding, function(v) { onChange('padding', v); })
+    );
+
+    addSectionHeader(container, 'Thumb');
+    addPairRow(container,
+      'thumb_color',  makeTextInput(w.thumb_color,  function(v) { onChange('thumb_color', v); }),
+      'thumb_radius', makeNumberInput(w.thumb_radius, function(v) { onChange('thumb_radius', v); })
+    );
+
+    addSectionHeader(container, 'Icon');
+    addPairRow(container,
+      'icon',       makeTextInput(w.icon,       function(v) { onChange('icon', v); }),
+      'icon_color', makeTextInput(w.icon_color, function(v) { onChange('icon_color', v); })
+    );
+    addNumber(container, 'icon_scale', w.icon_scale, onChange);
+
+    addSectionHeader(container, 'Label');
+    addPairRow(container,
+      'label',       makeTextInput(w.label,       function(v) { onChange('label', v); }),
+      'label_color', makeTextInput(w.label_color, function(v) { onChange('label_color', v); })
+    );
+    addNumber(container, 'label_size', w.label_size, onChange);
+
+    addSectionHeader(container, 'Behaviour');
+    addCheckbox(container, 'locked', !!w.locked, function(c) {
+      onChange('locked', c || undefined);
+    });
+    addCheckbox(container, 'optimistic (off = wait for HA)', w.optimistic !== false, function(c) {
+      onChange('optimistic', c ? undefined : false);
+    });
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Action');
     addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
   }
@@ -296,42 +433,153 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
   }
+
+  if (w.type === 'clock') {
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'color',      makeTextInput(w.color,      function(v) { onChange('color', v); }),
+      'background', makeTextInput(w.background, function(v) { onChange('background', v); })
+    );
+    addNumber(container, 'font_size', w.font_size, onChange);
+    addNumber(container, 'opacity', w.opacity, onChange);
+  }
+
+  if (w.type === 'camera') {
+    addSectionHeader(container, 'Source');
+    addText(container, 'entity', w.entity, onChange);
+    addText(container, 'snapshot_entity', w.snapshot_entity, onChange);
+    addText(container, 'stream_entity', w.stream_entity, onChange);
+    addText(container, 'url', w.url, onChange);
+    addSelect(container, 'preview', w.preview,
+      ['mjpeg', 'snapshot', 'poster', 'url'],
+      onChange);
+
+    addSectionHeader(container, 'Behaviour');
+    addText(container, 'label', w.label, onChange);
+    addSelect(container, 'fit', w.fit, ['cover', 'contain', 'stretch'], onChange);
+    addNumber(container, 'refresh_interval', w.refresh_interval, onChange);
+    addCheckbox(container, 'fullscreen_on_tap', w.fullscreen_on_tap !== false, function(checked) {
+      onChange('fullscreen_on_tap', checked ? undefined : false);
+    });
+
+    addSectionHeader(container, 'Appearance');
+    addNumber(container, 'radius', w.radius, onChange);
+    addNumber(container, 'opacity', w.opacity, onChange);
+  }
+
+  if (w.type === 'history_chart') {
+    addSectionHeader(container, 'Data');
+    addText(container, 'entity', w.entity, onChange, { domain: 'sensor', requireStateClass: true });
+    addSelect(container, 'period', w.period, ['hour', 'day', 'month', 'year'], onChange);
+    addPairRow(container,
+      'count',    makeNumberInput(w.count,    function(v) { onChange('count', v); }),
+      'stat_type', makeSelectInput(w.stat_type, ['mean', 'change'], function(v) { onChange('stat_type', v); })
+    );
+    addNumber(container, 'max', w.max, onChange);
+    addNumber(container, 'refresh_interval', w.refresh_interval, onChange);
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'color',       makeTextInput(w.color,       function(v) { onChange('color', v); }),
+      'today_color', makeTextInput(w.today_color, function(v) { onChange('today_color', v); })
+    );
+    addPairRow(container,
+      'track_color', makeTextInput(w.track_color, function(v) { onChange('track_color', v); }),
+      'background',  makeTextInput(w.background,  function(v) { onChange('background', v); })
+    );
+    addNumber(container, 'radius', w.radius, onChange);
+    addCheckbox(container, 'show_values', !!w.show_values, function(c) {
+      onChange('show_values', c ? true : undefined);
+    });
+    addCheckbox(container, 'show_labels', !!w.show_labels, function(c) {
+      onChange('show_labels', c ? true : undefined);
+    });
+
+    addSectionHeader(container, 'Fullscreen');
+    addCheckbox(container, 'fullscreen_on_tap', !!w.fullscreen_on_tap, function(checked) {
+      onChange('fullscreen_on_tap', checked ? true : undefined);
+    });
+    addJsonArrayButton(container, 'Fullscreen Views', w, 'fullscreen_views', onChange);
+  }
+
+  if (w.type === 'agenda') {
+    addSectionHeader(container, 'Calendars');
+    addJsonArrayButton(container, 'Calendars', w, 'calendars', onChange);
+
+    addSectionHeader(container, 'Data');
+    addPairRow(container,
+      'days_ahead',       makeNumberInput(w.days_ahead,       function(v) { onChange('days_ahead', v); }),
+      'refresh_interval', makeNumberInput(w.refresh_interval, function(v) { onChange('refresh_interval', v); })
+    );
+    addPairRow(container,
+      'time_format', makeSelectInput(w.time_format, ['12h', '24h'],          function(v) { onChange('time_format', v); }),
+      'layout',      makeSelectInput(w.layout,      ['list', 'columns'],      function(v) { onChange('layout', v); })
+    );
+
+    addSectionHeader(container, 'Appearance');
+    addPairRow(container,
+      'background',  makeTextInput(w.background,  function(v) { onChange('background', v); }),
+      'muted_color', makeTextInput(w.muted_color, function(v) { onChange('muted_color', v); })
+    );
+    addPairRow(container,
+      'radius',       makeNumberInput(w.radius,       function(v) { onChange('radius', v); }),
+      'padding',      makeNumberInput(w.padding,      function(v) { onChange('padding', v); })
+    );
+    addPairRow(container,
+      'font_size',    makeNumberInput(w.font_size,    function(v) { onChange('font_size', v); }),
+      'agenda_scale', makeNumberInput(w.agenda_scale, function(v) { onChange('agenda_scale', v); })
+    );
+    addNumber(container, 'opacity', w.opacity, onChange);
+
+    addSectionHeader(container, 'Options');
+    addCheckbox(container, 'today_indicator', !!w.today_indicator, function(c) {
+      onChange('today_indicator', c ? true : undefined);
+    });
+    addCheckbox(container, 'show_blank_days', !!w.show_blank_days, function(c) {
+      onChange('show_blank_days', c ? true : undefined);
+    });
+    addCheckbox(container, 'show_month_headers', w.show_month_headers !== false, function(c) {
+      onChange('show_month_headers', c ? undefined : false);
+    });
+    addCheckbox(container, 'legend', !!w.legend, function(c) {
+      onChange('legend', c ? true : undefined);
+    });
+  }
 }
 
 // ---- Theme palette -------------------------------------------------------
 
-function addThemePalette(container, theme) {
+function addThemePalette(container, theme, onEditTheme) {
   if (!theme || !theme.colors) return;
   var tokens = Object.keys(theme.colors);
   if (!tokens.length) return;
 
   var header = document.createElement('div');
   header.className = 'prop';
-  header.innerHTML = '<strong>Theme Colors</strong> <span class="meta">click to copy token</span>';
+  header.style.cssText = 'display:flex;align-items:center;';
+  header.innerHTML = '<strong>Theme Colors</strong> <span class="meta" style="flex:1;margin-left:4px;">click to copy token</span>';
+  if (onEditTheme) {
+    var editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit Theme';
+    editBtn.className = 'btn-small';
+    editBtn.addEventListener('click', onEditTheme);
+    header.appendChild(editBtn);
+  }
   container.appendChild(header);
 
   var grid = document.createElement('div');
-  grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px 8px;';
+  grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px 8px;';
   container.appendChild(grid);
 
   tokens.forEach(function(token) {
     var color = theme.colors[token];
-    var chip = document.createElement('div');
-    chip.title = token + ': ' + color;
-    chip.style.cssText = 'cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;width:52px;';
-
     var swatch = document.createElement('div');
-    swatch.style.cssText = 'width:36px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,0.15);transition:outline 0.1s;';
+    swatch.title = token + ': ' + color;
+    swatch.style.cssText = 'cursor:pointer;width:28px;height:16px;border-radius:3px;' +
+      'border:1px solid rgba(255,255,255,0.15);transition:outline 0.1s;flex-shrink:0;';
     swatch.style.background = color;
 
-    var lbl = document.createElement('div');
-    lbl.textContent = token;
-    lbl.style.cssText = 'font-size:9px;color:#9fa5ad;text-align:center;line-height:1.2;word-break:break-all;';
-
-    chip.appendChild(swatch);
-    chip.appendChild(lbl);
-
-    chip.addEventListener('click', function() {
+    swatch.addEventListener('click', function() {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(token).catch(function() {});
       }
@@ -339,7 +587,7 @@ function addThemePalette(container, theme) {
       setTimeout(function() { swatch.style.outline = ''; }, 600);
     });
 
-    grid.appendChild(chip);
+    grid.appendChild(swatch);
   });
 }
 
@@ -460,9 +708,47 @@ function addNumber(container, key, value, onChange) {
   addRow(container, key, input);
 }
 
-function addText(container, key, value, onChange) {
+var _onEntitySearch    = null;
+var _onAttributeSearch = null;
+
+function addText(container, key, value, onChange, searchOptions) {
   var input = makeTextInput(value, function(v) { onChange(key, v); });
-  addRow(container, key, input);
+
+  var showEntitySearch = (key === 'entity' || key === 'entity2') && _onEntitySearch;
+  var showAttrSearch   = key === 'entity_attribute' && _onAttributeSearch && searchOptions && searchOptions.getEntity;
+
+  if (showEntitySearch || showAttrSearch) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:4px;width:100%;';
+    input.style.flex = '1';
+    var searchBtn = document.createElement('button');
+    searchBtn.className = 'prop-icon-btn';
+    searchBtn.innerHTML = '<span class="fa-icon">&#xf002;</span>';
+
+    if (showEntitySearch) {
+      searchBtn.title = 'Search HA entities';
+      searchBtn.addEventListener('click', function() {
+        _onEntitySearch(input.value, function(entityId) {
+          input.value = entityId;
+          input.dispatchEvent(new Event('change'));
+        }, searchOptions || null);
+      });
+    } else {
+      searchBtn.title = 'Browse entity attributes';
+      searchBtn.addEventListener('click', function() {
+        _onAttributeSearch(searchOptions.getEntity, input.value, function(attrName) {
+          input.value = attrName;
+          input.dispatchEvent(new Event('change'));
+        });
+      });
+    }
+
+    wrap.appendChild(input);
+    wrap.appendChild(searchBtn);
+    addRow(container, key, wrap);
+  } else {
+    addRow(container, key, input);
+  }
 }
 
 function addSelect(container, key, value, options, onChange) {
@@ -484,18 +770,28 @@ function addCheckbox(container, label, checked, onChange) {
   container.appendChild(row);
 }
 
+function makeModalBtn(icon, label, count, onClick) {
+  var btn = document.createElement('button');
+  btn.className = 'prop-modal-btn';
+  btn.innerHTML = '<span class="fa-icon">' + icon + '</span>' + label;
+  if (count) {
+    var badge = document.createElement('span');
+    badge.className = 'prop-modal-btn-count';
+    badge.textContent = count;
+    btn.appendChild(badge);
+  }
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
 function addOverridesButton(container, w, onChange) {
   addSectionHeader(container, 'Conditional Overrides');
   var count = (w.overrides && w.overrides.length) ? w.overrides.length : 0;
   var row = document.createElement('div');
   row.className = 'prop';
-  var btn = document.createElement('button');
-  btn.textContent = count ? 'Edit Overrides (' + count + ' rules)' : 'Add Overrides';
-  btn.style.width = '100%';
-  btn.addEventListener('click', function() {
+  row.appendChild(makeModalBtn('&#xf0b0;', count ? 'Edit Overrides' : 'Add Overrides', count, function() {
     openJsonArrayModal('Conditional Overrides', w, 'overrides', onChange);
-  });
-  row.appendChild(btn);
+  }));
   container.appendChild(row);
 }
 
@@ -504,61 +800,35 @@ function addThresholdsButton(container, w, onChange) {
   var count = (w.thresholds && w.thresholds.length) ? w.thresholds.length : 0;
   var row = document.createElement('div');
   row.className = 'prop';
-  var btn = document.createElement('button');
-  btn.textContent = count ? 'Edit Thresholds (' + count + ' rules)' : 'Add Thresholds';
-  btn.style.width = '100%';
-  btn.addEventListener('click', function() {
+  row.appendChild(makeModalBtn('&#xf160;', count ? 'Edit Thresholds' : 'Add Thresholds', count, function() {
     openJsonArrayModal('Thresholds', w, 'thresholds', onChange);
-  });
-  row.appendChild(btn);
+  }));
   container.appendChild(row);
 }
 
 function addJsonObjectButton(container, label, w, key, onChange) {
+  var icons = { 'Action': '&#xf0e7;', 'Gradient': '&#xf1fc;' };
+  var icon = icons[label] || '&#xf013;';
   var row = document.createElement('div');
   row.className = 'prop';
-  var btn = document.createElement('button');
-  btn.textContent = w[key] ? ('Edit ' + label) : ('Add ' + label);
-  btn.style.width = '100%';
-  btn.addEventListener('click', function() {
+  row.appendChild(makeModalBtn(icon, w[key] ? 'Edit ' + label : 'Add ' + label, 0, function() {
     openJsonObjectModal(label, w, key, onChange);
-  });
-  row.appendChild(btn);
+  }));
   container.appendChild(row);
 }
 
 function addJsonArrayButton(container, label, w, key, onChange) {
-  var row = document.createElement('div');
-  row.className = 'prop';
+  var icons = { 'Options': '&#xf03a;' };
+  var icon = icons[label] || '&#xf03a;';
   var count = (w[key] && w[key].length) ? w[key].length : 0;
-  var btn = document.createElement('button');
-  btn.textContent = count ? ('Edit ' + label + ' (' + count + ')') : ('Add ' + label);
-  btn.style.width = '100%';
-  btn.addEventListener('click', function() {
-    openJsonArrayModal(label, w, key, onChange);
-  });
-  row.appendChild(btn);
-  container.appendChild(row);
-}
-
-function addRawJsonButton(container, w, onChange) {
   var row = document.createElement('div');
   row.className = 'prop';
-  row.style.display = 'flex';
-  row.style.justifyContent = 'flex-end';
-
-  var btn = document.createElement('button');
-  btn.innerHTML = '<span class="fa-icon">&#xf121;</span>&nbsp;Raw JSON';
-  btn.style.display = 'inline-flex';
-  btn.style.alignItems = 'center';
-  btn.style.gap = '6px';
-  btn.addEventListener('click', function() {
-    openRawWidgetJsonModal(w, onChange);
-  });
-
-  row.appendChild(btn);
+  row.appendChild(makeModalBtn(icon, count ? 'Edit ' + label : 'Add ' + label, count, function() {
+    openJsonArrayModal(label, w, key, onChange);
+  }));
   container.appendChild(row);
 }
+
 
 function openJsonArrayModal(heading, w, key, onChange) {
   var backdrop = document.createElement('div');
@@ -594,9 +864,46 @@ function openJsonArrayModal(heading, w, key, onChange) {
   var applyBtn = document.createElement('button');
   applyBtn.textContent = 'Apply';
   applyBtn.style.cssText = 'background:#8ADF45;color:#000;border-color:#8ADF45;font-weight:600;';
+  var exampleBtn = document.createElement('button');
+  exampleBtn.textContent = 'Insert Example';
+  exampleBtn.style.cssText = 'font-size:12px;';
   ftr.appendChild(errMsg);
+  ftr.appendChild(exampleBtn);
   ftr.appendChild(cancelBtn);
   ftr.appendChild(applyBtn);
+
+  var ARRAY_EXAMPLES = {
+    overrides: [{ when: { logic: 'all', conditions: [{ type: 'equals', value: 'on' }] }, set: { color: 'primary' } }],
+    thresholds: [
+      { value: 0,  color: 'danger' },
+      { value: 30, color: 'warning' },
+      { value: 60, color: 'primary' }
+    ],
+    calendars: [{ entity: 'calendar.home', color: 'primary', label: 'Home' }],
+    options: [
+      { label: 'Option 1', service: 'scene.turn_on', entity_id: 'scene.option_1' },
+      { label: 'Option 2', service: 'scene.turn_on', entity_id: 'scene.option_2' }
+    ],
+    fullscreen_views: [
+      { label: '7d',  period: 'day',   count: 7,  stat_type: 'change' },
+      { label: '30d', period: 'day',   count: 30, stat_type: 'change' }
+    ]
+  };
+
+  exampleBtn.addEventListener('click', function() {
+    var example = ARRAY_EXAMPLES[key];
+    if (!example) return;
+    var current = [];
+    try { current = JSON.parse(textarea.value); if (!Array.isArray(current)) current = []; } catch(e) { current = []; }
+    if (current.length === 0) {
+      textarea.value = JSON.stringify(example, null, 2);
+    } else {
+      current.push(example[0]);
+      textarea.value = JSON.stringify(current, null, 2);
+    }
+    errMsg.textContent = '';
+    textarea.style.borderColor = '#2d3641';
+  });
 
   modal.appendChild(hdr);
   modal.appendChild(textarea);
@@ -679,9 +986,31 @@ function openJsonObjectModal(heading, w, key, onChange) {
   var applyBtn = document.createElement('button');
   applyBtn.textContent = 'Apply';
   applyBtn.style.cssText = 'background:#8ADF45;color:#000;border-color:#8ADF45;font-weight:600;';
+  var exampleBtn = document.createElement('button');
+  exampleBtn.textContent = 'Insert Example';
+  exampleBtn.style.cssText = 'font-size:12px;';
   ftr.appendChild(errMsg);
+  ftr.appendChild(exampleBtn);
   ftr.appendChild(cancelBtn);
   ftr.appendChild(applyBtn);
+
+  var OBJECT_EXAMPLES = {
+    action:   { type: 'service', service: 'light.toggle', entity_id: 'light.living_room' },
+    gradient: { type: 'linear', angle: 180, stops: [{ color: 'surface', pos: 0 }, { color: 'primary', pos: 1 }] }
+  };
+
+  exampleBtn.addEventListener('click', function() {
+    var example = OBJECT_EXAMPLES[key];
+    if (!example) return;
+    var current = {};
+    try { current = JSON.parse(textarea.value); } catch(e) { current = {}; }
+    var isEmpty = Object.keys(current).length === 0;
+    if (isEmpty) {
+      textarea.value = JSON.stringify(example, null, 2);
+      errMsg.textContent = '';
+      textarea.style.borderColor = '#2d3641';
+    }
+  });
 
   modal.appendChild(hdr);
   modal.appendChild(textarea);

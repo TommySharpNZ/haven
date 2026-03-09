@@ -157,7 +157,7 @@ Quick reference for which attributes apply to each widget type, and which can be
 | `preview` | — | — | — | — | — | — | ✓ | — | — | mjpeg / snapshot / poster / url |
 | `snapshot_entity` | — | — | — | — | — | — | ✓ | — | — | |
 | `stream_entity` | — | — | — | — | — | — | ✓ | — | — | used for fullscreen HLS |
-| `refresh_interval` | — | — | — | — | — | — | ✓ | — | ✓ | ms for camera, seconds for hch |
+| `refresh_interval` | — | — | — | — | — | — | ✓ | — | ✓ | seconds for camera, history_chart, agenda |
 | `fit` | — | — | — | — | — | ✓ | ✓ | — | — | cover / contain |
 | `url` | — | — | — | — | — | ✓ | ✓ | — | — | img: static; cam: direct stream URL |
 

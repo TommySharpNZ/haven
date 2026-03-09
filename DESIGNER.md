@@ -1,203 +1,231 @@
 # HAven Designer
 
-A visual drag-and-drop editor for HAven device configs. Lives in `designer.html` alongside the main dashboard files - no separate install, no build tools, same static file philosophy as the rest of HAven.
+A visual drag-and-drop editor for HAven device configs. Lives in `designer.html` alongside the main dashboard files — no separate install, no build tools, same static file philosophy as the rest of HAven.
 
 ---
 
-## Status
+## Overview
 
-**Not yet implemented.** This document captures the design thinking and planned approach before development begins.
+The designer lets you build and edit HAven device configs visually without hand-editing JSON. You can drag widgets to reposition them, edit all properties through a sidebar panel, manage pages, configure the device and theme, and preview the result in a live runtime iframe — all in the browser.
 
----
-
-## Goals
-
-- Load any device config JSON and render it visually on a to-scale canvas
-- Click a widget to select it and view/edit its properties in a sidebar
-- Drag widgets to reposition them, with optional grid snapping
-- Add new widgets from a palette, delete existing ones
-- Output valid JSON that can be dropped straight back into `devices/`
-- Work entirely in the browser - no server, no build step
-
-## Non-Goals
-
-- Not a replacement for hand-editing JSON for power users
-- Not a cloud service or a hosted tool
-- No multi-user collaboration
-- No version history or undo beyond basic browser state
+Open it at: `http://your-ha-ip:8123/local/haven/designer.html`
 
 ---
 
-## Key Considerations Before Building
+## Getting Started
 
-### Arc/gauge widget is now part of the set
-The arc/gauge widget now exists in the runtime, so the designer should include it from day one.
+### Opening a config
 
-### Icon spacing (MDI)
-Spacing around `[mdi:icon-name]` tokens is handled via `&nbsp;` in text and inline `display: inline` on MDI spans inside labels/buttons. The designer should render the same as the runtime.
+From the welcome screen:
 
-### Page 0 awareness
-Page 0 widgets are persistent and render on top of every page (now implemented in runtime). The designer should composite page 0 on top of the selected page exactly as it appears at runtime.
+- **Open existing file** — pick a `devices/*.json` file using the browser's file picker. On Chrome/Edge the designer opens the directory so it can save changes back to the same file.
+- **New device** — enter a name and pick a canvas size from presets (1024×768, 1280×800, 1920×1080, 800×480, 480×320) or enter a custom size.
 
-### groupid is already in the schema
-The `groupid` field is already supported in the widget schema and ignored by the runtime. The designer uses it to treat widgets with the same groupid as an atomic unit for selection and movement. No schema changes needed.
-
-### Separate file, shared mental model
-The designer lives in `designer.html` and has its own JS. It does not modify `app.js`. Both files share the same JSON config schema - the designer reads and writes the same files that the dashboard runtime reads. No separate designer metadata format.
+You can also pass `?device=name` in the URL to load `devices/name.json` directly (same as the runtime app).
 
 ---
 
-## Planned Phases
+## Toolbar
 
-### Phase 1 - Canvas Viewer (read-only)
-*Useful on its own. Gets the scaffolding right before adding complexity.*
-
-- Load a config JSON (file picker or URL parameter `?device=name`)
-- Render the canvas at design resolution with all widgets visible (including page 0 overlay)
-- Page switcher to view each page
-- Click a widget to highlight it and show its properties in a read-only sidebar
-- No editing, no saving
-
-This phase answers the hardest question: can we render the config accurately enough that what you see in the designer matches what you see in the dashboard? The rendering code will be shared/adapted from `app.js`.
-
----
-
-## PoC Implementation Plan (Now)
-
-**Scope:** A small `designer.html` + `designer/` ES modules PoC that proves the hardest interactions first.
-
-**Tech choice:** Use Konva.js (local CDN link) for drag, zoom, snap, and selection. No build tooling required.
-
-**PoC features:**
-- Load `devices/test-designer.json` by default (override via `?device=name`)
-- Render a single page at a time + Page 0 overlay
-- Drag widgets to reposition (grid snapping)
-- Zoom with mouse wheel
-- Toggle “Pan mode” to drag the canvas
-- Tree view of widgets in JSON order
-- Hide/show widgets (designer‑only, in-memory)
-- Simple selection sidebar showing id/type/x/y/w/h
-- Property editor (x/y/w/h, label text/color/background/font)
-- Delete/Duplicate actions in selection panel
-- Undo/redo snapshot stack
-- Preview toggle (true runtime render, current page, synced zoom)
-- Guides with persistence (stored in device JSON under `designer.guides`)
-- Add Label / Add Rect buttons
-
-**Files:**
-- `designer.html`
-- `designer/app.js`
-- `designer/render.js`
-- `designer/grid.js`
-- `designer/tree.js`
-- `designer/selection.js`
-- `designer/io.js`
-- `devices/test-designer.json`
-
-### Phase 2 - Property Editing
-*The most valuable phase for day-to-day config work.*
-
-- Click a widget to select it
-- Sidebar shows editable fields: text, font_size, colors, entity, format, action, etc.
-- Changes reflect live on the canvas
-- Save button outputs the updated JSON (browser download)
-- Field types inferred from schema: text input, number, color picker, dropdown for enums, entity picker (fetches entity list from HA)
-
-### Phase 3 - Drag and Reposition
-- Drag selected widget to new position
-- x/y update in real time
-- Optional grid snapping (configurable grid size, e.g. 8px)
-- Resize handles for w/h
-- Arrow key nudging (1px or 8px with shift)
-- Group selection: click groupid group moves all widgets together
-
-### Phase 4 - Add and Delete
-- Widget palette panel listing all widget types (label, rectangle, bar, button, clock, image, camera, arc)
-- Drag from palette onto canvas to create a new widget with sensible defaults
-- Delete key removes selected widget
-- Duplicate selected widget (cmd/ctrl+D)
-- Z-order controls (send to back, bring to front - reorders in the widgets array)
+| Button | Action |
+|--------|--------|
+| **New…** | Create a new device config |
+| **Open** | Open an existing device JSON file |
+| **Save** | Save back to disk (File System Access API). Creates a timestamped backup before overwriting. |
+| **Download** | Save as a downloaded file (fallback for Firefox or when File System Access is unavailable) |
+| **↩ / ↪** | Undo / Redo (50 levels deep) |
+| **Copy / Cut / Paste** | Clipboard actions for selected widgets (also `Ctrl/Cmd + C/X/V`) |
+| **Snap** | Toggle grid snap (8px grid). Active state shown highlighted. |
+| **Pan** | Toggle pan mode. Right-click drag to pan is always available without enabling this. |
+| **Preview** | Toggle a live preview iframe showing the runtime with your current config injected. |
+| **Pages…** | Open the page management modal |
+| **Device…** | Edit device properties (name, canvas size, default page, return timer, screensaver) |
+| **Close** | Close the current device and return to the welcome screen |
 
 ---
 
-## Architecture Notes
+## Canvas
 
-**Rendering:** The designer canvas uses the same CSS transform scaling approach as the runtime. Widget rendering functions will be adapted from `app.js` but simplified - no entity subscriptions, no WebSocket, just static rendering from config values. A thin shared rendering layer is the goal rather than duplicating all of `app.js`. Page 0 should be rendered inside the canvas and layered on top.
+Widgets are placed at absolute pixel positions matching the runtime coordinate space.
 
-**HA connection (optional):** The designer can optionally connect to HA (using stored localStorage credentials) to:
-- Populate entity pickers with real entity IDs
-- Show live entity values in the canvas preview
-- Validate that referenced entities exist
+- **Click** — select a widget
+- **Shift+click** — add/remove from a multi-selection
+- **Drag** — move selected widgets (snaps to grid if Snap is on)
+- **Arrow keys** — nudge by 1px (or 10px with Shift)
+- **Scroll** — zoom in/out
+- **Right-click drag** — pan the canvas (or use Pan mode for left-click drag)
 
-If not connected, entity fields are plain text inputs and values show as placeholder text.
-
-**Config I/O:**
-- Load: file picker (`<input type="file">`) or `?device=name` URL parameter (fetches from `devices/` folder)
-- Save: browser download of the modified JSON. No server-side save - the user drops the file back into their `devices/` folder.
-- Future: direct save to HA via the REST API (`/api/config/...` or file editor API) if feasible.
-
-**Selection model:**
-- Single click: select widget, show in sidebar
-- Click on groupid group: select all widgets in group
-- Ctrl+click: add to selection
-- Escape: deselect
-- Selected widgets show a blue outline and resize handles
-
-**Template expressions:** Labels support `{{ ... }}` expressions in runtime. Designer should render templates using placeholder values or live entity values if connected to HA. At minimum, leave the template string visible.
-
-**Grid:**
-- Default 8px grid, toggleable
-- Snap to grid on drag and resize
-- Grid overlay shown when dragging (subtle dots)
+Page 0 widgets (persistent overlay) are rendered on top of the current page, just as they appear at runtime.
 
 ---
 
-## UI Layout
+## Widget Tree (left panel)
+
+Lists all widgets on the current page in z-order (bottom to top). Each row shows:
+
+- **Eye icon** — toggle widget visibility on canvas (hidden widgets still export to JSON)
+- **Lock icon** — lock a widget so it can't be accidentally selected or moved on canvas
+- **Type badge** — colour-coded letter indicating widget type
+- **Name / ID** — widget label if set, otherwise ID + type
+
+**Actions:**
+- Drag rows to reorder (changes z-order)
+- Use the search box to filter by name, ID, or type
+- **Select All / Deselect** buttons for bulk operations
+- **Add widget** buttons at the bottom — one button per widget type; they wrap to fill the available width
+
+The left panel is **resizable**: drag the right edge handle to make it wider or narrower. Width is saved in localStorage.
+
+---
+
+## Properties Panel (right panel)
+
+Select a widget to see and edit all its properties. Sections vary by widget type but always include:
+
+- **Position / size** — X, Y, W, H (live-update on canvas as you type)
+- **Widget Settings** — all type-specific properties (text, entity, format, color, background, font_size, radius, etc.)
+- **Overrides** — conditional override rules. Click **+ Add override** to create a new rule. Each rule has:
+  - **Condition group** — logic (all/any), conditions (source, type, value)
+  - **Set** — the properties to apply when the condition matches
+  - Expand/collapse, duplicate, and delete buttons per rule
+  - **Insert Example** button populates a sensible starting rule for that widget type
+
+- **Theme Colors** — click any swatch to copy the token name to clipboard. The **Edit Theme** button opens the theme editor (see below).
+- **Raw JSON** — view and directly edit the widget's full JSON. Changes are applied on blur.
+
+The right panel is **resizable**: drag the left edge handle to adjust width. Width is saved in localStorage.
+
+### Entity search
+
+Fields labelled `entity`, `entity2`, `snapshot_entity`, and `stream_entity` show a **magnifying glass button** next to the text input. Clicking it opens the entity search modal:
+
+- Connects to your HA instance using the URL from the browser (`window.location.origin`)
+- On first use, prompts for a Long-Lived Access Token (stored separately as `haven_designer_token`)
+- Shows all HA entities with their current state
+- **Search box** — filter by entity ID or friendly name
+- **Domain dropdown** — filter to a single domain (e.g. `sensor`, `light`, `binary_sensor`)
+- **Device class dropdown** — filter by device class (e.g. `temperature`, `motion`, `power`)
+- Click any entity to insert its ID into the field
+- **Refresh button** — re-fetch the entity list from HA (the list is cached for the session)
+- A **Change token** link lets you update the stored token without clearing it manually
+
+Some widget types pre-filter the list automatically. The `history_chart` entity field shows only sensors that have a `state_class` attribute (i.e. those with long-term statistics enabled), since other entities will not work with the chart.
+
+### Attribute browse
+
+The `entity_attribute` field shows a magnifying glass button that opens an **attribute browser** for the currently selected entity. The modal title changes to show the entity being inspected and lists all its attributes with their current values. Click any attribute name to insert it into the field. A search box filters the list for entities with many attributes. The domain and device class filters are hidden in this mode as they do not apply.
+
+> **Note:** Set the `entity` field before clicking the attribute browse button. If no entity is selected the button shows a status message instead of opening.
+
+---
+
+## Page Management
+
+Click **Pages…** to open the page manager:
+
+- **Left column** — page list with drag-to-reorder, widget count, delete button. Drag rows to change the display order — page IDs stay stable so navigation actions are unaffected.
+- **Right column** — page properties:
+  - Label, background image (pick from disk), background opacity, background fit mode
+  - Default page selector (which page loads on open / after return timer)
+
+### Overlay page (page 0)
+
+The overlay page is a special page whose widgets render on top of every other page at runtime — useful for persistent headers, clocks, or nav buttons. It always appears first in the page picker dropdown.
+
+To create one, open **Pages…** and click **+ Add Overlay Page** at the bottom of the list. Once created, select it in the page picker or the Pages modal to edit it like any other page. Background image, opacity, and fit are not available for the overlay page (it renders transparently over the current page).
+
+To delete it, click the bin icon next to the Overlay entry in the Pages modal.
+
+---
+
+## Device Properties
+
+Click **Device…** to edit:
+
+- **Name** — display name for this device
+- **Canvas size** — width × height in pixels (preset or custom)
+- **Default page** — page to show on load and to return to after inactivity
+- **Return timer** — seconds of inactivity before returning to default page (0 = disabled)
+- **Screensaver** — timeout (seconds), dim opacity (0.0–1.0), and optional overlay text
+
+---
+
+## Theme Editor
+
+Click **Edit Theme** in the Properties panel to open the theme editor:
+
+- **Fixed tokens** — the standard HAven color tokens (`background`, `surface`, `surface2`, `primary`, `warning`, `danger`, `text`, `text_dim`, `text_muted`, `icon_inactive`). Names are locked; only the color value can be changed.
+- **Custom tokens** — any additional tokens you've defined. Name and color are both editable; these rows can be deleted.
+- **Add color** — append a new custom token row
+- **Font size** — base font size for the device (in px)
+
+Changes apply to the config when you click **Save**.
+
+---
+
+## Alignment Tools
+
+With two or more widgets selected the toolbar shows alignment buttons:
+
+- Align left / right / top / bottom edges
+- Centre horizontally / vertically
+- Distribute evenly horizontally / vertically
+
+---
+
+## Preview
+
+Click **Preview** to open a live preview panel next to the canvas. The preview runs the full HAven runtime with your current config injected — no save or reload required. It updates automatically as you make changes.
+
+The preview uses your saved HA credentials (same localStorage key as the runtime app) to connect and show live entity values.
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + C` | Copy selected widget(s) |
+| `Ctrl/Cmd + X` | Cut selected widget(s) |
+| `Ctrl/Cmd + V` | Paste with a small offset |
+| `Ctrl/Cmd + Z` | Undo |
+| `Ctrl/Cmd + Shift + Z` | Redo |
+| `Delete / Backspace` | Delete selected widget(s) |
+| Arrow keys | Nudge 1px |
+| `Shift + Arrow` | Nudge 10px |
+| `Escape` | Deselect all |
+
+---
+
+## File Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  [Load Config]  [Save]   Device: ipad-air    Page: [1▾] [+] │  ← toolbar
-├───────────────┬─────────────────────────────┬───────────────┤
-│               │                             │               │
-│  Widget       │                             │  Properties   │
-│  Palette      │      Canvas                 │  Sidebar      │
-│               │      (scaled to fit)        │               │
-│  label        │                             │  id: clock    │
-│  rectangle    │                             │  x: 16        │
-│  bar          │                             │  y: 12        │
-│  button       │                             │  w: 140       │
-│  clock        │                             │  h: 36        │
-│  image        │                             │  font_size:26 │
-│  camera       │                             │  ...          │
-│               │                             │               │
-├───────────────┴─────────────────────────────┴───────────────┤
-│  Grid: [8px ▾]  [x] Snap    x:16 y:12 w:140 h:36           │  ← status bar
-└─────────────────────────────────────────────────────────────┘
+haven/
+  designer.html         — Designer shell (all panels, modals, CSS)
+  designer/
+    app.js              — Main designer logic (canvas, toolbar, modals, entity search)
+    render.js           — Widget rendering for the designer canvas
+    grid.js             — Grid and guide rendering
+    tree.js             — Widget tree panel
+    selection.js        — Properties panel, overrides editor, theme palette
+    io.js               — Config load/save, undo/redo, File System Access API
+  devices/
+    test-designer.json  — Sample config for testing the designer
 ```
 
 ---
 
-## Open Questions
+## Browser Compatibility
 
-- **How to handle the entity picker?** A searchable dropdown populated from HA's entity list is ideal but requires a HA connection. Fallback to a plain text field with validation feedback.
-- **Color picker UX?** Native `<input type="color">` is fine for hex values but doesn't understand theme tokens. The sidebar probably needs a dual mode: token dropdown + custom hex option.
-- **Undo/redo?** Not in initial phases. The config is JSON and users can maintain their own backups. Could be added as a simple history stack later.
-- **Mobile/tablet use?** The designer is primarily a desktop tool - designing on the same tablet you're using as a dashboard is an edge case. Touch support for the canvas is a nice-to-have, not a requirement.
+The designer targets modern desktop browsers. The **File System Access API** (direct save to disk) requires Chrome or Edge 86+. Firefox can open and download files but cannot save directly back to disk — use **Download** instead.
 
----
-
-## Inspiration Resources
-
-- https://github.com/mvturnho/OpenHaspDesigner
-- https://haspdesigner.qrisonline.nl/
-- https://github.com/HASwitchPlate/openHASP/discussions/957
-- https://hasp-screen-maker-lenardo.replit.app/
+The designer is a desktop tool. Touch support on the canvas is not a priority — the expectation is that you design on a computer and view on a tablet.
 
 ---
 
-## Designer Metadata
+## Designer Metadata in Configs
 
-Designer-only metadata is stored inside device configs under a `designer` block. This is ignored by the runtime.
+The designer writes a `designer` block into device configs for its own metadata (ignored by the runtime):
 
 ```json
 "designer": {
@@ -209,3 +237,5 @@ Designer-only metadata is stored inside device configs under a `designer` block.
   }
 }
 ```
+
+Guides are stored per page and persist across sessions.

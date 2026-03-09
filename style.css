@@ -21,6 +21,7 @@ html, body {
   overflow: hidden;
   overscroll-behavior-y: none;
   overscroll-behavior-x: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* ---- Font Awesome 4 (bundled locally) ----------------------
@@ -86,6 +87,86 @@ html, body {
   overflow: hidden;
 }
 
+/* ---- Widget animations (v1: label / rectangle) -------------
+   Animation is applied to the outer widget host so inner widget
+   styling (including override opacity) can remain independent. */
+.widget-anim-active {
+  -webkit-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  will-change: opacity, transform;
+}
+
+.widget-anim-pulse {
+  -webkit-animation: havenPulse 2s ease-in-out infinite;
+  animation: havenPulse 2s ease-in-out infinite;
+}
+
+.widget-anim-pulse-fast {
+  -webkit-animation: havenPulseFast 0.8s ease-in-out infinite;
+  animation: havenPulseFast 0.8s ease-in-out infinite;
+}
+
+.widget-anim-blink {
+  -webkit-animation: havenBlink 0.9s step-end infinite;
+  animation: havenBlink 0.9s step-end infinite;
+}
+
+.widget-anim-breathe {
+  -webkit-animation: havenBreathe 2.2s ease-in-out infinite;
+  animation: havenBreathe 2.2s ease-in-out infinite;
+}
+
+.haven-anim-paused .widget-anim-active {
+  -webkit-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-anim-active {
+    -webkit-animation: none !important;
+    animation: none !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+@-webkit-keyframes havenPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes havenPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@-webkit-keyframes havenPulseFast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.52; }
+}
+@keyframes havenPulseFast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.52; }
+}
+
+@-webkit-keyframes havenBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.1; }
+}
+@keyframes havenBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.1; }
+}
+
+@-webkit-keyframes havenBreathe {
+  0%, 100% { -webkit-transform: scale(1); transform: scale(1); }
+  50% { -webkit-transform: scale(1.05); transform: scale(1.05); }
+}
+@keyframes havenBreathe {
+  0%, 100% { -webkit-transform: scale(1); transform: scale(1); }
+  50% { -webkit-transform: scale(1.05); transform: scale(1.05); }
+}
+
 /* ---- Label widget ------------------------------------------ */
 
 .widget-label {
@@ -147,6 +228,78 @@ html, body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.35);
   -webkit-transition: background-color 0.2s ease;
   transition: background-color 0.2s ease;
+}
+
+/* ---- Switch widget ----------------------------------------- */
+
+.widget-switch {
+  position: absolute;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.widget-switch .switch-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.widget-switch .switch-thumb {
+  position: absolute;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.38);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.38);
+  -webkit-transition: left 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+  transition: left 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.widget-switch .switch-icon {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.widget-switch .switch-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 /* ---- Button widget ----------------------------------------- */

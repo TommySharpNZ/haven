@@ -42,7 +42,7 @@
       background: var(--panel);
       border-bottom: 1px solid var(--border);
     }
-    .toolbar .title { font-weight: 600; margin-right: 4px; }
+    .toolbar .title { font-weight: 600; margin-right: 4px; color: var(--accent); }
     .toolbar select, .toolbar button {
       background: var(--panel2);
       color: var(--text);
@@ -82,8 +82,22 @@
     .layout {
       flex: 1;
       display: grid;
-      grid-template-columns: 240px 1fr 420px;
+      grid-template-columns: 240px 1fr 340px;
       min-height: 0;
+    }
+    #propsPanelResizer, #treePanelResizer {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 5px;
+      cursor: col-resize;
+      z-index: 10;
+    }
+    #propsPanelResizer { left: 0; }
+    #treePanelResizer  { right: 0; }
+    #propsPanelResizer:hover, #propsPanelResizer.dragging,
+    #treePanelResizer:hover,  #treePanelResizer.dragging {
+      background: var(--accent);
+      opacity: 0.5;
     }
     .panel {
       background: var(--panel);
@@ -94,6 +108,8 @@
     .panel.right {
       border-right: none;
       border-left: 1px solid var(--border);
+      padding: 0;
+      overflow: visible;
     }
     .panel h3 {
       margin: 8px 0 12px;
@@ -101,6 +117,92 @@
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.06em;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .panel-header h3 { margin: 8px 0; flex: 1; text-transform: none; letter-spacing: normal; font-size: 13px; }
+    .prop-type-badge {
+      display: inline-block;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
+    .prop-header-id { color: var(--muted); font-size: 12px; vertical-align: middle; }
+    #propsHeaderActions { display: flex; align-items: center; gap: 4px; }
+    .prop-icon-btn {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 3px 6px;
+      font-size: 13px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .prop-icon-btn:hover { color: var(--text); border-color: var(--accent); }
+    .prop-icon-btn.danger:hover { color: #e05555; border-color: #e05555; }
+    .prop-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px 0 4px;
+    }
+    .prop-name-row input { flex: 1; min-width: 0; }
+    /* Modernized inputs — match tree-search field style */
+    #props input[type="text"],
+    #props input[type="number"],
+    #props select {
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      width: 100%;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    #props input[type="text"]:focus,
+    #props input[type="number"]:focus,
+    #props select:focus { border-color: var(--accent); }
+    #props input::placeholder { color: var(--muted); }
+    /* Modal-open buttons */
+    .prop-modal-btn {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .prop-modal-btn:hover { border-color: var(--accent); color: var(--text); }
+    .prop-modal-btn-count {
+      margin-left: auto;
+      font-size: 11px;
+      background: var(--border);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--text);
     }
     #stage-wrap {
       position: relative;
@@ -125,7 +227,7 @@
     .tree-bulk { display: flex; gap: 4px; margin-top: 6px; }
     .widget-add-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
       gap: 6px;
       margin-bottom: 8px;
     }
@@ -212,7 +314,16 @@
     .prop-row input, .prop-row select { flex: 1; min-width: 0; }
     .prop-labels { display: flex; gap: 6px; margin-top: 6px; font-size: 11px; color: var(--muted); }
     .prop-labels div { flex: 1; }
-    .btn-small { padding: 4px 6px; font-size: 12px; }
+    .btn-small {
+      padding: 3px 8px;
+      font-size: 12px;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-small:hover { border-color: var(--accent); }
     .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
     .tree-item.drag-over-above { border-top: 2px solid var(--accent); }
     .tree-item.drag-over-below { border-bottom: 2px solid var(--accent); }
@@ -265,7 +376,7 @@
     /* ── New Device modal ─────────────────────────────────────── */
     .ndm-row { margin-bottom: 14px; }
     .ndm-row label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
-    .ndm-row input[type=text], .ndm-row select, .ndm-row input[type=number] {
+    .ndm-row input[type=text], .ndm-row input[type=password], .ndm-row textarea, .ndm-row select, .ndm-row input[type=number] {
       width: 100%;
       background: var(--panel2);
       color: var(--text);
@@ -273,8 +384,10 @@
       padding: 7px 10px;
       border-radius: 5px;
       font-size: 13px;
+      font-family: inherit;
     }
-    .ndm-row input:focus, .ndm-row select:focus {
+    .ndm-row textarea { resize: vertical; }
+    .ndm-row input:focus, .ndm-row select:focus, .ndm-row textarea:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -282,6 +395,30 @@
     .ndm-custom.visible { display: flex; }
     .ndm-custom input { flex: 1; }
     .ndm-custom span { line-height: 34px; color: var(--muted); font-size: 13px; }
+    /* Theme modal color rows */
+    .tm-color-name, .tm-color-value {
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+      width: 100%;
+    }
+    .tm-color-name:focus, .tm-color-value:focus { border-color: var(--accent); }
+    .tm-color-name::placeholder, .tm-color-value::placeholder { color: var(--muted); }
+    input[type=color].tm-color-swatch {
+      width: 28px;
+      height: 28px;
+      padding: 1px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      background: none;
+    }
+    input[type=color].tm-color-swatch:focus { outline: none; border-color: var(--accent); }
 
     /* ── Pages modal ─────────────────────────────────────────── */
     .modal-overlay {
@@ -455,6 +592,19 @@
       color: #D9534F;
     }
     .modal-footer button.danger:hover { background: #D9534F; color: #fff; }
+    .entity-search-item {
+      display: flex;
+      flex-direction: column;
+      padding: 7px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      gap: 1px;
+    }
+    .entity-search-item:hover { background: var(--panel2); }
+    .entity-search-item .esi-id   { font-size: 12px; font-family: monospace; color: var(--text); }
+    .entity-search-item .esi-name { font-size: 11px; color: var(--muted); }
+    .entity-search-item .esi-state { font-size: 11px; color: var(--accent); margin-left: auto; }
+    #entitySearchInput:focus { border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -497,7 +647,8 @@
   </div>
 
   <div class="layout">
-    <div class="panel" id="treePanel">
+    <div class="panel" id="treePanel" style="position:relative;">
+      <div id="treePanelResizer"></div>
       <h3>Widgets</h3>
       <div class="widget-add-grid">
         <button id="addLabelBtn" class="widget-add-btn" title="Add Label" aria-label="Add Label"><span class="fa-icon">&#xf031;</span></button>
@@ -507,6 +658,7 @@
         <button id="addBarBtn" class="widget-add-btn" title="Add Bar" aria-label="Add Bar"><span class="fa-icon">&#xf080;</span></button>
         <button id="addArcBtn" class="widget-add-btn" title="Add Arc" aria-label="Add Arc"><span class="fa-icon">&#xf1fe;</span></button>
         <button id="addSliderBtn" class="widget-add-btn" title="Add Slider" aria-label="Add Slider"><span class="fa-icon">&#xf1de;</span></button>
+        <button id="addSwitchBtn" class="widget-add-btn" title="Add Switch" aria-label="Add Switch"><span class="fa-icon">&#xf205;</span></button>
         <button id="addSceneBtn" class="widget-add-btn" title="Add Scene" aria-label="Add Scene"><span class="fa-icon">&#xf00b;</span></button>
         <button id="addClockBtn" class="widget-add-btn" title="Add Clock" aria-label="Add Clock"><span class="fa-icon">&#xf017;</span></button>
         <button id="addCameraBtn" class="widget-add-btn" title="Add Camera" aria-label="Add Camera"><span class="fa-icon">&#xf030;</span></button>
@@ -524,9 +676,9 @@
       <div id="tree"></div>
       <h3>Guides</h3>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button id="addHGuideBtn">Add H</button>
-        <button id="addVGuideBtn">Add V</button>
-        <button id="clearGuidesBtn">Clear</button>
+        <button id="addHGuideBtn" class="btn-small">Add H</button>
+        <button id="addVGuideBtn" class="btn-small">Add V</button>
+        <button id="clearGuidesBtn" class="btn-small">Clear</button>
       </div>
     </div>
 
@@ -544,10 +696,16 @@
       </div>
     </div>
 
-    <div class="panel right" id="propsPanel">
-      <h3>Selection</h3>
+    <div class="panel right" id="propsPanel" style="position:relative;">
+      <div id="propsPanelResizer"></div>
+      <div style="height:100%;overflow:auto;padding:10px;">
+      <div class="panel-header">
+        <h3 id="propsHeaderTitle">Selection</h3>
+        <div id="propsHeaderActions"></div>
+      </div>
       <div id="props"></div>
-      <div class="note">PoC: drag to move, wheel to zoom, toggle Pan to drag the stage.</div>
+      <div class="note">Scroll to zoom · Right Click and Drag or Enable Pan mode</div>
+      </div><!-- end inner scroll div -->
     </div>
   </div>
 
@@ -564,6 +722,7 @@
           <div class="modal-list-toolbar">
             <button id="addPageBtn">+ Add Page</button>
           </div>
+          <div style="font-size:11px;color:var(--muted);padding:4px 8px 2px;">Drag rows to reorder pages</div>
           <div id="pageModalList"></div>
         </div>
         <div class="modal-props-col" id="pageModalProps"></div>
@@ -599,7 +758,7 @@
         <div class="spacer"></div>
         <button id="devicePropsCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
       </div>
-      <div style="padding:20px 24px 4px;">
+      <div style="padding:20px 24px 4px;flex:1;min-height:0;overflow-y:auto;">
 
         <!-- File info (read-only) -->
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:18px;">
@@ -645,10 +804,141 @@
           </div>
         </div>
 
+        <div class="ndm-row">
+          <label style="display:flex;align-items:center;gap:8px;margin:0;">
+            <input type="checkbox" id="dpShowConnIndicator">
+            Show connection status indicator
+          </label>
+        </div>
+
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Page Navigation</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;">
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;margin:0;">
+                <input type="checkbox" id="dpPageNavShow">
+                Show bottom nav dots
+              </label>
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Size</label>
+              <select id="dpPageNavSize">
+                <option value="">(default)</option>
+                <option value="micro">micro</option>
+                <option value="tiny">tiny</option>
+                <option value="small">small</option>
+                <option value="medium">medium</option>
+                <option value="large">large</option>
+              </select>
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Background Color</label>
+              <input type="text" id="dpPageNavBg" placeholder="rgba(0,0,0,0.20) or token">
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Primary Color</label>
+              <input type="text" id="dpPageNavPrimary" placeholder="text or #ffffff">
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Secondary Color</label>
+              <input type="text" id="dpPageNavSecondary" placeholder="#6f7781">
+            </div>
+          </div>
+        </div>
+
+        <!-- Screensaver -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Screensaver</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;">
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Timeout (seconds, 0 = off)</label>
+              <input type="number" id="dpSsTimeout" min="0" max="3600" step="1">
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;">
+              <label>Opacity (0–1)</label>
+              <input type="number" id="dpSsOpacity" min="0" max="1" step="0.05" placeholder="0.95">
+            </div>
+            <div class="ndm-row" style="margin-bottom:0;grid-column:span 2;">
+              <label>Bouncing Text (optional, leave blank for black screen)</label>
+              <input type="text" id="dpSsText" placeholder="e.g. HAven">
+            </div>
+          </div>
+        </div>
+
+        <!-- HA Connection -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Home Assistant Connection</div>
+          <div class="ndm-row">
+            <label>Long-Lived Access Token <span style="color:var(--muted);font-weight:400;">(optional — see note below)</span></label>
+            <textarea id="dpHaToken" rows="3" placeholder="Leave blank to prompt on first load" autocomplete="off" spellcheck="false"></textarea>
+          </div>
+          <div class="ndm-row">
+            <label>HA URL <span style="color:var(--muted);font-weight:400;">(advanced — leave blank if HAven is hosted in HA's www/ folder)</span></label>
+            <input type="text" id="dpHaUrl" placeholder="e.g. http://192.168.1.100:8123">
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px;padding:8px 10px;background:var(--surface2);border-radius:4px;">
+            <strong style="color:var(--text-dim);">Token tip:</strong> You can embed a token here so new tablets connect automatically without a setup screen. Once the device has loaded the config and saved the token to its local storage, you can remove it from the JSON for security — the token in local storage is used from then on.
+          </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button id="devicePropsCancelBtn">Cancel</button>
         <button id="devicePropsSaveBtn" class="primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme modal -->
+  <div class="modal-overlay" id="themeModal">
+    <div class="modal" style="width:480px;">
+      <div class="modal-header">
+        Edit Theme
+        <div class="spacer"></div>
+        <button id="themeModalCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
+      </div>
+      <div style="padding:20px 24px 4px;flex:1;min-height:0;overflow-y:auto;">
+        <div class="ndm-row">
+          <label>Base Font Size (px)</label>
+          <input type="number" id="tmFontSize" min="8" max="72" step="1" style="width:80px;">
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;">Colors</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Fixed token names cannot be renamed as they are used internally by HAven.</div>
+        <div id="tmColorRows"></div>
+        <button id="tmAddColorBtn" class="btn-small" style="margin-top:8px;">+ Add Color</button>
+      </div>
+      <div class="modal-footer">
+        <button id="themeModalCancelBtn">Cancel</button>
+        <button id="themeModalSaveBtn" class="primary">Save Theme</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entity Search modal -->
+  <div class="modal-overlay" id="entitySearchModal">
+    <div class="modal" style="width:480px;">
+      <div class="modal-header">
+        Search Entities
+        <div class="spacer"></div>
+        <button id="entitySearchRefreshBtn" title="Refresh entity list"><span class="fa-icon">&#xf021;</span></button>
+        <button id="entitySearchCloseBtn" title="Close"><span class="fa-icon">&#xf00d;</span></button>
+      </div>
+      <div style="padding:12px 16px 8px;">
+        <input type="text" id="entitySearchInput" placeholder="Type to filter by entity ID or name…" autocomplete="off"
+          style="width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
+        <div id="entityFilterRow" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+          <select id="entityDomainFilter" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 8px;border-radius:5px;font-size:12px;outline:none;">
+            <option value="">All domains</option>
+          </select>
+          <select id="entityClassFilter" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 8px;border-radius:5px;font-size:12px;outline:none;">
+            <option value="">All device classes</option>
+          </select>
+        </div>
+        <div id="entitySearchStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:16px;"></div>
+      </div>
+      <div id="entitySearchList" style="flex:1;min-height:0;overflow-y:auto;max-height:48vh;padding:0 8px 4px;"></div>
+      <div style="padding:8px 16px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:4px;">
+        Entity states are cached for this session and may not reflect the latest values. Click <span class="fa-icon" style="font-size:11px;">&#xf021;</span> to refresh.
       </div>
     </div>
   </div>

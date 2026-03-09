@@ -96,7 +96,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 60000,
+          "refresh_interval": 60,
           "fit": "cover"
         },
         {
@@ -121,7 +121,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 5000,
+          "refresh_interval": 5,
           "fit": "cover"
         },
         {
@@ -144,7 +144,7 @@
           "label": "direct url preview",
           "preview": "url",
           "url": "https://192.168.11.62/cgi-bin/api.cgi?cmd=Snap&channel=0&rs=webhasp&user=guest&password=IAmWatch1ng",
-          "refresh_interval": 5000,
+          "refresh_interval": 5,
           "stream_entity": "camera.seccam05_fluent",
           "fit": "cover"
         },
@@ -242,7 +242,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 5000,
+          "refresh_interval": 5,
           "fit": "cover"
         },
         {
@@ -267,7 +267,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 5000,
+          "refresh_interval": 5,
           "fit": "cover"
         },
         {
@@ -292,7 +292,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 5000,
+          "refresh_interval": 5,
           "fit": "cover"
         },
         {
@@ -317,7 +317,7 @@
           "entity": "camera.seccam05_fluent",
           "snapshot_entity": "camera.seccam05_snapshots_fluent",
           "stream_entity": "camera.seccam05_fluent",
-          "refresh_interval": 10000,
+          "refresh_interval": 10,
           "fit": "cover"
         },
         {

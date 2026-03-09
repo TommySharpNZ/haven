@@ -5,6 +5,7 @@ var BADGES = {
   button:        { char: 'B', color: '#86a' },
   bar:           { char: 'b', color: '#a74' },
   slider:        { char: 'S', color: '#6a8' },
+  switch:        { char: 'W', color: '#5a7' },
   arc:           { char: 'A', color: '#a49' },
   clock:         { char: 'C', color: '#559' },
   image:         { char: 'I', color: '#779' },
