@@ -29,22 +29,37 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 - **`haven_command` event bus:** HA automations can trigger navigation, wake, dim, or speech on the device
 - **Visual designer:** drag-and-drop editor at `designer.html` with live preview, undo/redo, and entity search
 
+![Preview](images/screenshot.png)
+
+![Preview](images/smartclock.png)
+
 ---
 
-## Screenshots
+## Installation
 
-*(screenshots coming soon)*
+### HACS (Recommended)
+
+1. Open **HACS** in Home Assistant
+2. Click the three dots (⋮) in the top right → **Custom repositories**
+3. Add `https://github.com/TommySharpNZ/haven` and select **Dashboard** as the category
+4. Click **Add**
+5. Search for **HAven** and click **Download**
+6. Hard refresh your browser (Ctrl+Shift+R)
+
+### Manual
+
+1. Download the latest release from the [latest release](https://github.com/TommySharpNZ/haven/releases/latest)
+2. Copy the `haven/` folder to your Home Assistant `/config/www/` folder
 
 ---
 
 ## Quick Start
 
-1. Copy the `haven/` folder into `config/www/` on your HA instance
-2. Open `http://your-ha-ip:8123/local/haven/index.html?device=example`
-3. Enter your Long-Lived Access Token when prompted
-4. Edit `devices/example.json` or create your own device config
+1. the `haven/` folderOpen `http://your-ha-ip:8123/local/haven/index.html?device=example`
+2. Enter a Long-Lived Access Token when prompted
+3. Edit `devices/example.json` or create your own device config
 
-The designer is available at `designer.html` on the same path. It requires Chrome or Edge over HTTPS (Nabu Casa works perfectly).
+A graphical designer is available at `designer.html` on the same path. It requires Chrome or Edge over a HTTPS connection (Nabu Casa works perfectly).
 
 ---
 
