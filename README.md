@@ -121,3 +121,5 @@ HAven is a personal project shared freely. If it's running on a screen in your h
 If you'd like to go further, you can buy me a coffee. HAven will always be free and open source, including the visual designer. Any support goes straight toward HA gadgets and tinkering that feeds future features.
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/tommysharpnz)
+
+[![GitHub](https://img.shields.io/badge/GitHub-TommySharpNZ%2Fhaven-181717?style=flat&logo=github)](https://github.com/TommySharpNZ/haven)
