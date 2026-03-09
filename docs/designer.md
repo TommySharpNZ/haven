@@ -166,13 +166,13 @@ With two or more widgets selected, alignment buttons appear in the toolbar:
 
 - Align left, right, top, or bottom edges
 - Centre horizontally or vertically
-- Distribute evenly horizontally or vertically
+- Distribute evenly horizontally or vertically (Not Working!)
 
 ---
 
 ## Preview
 
-Click **Preview** to open a live preview panel alongside the canvas. The preview runs the full HAven runtime with your current config injected and updates automatically as you make changes. It connects to HA using the same stored credentials as the runtime app, so live entity values are visible.
+Click **Preview** to open a live preview panel alongside the canvas. The preview runs the full HAven runtime with your current config injected and updates automatically as you make changes. It connects to HA using the same stored credentials as the runtime app, so live entity values are visible. While it does it's best the render the true front end not every widget will render faithfully. But it should be useful to move things around as the arrow keys still move selected widgets while in preview mode.
 
 ---
 
