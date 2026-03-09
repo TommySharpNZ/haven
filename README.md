@@ -1,4 +1,4 @@
-# HAven
+# <img src="images/haven_logo_192.png" width="36" height="36" alt="" style="vertical-align:middle;"> HAven
 
 [![GitHub release](https://img.shields.io/github/release/TommySharpNZ/haven.svg)](https://github.com/TommySharpNZ/haven/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

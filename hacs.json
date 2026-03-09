@@ -1,8 +1,0 @@
-{
-  "name": "HAven Dashboard",
-  "content_in_root": true,
-  "zip_release": true,
-  "filename": "haven.zip",
-  "homeassistant": "2023.1.0",
-  "render_readme": true
-}
