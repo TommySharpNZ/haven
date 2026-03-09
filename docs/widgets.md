@@ -15,9 +15,9 @@ Widgets are the building blocks of a HAven dashboard. Each widget is a JSON obje
 
 ## How Widgets Work
 
-Every widget sits at a fixed `x`/`y` position with a fixed `w`/`h` size. Positions are in the design coordinate space — HAven scales the entire canvas uniformly to fit the screen, so a widget at `x: 500, y: 300` is always in the same relative position regardless of the physical screen size.
+Every widget sits at a fixed `x`/`y` position with a fixed `w`/`h` size. Positions are in the design coordinate space. HAven scales the entire canvas uniformly to fit the screen, so a widget at `x: 500, y: 300` is always in the same relative position regardless of the physical screen size.
 
-Widgets that bind to a HA entity register a callback when the page loads. When that entity changes in HA, only that widget updates — the rest of the page is untouched. This makes even busy dashboards with many entities very efficient.
+Widgets that bind to a HA entity register a callback when the page loads. When that entity changes in HA, only that widget updates. The rest of the page is untouched. This makes even busy dashboards with many entities very efficient.
 
 Conditional overrides let any widget change its appearance based on entity state without writing any code. See the [Conditional Overrides](overrides.md) reference for full details.
 

@@ -12,6 +12,7 @@ HAven device configs are JSON files stored in the `devices/` folder. Each file d
 - [pages array](#pages-array)
 - [Page 0 - Persistent Overlay](#page-0---persistent-overlay)
 - [Page Background Images](#page-background-images)
+- [Widgets](widgets.md)
 - [Icons](#icons)
 - [Actions](actions.md)
 - [Conditional Overrides](overrides.md)
@@ -73,8 +74,8 @@ HAven device configs are JSON files stored in the `devices/` folder. Each file d
 | `screensaver` | Optional screensaver config (see below). Omit to disable. |
 | `page_nav` | Optional navigation dot styling (see below). |
 | `page_navigation` | Alias for `page_nav`. Same fields. |
-| `ha_token` | Optional Long-Lived Access Token embedded in config (see [Credentials](getting-started.md#credentials--security)). |
-| `ha_url` | Optional HA URL override. Defaults to `window.location.origin`. |
+| `ha_token` | Optional Long-Lived Access Token embedded in the config file (see below). |
+| `ha_url` | Optional HA URL override. Defaults to `window.location.origin` when HAven is hosted inside HA's `www/` folder. |
 
 ### Screensaver
 
@@ -105,6 +106,35 @@ When configured, HAven dims the screen after a period of inactivity. Any touch, 
 | `size` | `medium` | Dot size: `small`, `medium`, or `large`. |
 
 Set `"show": false` to hide the built-in dots entirely, for example when using custom navigation buttons.
+
+### HA credentials in config
+
+By default HAven prompts for a Long-Lived Access Token on first run and stores it in the browser's `localStorage`. The `ha_token` and `ha_url` fields let you embed credentials directly in the device JSON instead, which is useful for provisioning a new device without touching it.
+
+**Token only** (most common). Use this when HAven is hosted inside HA's `www/` folder. The URL is inferred from the browser automatically:
+
+```json
+"device": {
+  "name": "Kitchen Tablet",
+  "canvas": { "width": 1024, "height": 768 },
+  "ha_token": "your-long-lived-access-token"
+}
+```
+
+**Token and URL**. Use this when HAven is hosted outside HA or you want to point at a specific HA instance regardless of where the dashboard is served from:
+
+```json
+"device": {
+  "name": "Kitchen Tablet",
+  "canvas": { "width": 1024, "height": 768 },
+  "ha_token": "your-long-lived-access-token",
+  "ha_url":   "http://192.168.1.100:8123"
+}
+```
+
+Once the device has opened the dashboard for the first time, the token is saved to `localStorage` and the fields can be removed from the JSON. They will not be needed again unless the browser storage is cleared.
+
+> **Security note:** `devices/` JSON files are served by HA without authentication. Anyone on your local network who knows the URL can read the file. Remove `ha_token` from production configs once the device is provisioned, or accept that it is readable on the local network.
 
 ---
 
@@ -228,6 +258,14 @@ Pages can display a background image beneath their widgets.
 | `background_image` | path or URL | Relative paths resolve from the `haven/` folder. |
 | `background_image_opacity` | `0.0` to `1.0` | `1.0` = full brightness, `0.1` = very subtle. |
 | `background_image_fit` | `cover` (default), `contain` | How the image fills the canvas. |
+
+---
+
+## Widgets
+
+Widgets are the objects placed on each page. Every widget has a `type`, a position (`x`, `y`), a size (`w`, `h`), and type-specific properties. They live in the `widgets` array of each page object.
+
+See the [Widget Reference](widgets.md) for the full list of widget types, shared base properties, and links to the detail page for each type.
 
 ---
 

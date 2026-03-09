@@ -224,7 +224,7 @@ HAven targets any browser that can reach your HA instance, including old tablets
 
 The designer is a desktop tool and has two requirements beyond a modern browser:
 
-**Chrome or Edge recommended.** The File System Access API (used to save changes directly back to the config file on disk) requires Chrome or Edge 86+. Firefox can open and download files but cannot save directly back to disk — use the **Download** button instead.
+**Chrome or Edge recommended.** The File System Access API (used to save changes directly back to the config file on disk) requires Chrome or Edge 86+. Firefox can open and download files but cannot save directly back to disk. Use the **Download** button instead.
 
 **HTTPS required.** Browsers restrict the File System Access API and certain other features to secure contexts. The designer must be opened over HTTPS. The simplest way to achieve this is via your Nabu Casa remote URL, which is always HTTPS:
 
@@ -232,7 +232,7 @@ The designer is a desktop tool and has two requirements beyond a modern browser:
 https://your-instance.ui.nabu.casa/local/haven/designer.html
 ```
 
-If you don't use Nabu Casa, your HA instance needs to be accessible over HTTPS — either through a reverse proxy or a self-signed certificate. Setting that up is outside the scope of HAven; the Home Assistant documentation covers the available options.
+If you don't use Nabu Casa, your HA instance needs to be accessible over HTTPS, either through a reverse proxy or a self-signed certificate. Setting that up is outside the scope of HAven; the Home Assistant documentation covers the available options.
 
 ---
 
