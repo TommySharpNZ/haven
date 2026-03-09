@@ -13,6 +13,16 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 
 ---
 
+> [!NOTE]
+> HAven is actively developed and should be considered a work in progress. Bugs are expected, and refactoring between releases may occasionally introduce breaking changes to config files or widget properties. Check the release notes before updating.
+>
+> **Feature requests:** use [Discussions](https://github.com/TommySharpNZ/haven/discussions)
+> **Bugs and questions:** use [Issues](https://github.com/TommySharpNZ/haven/issues)
+>
+> Feedback and contributions are very welcome.
+
+---
+
 ## Features
 
 - **Zero server-side install:** copy files into HA's `www/` folder, done
