@@ -1,9 +1,15 @@
-## HAven
+# HAven
+
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/release/TommySharpNZ/haven.svg)](https://github.com/TommySharpNZ/haven/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Thanks!-%23FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/tommysharpnz)
+
 ### *A lightweight Home Assistant dashboard for screens that Lovelace left behind*
 
-That old iPad gathering dust. The Android tablet mounted on the kitchen wall. The Fire HD you picked up for $30. HAven gives them a second life as always-on Home Assistant displays. No addons, no server-side code, no install. Just static files dropped into your HA `www/` folder and a browser that can open a URL.
+An old iPad gathering dust... That sluggish Android tablet mounted on the kitchen wall... The Fire HD you picked up for $30... HAven gives them a second life as always-on Home Assistant displays. No addons, no server-side code, no install. Just static files dropped into your HA `www/` folder and a browser that can open a URL.
 
-Inspired by the pixel-perfect philosophy of [OpenHASP](https://openhasp.com), HAven borrows the same core idea: a fixed canvas, absolute widget placement, and JSON-driven config files. But instead of flashing firmware onto an ESP32, you point a browser at a URL.
+Most dashboards flex and reflow to fit whatever screen they land on. HAven takes the opposite approach: a fixed canvas, absolute widget placement, and every element exactly where you put it. Design once at a specific resolution and HAven scales it to fill any screen. No responsive breakpoints, no layout surprises. Just a purpose-built display that looks exactly how you intended.
 
 ---
 
