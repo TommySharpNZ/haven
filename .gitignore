@@ -1,3 +1,7 @@
 .DS_Store
 node_modules/
 *.log
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

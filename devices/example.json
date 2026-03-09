@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "device": {
-    "name": "My HAven Dashboard",
+    "name": "Example",
     "canvas": {
       "width": 1024,
       "height": 768
@@ -36,7 +36,7 @@
           "y": 0,
           "w": 1024,
           "h": 60,
-          "text": "HAven Dashboard",
+          "text": "HAven Example Dashboard",
           "font_size": 28,
           "align": "center",
           "color": "primary",
@@ -45,8 +45,8 @@
         {
           "id": "clock_widget",
           "type": "clock",
-          "x": 800,
-          "y": 10,
+          "x": 8,
+          "y": 8,
           "w": 200,
           "h": 40,
           "font_size": 24,
@@ -56,13 +56,13 @@
         {
           "id": "example_button",
           "type": "button",
-          "x": 40,
-          "y": 100,
+          "x": 36,
+          "y": 148,
           "w": 180,
           "h": 120,
-          "label": "Living Room",
-          "icon": "[mdi:lightbulb-outline]",
-          "entity": "light.living_room",
+          "label": "Replaced By Conditional Overrides",
+          "icon": "[mdi:weather-night]",
+          "entity": "sun.sun",
           "background": "surface",
           "icon_color": "icon_inactive",
           "label_color": "text_muted",
@@ -70,34 +70,122 @@
             {
               "when": {
                 "logic": "all",
-                "conditions": [{ "type": "equals", "value": "on" }]
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "above_horizon"
+                  }
+                ]
               },
               "set": {
-                "icon": "[mdi:lightbulb]",
-                "icon_color": "primary",
-                "label_color": "text"
+                "icon": "[mdi:weather-sunny]",
+                "icon_color": "warning",
+                "label_color": "text",
+                "label": "Daytime"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "below_horizon"
+                  }
+                ]
+              },
+              "set": {
+                "icon": "[mdi:weather-night]",
+                "icon_color": "warning",
+                "label_color": "text",
+                "label": "Night Time"
               }
             }
-          ],
-          "action": {
-            "type": "service",
-            "service": "light.toggle",
-            "entity_id": "light.living_room"
-          }
+          ]
+        },
+        {
+          "id": "sun_attr_card",
+          "type": "rectangle",
+          "x": 36,
+          "y": 280,
+          "w": 460,
+          "h": 144,
+          "background": "surface",
+          "radius": 8
         },
         {
           "id": "example_label",
           "type": "label",
-          "x": 40,
-          "y": 260,
-          "w": 300,
-          "h": 40,
-          "entity": "sensor.temperature",
-          "format": "percent",
-          "prefix": "Temperature: ",
-          "font_size": 18,
+          "x": 56,
+          "y": 296,
+          "w": 420,
+          "h": 35,
+          "entity": "sun.sun",
+          "text": "[mdi:weather-sunset] Elevation: {{ attr.elevation }}°",
+          "font_size": 16,
+          "color": "text_muted",
+          "background": "",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "above_horizon"
+                  }
+                ]
+              },
+              "set": {
+                "color": "text"
+              }
+            }
+          ]
+        },
+        {
+          "id": "sun_azimuth",
+          "type": "label",
+          "x": 56,
+          "y": 336,
+          "w": 420,
+          "h": 35,
+          "entity": "sun.sun",
+          "text": "[mdi:compass] Azimuth: {{ attr.azimuth }}°",
+          "font_size": 16,
           "color": "text",
-          "background": "surface"
+          "background": ""
+        },
+        {
+          "id": "sun_rising",
+          "type": "label",
+          "x": 56,
+          "y": 380,
+          "w": 420,
+          "h": 35,
+          "entity": "sun.sun",
+          "text": "[mdi:arrow-down-circle-outline] Setting",
+          "font_size": 16,
+          "color": "text_muted",
+          "background": "",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "attribute",
+                    "attribute": "rising",
+                    "type": "equals",
+                    "value": true
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:arrow-up-circle-outline] Rising",
+                "color": "primary"
+              }
+            }
+          ]
         },
         {
           "id": "hint",
@@ -106,11 +194,130 @@
           "y": 680,
           "w": 944,
           "h": 30,
-          "text": "Edit devices/example.json or create your own config to get started. See README.md for full documentation.",
+          "text": "Edit devices/example.json or create your own config to get started. See github README.md for full documentation.",
           "font_size": 13,
           "align": "center",
           "color": "text_muted",
           "background": "background"
+        },
+        {
+          "id": "p0_connection_status",
+          "type": "label",
+          "x": 948,
+          "y": 16,
+          "w": 64,
+          "font_size": 18,
+          "align": "center",
+          "background": "",
+          "color": "warning",
+          "entity": "internal.connectionstatus",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "connected"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-check]",
+                "color": "primary"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "connecting"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-sync]",
+                "color": "warning"
+              }
+            },
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "source": "state",
+                    "type": "equals",
+                    "value": "disconnected"
+                  }
+                ]
+              },
+              "set": {
+                "text": "[mdi:wifi-remove]",
+                "color": "danger"
+              }
+            }
+          ],
+          "name": "Connection Header",
+          "h": 32
+        },
+        {
+          "id": "label_1",
+          "type": "label",
+          "x": 36,
+          "y": 96,
+          "w": 372,
+          "h": 40,
+          "text": "sun.sun entity state = {{ state }}",
+          "font_size": 18,
+          "color": "text",
+          "entity": "sun.sun"
+        },
+        {
+          "id": "sun_switch",
+          "type": "switch",
+          "x": 228,
+          "y": 148,
+          "w": 296,
+          "h": 60,
+          "entity": "sun.sun",
+          "on_value": "above_horizon",
+          "off_value": "below_horizon",
+          "locked": true,
+          "color": "surface2",
+          "thumb_color": "surface",
+          "icon": "[mdi:moon-waning-crescent]",
+          "icon_color": "text_muted",
+          "label": "Night",
+          "label_color": "text_muted",
+          "overrides": [
+            {
+              "when": {
+                "logic": "all",
+                "conditions": [
+                  {
+                    "type": "equals",
+                    "value": "above_horizon"
+                  }
+                ]
+              },
+              "set": {
+                "color": "warning",
+                "thumb_color": "text",
+                "icon": "[mdi:white-balance-sunny]",
+                "icon_color": "warning",
+                "label": "Day",
+                "label_color": "text"
+              }
+            }
+          ],
+          "radius": 10,
+          "thumb_radius": 8,
+          "label_size": 28,
+          "padding": 8
         }
       ]
     }
