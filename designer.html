@@ -4,16 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HAven Designer (PoC)</title>
+  <link rel="stylesheet" href="fonts/materialdesignicons.css">
   <style>
-    @font-face {
-      font-family: 'FontAwesome';
-      src: url('fonts/fontawesome-webfont.woff2') format('woff2'),
-           url('fonts/fontawesome-webfont.woff') format('woff'),
-           url('fonts/fontawesome-webfont.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
-
     :root {
       --bg: #0f141a;
       --panel: #1b222a;
@@ -64,9 +56,6 @@
       padding: 5px 7px;
       font-size: 15px;
       line-height: 1;
-    }
-    .toolbar button.icon-btn .fa-icon {
-      font-size: 14px;
     }
     /* Disabled state */
     .toolbar button:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
@@ -253,18 +242,6 @@
     .widget-add-btn:active {
       transform: translateY(0);
     }
-    .fa-icon {
-      font-family: 'FontAwesome';
-      font-style: normal;
-      font-weight: normal;
-      font-size: 17px;
-      line-height: 1;
-      display: inline-block;
-      width: 1em;
-      text-align: center;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
     .tree-item {
       display: flex;
       align-items: center;
@@ -287,10 +264,6 @@
       flex-shrink: 0;
       color: inherit;
       line-height: 1;
-    }
-    .tree-icon-btn .fa-icon {
-      font-size: 12px;
-      vertical-align: middle;
     }
     .tree-badge {
       display: inline-flex;
@@ -633,11 +606,11 @@
     </label>
     <div class="toolbar-sep"></div>
     <button id="saveBtn" title="Save to disk (Ctrl+S)">Save</button>
-    <button id="undoBtn" class="icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo"><span class="fa-icon">&#xf0e2;</span></button>
-    <button id="redoBtn" class="icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo"><span class="fa-icon">&#xf01e;</span></button>
-    <button id="copyBtn" class="icon-btn" title="Copy selection (Ctrl/Cmd+C)" aria-label="Copy selection"><span class="fa-icon">&#xf0c5;</span></button>
-    <button id="cutBtn" class="icon-btn" title="Cut selection (Ctrl/Cmd+X)" aria-label="Cut selection"><span class="fa-icon">&#xf0c4;</span></button>
-    <button id="pasteBtn" class="icon-btn" title="Paste (Ctrl/Cmd+V)" aria-label="Paste"><span class="fa-icon">&#xf0ea;</span></button>
+    <button id="undoBtn" class="icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo"><span class="mdi mdi-undo"></span></button>
+    <button id="redoBtn" class="icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo"><span class="mdi mdi-redo"></span></button>
+    <button id="copyBtn" class="icon-btn" title="Copy selection (Ctrl/Cmd+C)" aria-label="Copy selection"><span class="mdi mdi-content-copy"></span></button>
+    <button id="cutBtn" class="icon-btn" title="Cut selection (Ctrl/Cmd+X)" aria-label="Cut selection"><span class="mdi mdi-content-cut"></span></button>
+    <button id="pasteBtn" class="icon-btn" title="Paste (Ctrl/Cmd+V)" aria-label="Paste"><span class="mdi mdi-content-paste"></span></button>
     <div class="toolbar-sep"></div>
     <button id="previewBtn" title="Toggle live preview overlay">Preview</button>
     <button id="toggleSnap" class="active" title="Toggle grid snapping">Snap</button>
@@ -651,19 +624,19 @@
       <div id="treePanelResizer"></div>
       <h3>Widgets</h3>
       <div class="widget-add-grid">
-        <button id="addLabelBtn" class="widget-add-btn" title="Add Label" aria-label="Add Label"><span class="fa-icon">&#xf031;</span></button>
-        <button id="addRectBtn" class="widget-add-btn" title="Add Rectangle" aria-label="Add Rectangle"><span class="fa-icon">&#xf096;</span></button>
-        <button id="addButtonBtn" class="widget-add-btn" title="Add Button" aria-label="Add Button"><span class="fa-icon">&#xf111;</span></button>
-        <button id="addImageBtn" class="widget-add-btn" title="Add Image" aria-label="Add Image"><span class="fa-icon">&#xf03e;</span></button>
-        <button id="addBarBtn" class="widget-add-btn" title="Add Bar" aria-label="Add Bar"><span class="fa-icon">&#xf080;</span></button>
-        <button id="addArcBtn" class="widget-add-btn" title="Add Arc" aria-label="Add Arc"><span class="fa-icon">&#xf1fe;</span></button>
-        <button id="addSliderBtn" class="widget-add-btn" title="Add Slider" aria-label="Add Slider"><span class="fa-icon">&#xf1de;</span></button>
-        <button id="addSwitchBtn" class="widget-add-btn" title="Add Switch" aria-label="Add Switch"><span class="fa-icon">&#xf205;</span></button>
-        <button id="addSceneBtn" class="widget-add-btn" title="Add Scene" aria-label="Add Scene"><span class="fa-icon">&#xf00b;</span></button>
-        <button id="addClockBtn" class="widget-add-btn" title="Add Clock" aria-label="Add Clock"><span class="fa-icon">&#xf017;</span></button>
-        <button id="addCameraBtn" class="widget-add-btn" title="Add Camera" aria-label="Add Camera"><span class="fa-icon">&#xf030;</span></button>
-        <button id="addAgendaBtn" class="widget-add-btn" title="Add Agenda" aria-label="Add Agenda"><span class="fa-icon">&#xf073;</span></button>
-        <button id="addHistoryChartBtn" class="widget-add-btn" title="Add History Chart" aria-label="Add History Chart"><span class="fa-icon">&#xf201;</span></button>
+        <button id="addLabelBtn" class="widget-add-btn" title="Add Label" aria-label="Add Label"><span class="mdi mdi-format-text"></span></button>
+        <button id="addRectBtn" class="widget-add-btn" title="Add Rectangle" aria-label="Add Rectangle"><span class="mdi mdi-rectangle-outline"></span></button>
+        <button id="addButtonBtn" class="widget-add-btn" title="Add Button" aria-label="Add Button"><span class="mdi mdi-gesture-tap-button"></span></button>
+        <button id="addImageBtn" class="widget-add-btn" title="Add Image" aria-label="Add Image"><span class="mdi mdi-image"></span></button>
+        <button id="addBarBtn" class="widget-add-btn" title="Add Bar" aria-label="Add Bar"><span class="mdi mdi-chart-bar"></span></button>
+        <button id="addArcBtn" class="widget-add-btn" title="Add Arc" aria-label="Add Arc"><span class="mdi mdi-chart-donut"></span></button>
+        <button id="addSliderBtn" class="widget-add-btn" title="Add Slider" aria-label="Add Slider"><span class="mdi mdi-tune-vertical"></span></button>
+        <button id="addSwitchBtn" class="widget-add-btn" title="Add Switch" aria-label="Add Switch"><span class="mdi mdi-toggle-switch"></span></button>
+        <button id="addSceneBtn" class="widget-add-btn" title="Add Scene" aria-label="Add Scene"><span class="mdi mdi-layers-outline"></span></button>
+        <button id="addClockBtn" class="widget-add-btn" title="Add Clock" aria-label="Add Clock"><span class="mdi mdi-clock-outline"></span></button>
+        <button id="addCameraBtn" class="widget-add-btn" title="Add Camera" aria-label="Add Camera"><span class="mdi mdi-camera"></span></button>
+        <button id="addAgendaBtn" class="widget-add-btn" title="Add Agenda" aria-label="Add Agenda"><span class="mdi mdi-calendar"></span></button>
+        <button id="addHistoryChartBtn" class="widget-add-btn" title="Add History Chart" aria-label="Add History Chart"><span class="mdi mdi-chart-line"></span></button>
       </div>
       <div class="tree-controls">
         <input id="treeSearch" class="tree-search" type="text" placeholder="Search widgets…">
@@ -735,7 +708,7 @@
       <div class="modal-header">
         Pages
         <div class="spacer"></div>
-        <button id="pagesModalCloseBtn" title="Close" aria-label="Close"><span class="fa-icon">&#xf00d;</span></button>
+        <button id="pagesModalCloseBtn" title="Close" aria-label="Close"><span class="mdi mdi-close"></span></button>
       </div>
       <div class="modal-body">
         <div class="modal-list-col">
@@ -776,7 +749,7 @@
       <div class="modal-header">
         Device Properties
         <div class="spacer"></div>
-        <button id="devicePropsCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
+        <button id="devicePropsCloseBtn" title="Cancel" aria-label="Cancel"><span class="mdi mdi-close"></span></button>
       </div>
       <div style="padding:20px 24px 4px;flex:1;min-height:0;overflow-y:auto;">
 
@@ -915,7 +888,7 @@
       <div class="modal-header">
         Edit Theme
         <div class="spacer"></div>
-        <button id="themeModalCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
+        <button id="themeModalCloseBtn" title="Cancel" aria-label="Cancel"><span class="mdi mdi-close"></span></button>
       </div>
       <div style="padding:20px 24px 4px;flex:1;min-height:0;overflow-y:auto;">
         <div class="ndm-row">
@@ -940,8 +913,8 @@
       <div class="modal-header">
         Search Entities
         <div class="spacer"></div>
-        <button id="entitySearchRefreshBtn" title="Refresh entity list"><span class="fa-icon">&#xf021;</span></button>
-        <button id="entitySearchCloseBtn" title="Close"><span class="fa-icon">&#xf00d;</span></button>
+        <button id="entitySearchRefreshBtn" title="Refresh entity list"><span class="mdi mdi-refresh"></span></button>
+        <button id="entitySearchCloseBtn" title="Close"><span class="mdi mdi-close"></span></button>
       </div>
       <div style="padding:12px 16px 8px;">
         <input type="text" id="entitySearchInput" placeholder="Type to filter by entity ID or name…" autocomplete="off"
@@ -958,7 +931,7 @@
       </div>
       <div id="entitySearchList" style="flex:1;min-height:0;overflow-y:auto;max-height:48vh;padding:0 8px 4px;"></div>
       <div style="padding:8px 16px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:4px;">
-        Entity states are cached for this session and may not reflect the latest values. Click <span class="fa-icon" style="font-size:11px;">&#xf021;</span> to refresh.
+        Entity states are cached for this session and may not reflect the latest values. Click <span class="mdi mdi-refresh" style="font-size:11px;"></span> to refresh.
       </div>
     </div>
   </div>
@@ -969,7 +942,7 @@
       <div class="modal-header">
         New Device
         <div class="spacer"></div>
-        <button id="newDeviceCloseBtn" title="Cancel" aria-label="Cancel"><span class="fa-icon">&#xf00d;</span></button>
+        <button id="newDeviceCloseBtn" title="Cancel" aria-label="Cancel"><span class="mdi mdi-close"></span></button>
       </div>
       <div style="padding:20px 24px 8px;">
         <div class="ndm-row">

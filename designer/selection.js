@@ -38,27 +38,27 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     var b = document.createElement('button');
     b.className = 'prop-icon-btn';
     b.title = tip;
-    b.innerHTML = '<span class="fa-icon">' + icon + '</span>';
+    b.innerHTML = '<span class="mdi ' + icon + '"></span>';
     b.addEventListener('click', function() { onAlign(action); });
     return b;
   }
-  reorderRow.appendChild(makeReorderBtn('&#xf102;', 'Bring to Front', 'front'));
-  reorderRow.appendChild(makeReorderBtn('&#xf103;', 'Send to Back',   'back'));
-  reorderRow.appendChild(makeReorderBtn('&#xf106;', 'Move Up',        'up'));
-  reorderRow.appendChild(makeReorderBtn('&#xf107;', 'Move Down',      'down'));
+  reorderRow.appendChild(makeReorderBtn('mdi-arrow-collapse-up',   'Bring to Front', 'front'));
+  reorderRow.appendChild(makeReorderBtn('mdi-arrow-collapse-down', 'Send to Back',   'back'));
+  reorderRow.appendChild(makeReorderBtn('mdi-chevron-up',          'Move Up',        'up'));
+  reorderRow.appendChild(makeReorderBtn('mdi-chevron-down',        'Move Down',      'down'));
   var reorderSpacer = document.createElement('div');
   reorderSpacer.style.flex = '1';
   reorderRow.appendChild(reorderSpacer);
   var dupBtnR = document.createElement('button');
   dupBtnR.className = 'prop-icon-btn';
   dupBtnR.title = 'Duplicate';
-  dupBtnR.innerHTML = '<span class="fa-icon">&#xf0c5;</span>';
+  dupBtnR.innerHTML = '<span class="mdi mdi-content-copy"></span>';
   dupBtnR.addEventListener('click', function() { onDuplicate(); });
   reorderRow.appendChild(dupBtnR);
   var delBtnR = document.createElement('button');
   delBtnR.className = 'prop-icon-btn danger';
   delBtnR.title = 'Delete';
-  delBtnR.innerHTML = '<span class="fa-icon">&#xf1f8;</span>';
+  delBtnR.innerHTML = '<span class="mdi mdi-delete"></span>';
   delBtnR.addEventListener('click', function() { onDelete(); });
   reorderRow.appendChild(delBtnR);
   container.appendChild(reorderRow);
@@ -98,7 +98,7 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
     var rawBtn = document.createElement('button');
     rawBtn.className = 'prop-icon-btn';
     rawBtn.title = 'Edit Raw JSON';
-    rawBtn.innerHTML = '<span class="fa-icon">&#xf121;</span>';
+    rawBtn.innerHTML = '<span class="mdi mdi-code-braces"></span>';
     rawBtn.addEventListener('click', function() { openRawWidgetJsonModal(w, onChange); });
     headerActions.appendChild(rawBtn);
   }
@@ -723,7 +723,7 @@ function addText(container, key, value, onChange, searchOptions) {
     input.style.flex = '1';
     var searchBtn = document.createElement('button');
     searchBtn.className = 'prop-icon-btn';
-    searchBtn.innerHTML = '<span class="fa-icon">&#xf002;</span>';
+    searchBtn.innerHTML = '<span class="mdi mdi-magnify"></span>';
 
     if (showEntitySearch) {
       searchBtn.title = 'Search HA entities';
@@ -773,7 +773,7 @@ function addCheckbox(container, label, checked, onChange) {
 function makeModalBtn(icon, label, count, onClick) {
   var btn = document.createElement('button');
   btn.className = 'prop-modal-btn';
-  btn.innerHTML = '<span class="fa-icon">' + icon + '</span>' + label;
+  btn.innerHTML = '<span class="mdi ' + icon + '"></span>' + label;
   if (count) {
     var badge = document.createElement('span');
     badge.className = 'prop-modal-btn-count';
@@ -789,7 +789,7 @@ function addOverridesButton(container, w, onChange) {
   var count = (w.overrides && w.overrides.length) ? w.overrides.length : 0;
   var row = document.createElement('div');
   row.className = 'prop';
-  row.appendChild(makeModalBtn('&#xf0b0;', count ? 'Edit Overrides' : 'Add Overrides', count, function() {
+  row.appendChild(makeModalBtn('mdi-filter-outline', count ? 'Edit Overrides' : 'Add Overrides', count, function() {
     openJsonArrayModal('Conditional Overrides', w, 'overrides', onChange);
   }));
   container.appendChild(row);
@@ -800,15 +800,15 @@ function addThresholdsButton(container, w, onChange) {
   var count = (w.thresholds && w.thresholds.length) ? w.thresholds.length : 0;
   var row = document.createElement('div');
   row.className = 'prop';
-  row.appendChild(makeModalBtn('&#xf160;', count ? 'Edit Thresholds' : 'Add Thresholds', count, function() {
+  row.appendChild(makeModalBtn('mdi-tune', count ? 'Edit Thresholds' : 'Add Thresholds', count, function() {
     openJsonArrayModal('Thresholds', w, 'thresholds', onChange);
   }));
   container.appendChild(row);
 }
 
 function addJsonObjectButton(container, label, w, key, onChange) {
-  var icons = { 'Action': '&#xf0e7;', 'Gradient': '&#xf1fc;' };
-  var icon = icons[label] || '&#xf013;';
+  var icons = { 'Action': 'mdi-lightning-bolt', 'Gradient': 'mdi-gradient-horizontal' };
+  var icon = icons[label] || 'mdi-cog';
   var row = document.createElement('div');
   row.className = 'prop';
   row.appendChild(makeModalBtn(icon, w[key] ? 'Edit ' + label : 'Add ' + label, 0, function() {
@@ -818,8 +818,8 @@ function addJsonObjectButton(container, label, w, key, onChange) {
 }
 
 function addJsonArrayButton(container, label, w, key, onChange) {
-  var icons = { 'Options': '&#xf03a;' };
-  var icon = icons[label] || '&#xf03a;';
+  var icons = { 'Options': 'mdi-format-list-bulleted' };
+  var icon = icons[label] || 'mdi-format-list-bulleted';
   var count = (w[key] && w[key].length) ? w[key].length : 0;
   var row = document.createElement('div');
   row.className = 'prop';
@@ -843,7 +843,7 @@ function openJsonArrayModal(heading, w, key, onChange) {
   var title = document.createElement('div');
   title.innerHTML = '<strong>' + heading + '</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
   var closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
+  closeBtn.innerHTML = '<span class="mdi mdi-close"></span>';
   closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
   hdr.appendChild(title);
   hdr.appendChild(closeBtn);
@@ -967,7 +967,7 @@ function openJsonObjectModal(heading, w, key, onChange) {
   var title = document.createElement('div');
   title.innerHTML = '<strong>' + heading + '</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
   var closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
+  closeBtn.innerHTML = '<span class="mdi mdi-close"></span>';
   closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
   hdr.appendChild(title);
   hdr.appendChild(closeBtn);
@@ -1076,7 +1076,7 @@ function openRawWidgetJsonModal(w, onChange) {
   var title = document.createElement('div');
   title.innerHTML = '<strong>Raw Widget JSON</strong> <span style="color:#9fa5ad;font-size:12px;margin-left:8px;">' + (w.id || 'widget') + '</span>';
   var closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '<span class="fa-icon">&#xf00d;</span>';
+  closeBtn.innerHTML = '<span class="mdi mdi-close"></span>';
   closeBtn.style.cssText = 'background:none;border:none;color:#9fa5ad;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;';
   hdr.appendChild(title);
   hdr.appendChild(closeBtn);

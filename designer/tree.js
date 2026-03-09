@@ -57,8 +57,8 @@ export function renderTree(container, widgets, selectedIds, hiddenMap, lockedMap
     eyeBtn.className = 'tree-icon-btn';
     eyeBtn.title     = isHidden ? 'Show' : 'Hide';
     eyeBtn.innerHTML = isHidden
-      ? '<span class="fa-icon">&#xf070;</span>'
-      : '<span class="fa-icon">&#xf06e;</span>';
+      ? '<span class="mdi mdi-eye-off"></span>'
+      : '<span class="mdi mdi-eye"></span>';
     eyeBtn.style.color = isHidden ? '#555' : '#8ADF45';
     eyeBtn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -70,8 +70,8 @@ export function renderTree(container, widgets, selectedIds, hiddenMap, lockedMap
     lockBtn.className = 'tree-icon-btn';
     lockBtn.title     = isLocked ? 'Unlock' : 'Lock';
     lockBtn.innerHTML = isLocked
-      ? '<span class="fa-icon">&#xf023;</span>'
-      : '<span class="fa-icon">&#xf09c;</span>';
+      ? '<span class="mdi mdi-lock"></span>'
+      : '<span class="mdi mdi-lock-open-outline"></span>';
     lockBtn.style.opacity = isLocked ? '1' : '0.2';
     lockBtn.addEventListener('click', function (e) {
       e.stopPropagation();

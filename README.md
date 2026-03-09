@@ -157,6 +157,5 @@ HAven bundles or loads the following third-party libraries and assets:
 | Library | Use | License |
 |---------|-----|---------|
 | [Material Design Icons](https://github.com/Templarian/MaterialDesign-Webfont) | Icon set used throughout the runtime and designer | SIL OFL 1.1 |
-| [FontAwesome 4](https://github.com/FortAwesome/Font-Awesome) | UI glyphs in the designer toolbar and panels | SIL OFL 1.1 |
 | [Konva.js](https://konvajs.org) | Canvas rendering engine used in the designer | MIT |
 | [HLS.js](https://github.com/video-dev/hls.js) | HLS stream playback for camera fullscreen (loaded on demand) | Apache 2.0 |

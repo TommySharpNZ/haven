@@ -3985,6 +3985,26 @@
         });
       }
 
+      video.addEventListener('error', function() {
+        var err = video.error;
+        var msg = err ? ('code=' + err.code + ' ' + (err.message || '')) : 'unknown';
+        console.warn('HAven camera [' + (w.id || entity) + ']: video element error: ' + msg);
+        loader.style.display = 'flex';
+        loader.textContent = '';
+        var icon = document.createElement('span');
+        icon.className = 'mdi mdi-alert-circle';
+        icon.style.color = '#D9534F';
+        icon.style.fontSize = '48px';
+        loader.appendChild(icon);
+        var txt = document.createElement('div');
+        txt.style.color = '#9fa5ad';
+        txt.style.fontSize = '13px';
+        txt.style.marginTop = '8px';
+        txt.style.textAlign = 'center';
+        txt.textContent = 'Stream unavailable. Check HA camera integration and logs.';
+        loader.appendChild(txt);
+      });
+
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS - Safari and iOS
         console.log('HAven camera [' + (w.id || entity) + ']: using native HLS (Safari/iOS)');
