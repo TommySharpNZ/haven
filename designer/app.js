@@ -52,6 +52,7 @@ var addSceneBtn  = document.getElementById('addSceneBtn');
 var addClockBtn  = document.getElementById('addClockBtn');
 var addCameraBtn = document.getElementById('addCameraBtn');
 var addAgendaBtn = document.getElementById('addAgendaBtn');
+var addTasksBtn  = document.getElementById('addTasksBtn');
 var addHistoryChartBtn = document.getElementById('addHistoryChartBtn');
 var addHGuideBtn = document.getElementById('addHGuideBtn');
 var addVGuideBtn = document.getElementById('addVGuideBtn');
@@ -204,6 +205,7 @@ function init() {
   addClockBtn.addEventListener('click', function () { addWidget('clock'); });
   addCameraBtn.addEventListener('click', function () { addWidget('camera'); });
   addAgendaBtn.addEventListener('click', function () { addWidget('agenda'); });
+  addTasksBtn.addEventListener('click',  function () { addWidget('tasks'); });
   addHistoryChartBtn.addEventListener('click', function () { addWidget('history_chart'); });
   addHGuideBtn.addEventListener('click', function () { addGuide('h'); });
   addVGuideBtn.addEventListener('click', function () { addGuide('v'); });
@@ -2852,6 +2854,13 @@ function addWidget(type) {
     w.today_indicator = true;
     w.time_format = '12h';
     w.calendars = [];
+  }
+  if (type === 'tasks') {
+    w.w = 380;
+    w.h = 300;
+    w.background = 'surface';
+    w.refresh_interval = 120;
+    w.lists = [];
   }
   if (type === 'history_chart') {
     w.w = 520;

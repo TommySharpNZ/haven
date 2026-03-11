@@ -20,6 +20,7 @@
   var page0Callbacks  = {};        // entityId -> [callback, ...] persistent (page 0 widgets)
   var pendingStreamRequests = {};  // msgId -> callback for camera/stream responses
   var pendingAgendaRequests = {};  // msgId -> callback for calendar/get_events responses
+  var pendingTaskRequests   = {};  // msgId -> callback for todo/get_items responses
   var activePageTimers      = [];  // setInterval IDs to clear on page change
   var entityStates = {};      // entityId -> stateObject (cached)
   var INTERNAL_CONN_ENTITY = 'internal.connectionstatus';
@@ -59,19 +60,15 @@
 
     console.log('HAven init: url=' + haUrl + ' tokenLength=' + haToken.length);
 
-    if (!haToken) {
-      // No token in localStorage - check device config before showing setup
-      console.log('HAven init: no token in localStorage, checking device config');
-      loadConfigForCredentials();
-      return;
-    }
-
-    console.log('HAven init: credentials found, loading config');
-    loadConfig();
+    // Always check device config first so ha_token/ha_url in the config
+    // takes precedence over anything previously stored in localStorage.
+    loadConfigForCredentials();
   }
 
   // Load config to extract optional credential overrides.
-  // Falls back to setup screen only if no token can be found anywhere.
+  // If the device config contains ha_token it always wins over localStorage
+  // (allows pre-configured tokens to be updated centrally via the JSON file).
+  // Falls back to localStorage token, then shows setup if neither is present.
   function loadConfigForCredentials() {
     var deviceParam = getUrlParam('device') || 'default';
     var base        = window.location.pathname.replace(/\/[^\/]*$/, '/');
@@ -80,12 +77,22 @@
     fetchJson(configUrl, function(err, data) {
       if (err) {
         console.log('HAven init: config fetch error: ' + err);
-        showSetup();
+        // Fall back to localStorage credentials if the config cannot be fetched
+        if (haToken) {
+          console.log('HAven init: using localStorage credentials after config fetch error');
+          loadConfig();
+        } else {
+          showSetup();
+        }
         return;
       }
       if (!data) {
         console.log('HAven init: config fetch returned no data');
-        showSetup();
+        if (haToken) {
+          loadConfig();
+        } else {
+          showSetup();
+        }
         return;
       }
 
@@ -95,15 +102,19 @@
       console.log('HAven init: config loaded, credUrl=' + credUrl + ' credTokenLength=' + credToken.length);
 
       if (credToken) {
-        // URL override is optional - fall back to origin if not set
+        // Config token takes priority - update localStorage so it stays in sync
         if (credUrl) haUrl = credUrl;
         haToken = credToken;
         localStorage.setItem('haven_url',   haUrl);
         localStorage.setItem('haven_token', haToken);
         console.log('HAven init: credentials from device config, url=' + haUrl);
         loadConfig();
+      } else if (haToken) {
+        // No token in config - use whatever is already in localStorage
+        console.log('HAven init: no token in config, using localStorage credentials');
+        loadConfig();
       } else {
-        console.log('HAven init: no token in config, showing setup');
+        console.log('HAven init: no token found anywhere, showing setup');
         showSetup();
       }
     });
@@ -402,6 +413,7 @@
         for (var p = 0; p < activePageTimers[t].pendingIds.length; p++) {
           delete pendingStreamRequests[activePageTimers[t].pendingIds[p]];
           delete pendingAgendaRequests[activePageTimers[t].pendingIds[p]];
+          delete pendingTaskRequests[activePageTimers[t].pendingIds[p]];
         }
       }
     }
@@ -986,6 +998,7 @@
       case 'camera':       renderCamera(contentEl, w);       break;
       case 'arc':          renderArc(contentEl, w);          break;
       case 'agenda':       renderAgenda(contentEl, w);       break;
+      case 'tasks':        renderTasks(contentEl, w);        break;
       case 'history_chart': renderHistoryChart(contentEl, w); break;
       default:
         contentEl.style.background = 'rgba(255,0,0,0.3)';
@@ -3706,6 +3719,739 @@
     timerRef.id = timer;
   }
 
+  // -- Tasks widget --
+  //
+  // Shows items from one or more HA todo list entities.
+  // Fetches items via WS call_service todo.get_items with return_response: true.
+  // Subscribes to entity state changes to refresh when item counts change.
+  // Optional editable mode: tap to mark items complete with a confirmation prompt.
+  //
+  // Config example:
+  //   { "type": "tasks",
+  //     "lists": [
+  //       { "entity": "todo.m365todo_grocery_list", "name": "Groceries", "color": "primary" },
+  //       { "entity": "todo.work_tasks",            "name": "Work",       "color": "warning" }
+  //     ],
+  //     "show_completed": false,
+  //     "editable": false,
+  //     "legend": true,
+  //     "overdue_color": "danger",
+  //     "refresh_interval": 120
+  //   }
+  //
+  function renderTasks(el, w) {
+    el.className += ' widget-tasks';
+
+    var scaleRaw = (w.tasks_scale !== undefined) ? w.tasks_scale : w.scale;
+    var scale = (scaleRaw !== undefined) ? parseFloat(scaleRaw) : 1;
+    if (isNaN(scale) || scale <= 0) scale = 1;
+    function s(px) { return Math.max(1, Math.round(px * scale)); }
+
+    var radius     = s((w.radius     !== undefined) ? w.radius     : 12);
+    var pad        = s((w.padding    !== undefined) ? w.padding    : 10);
+    var refreshSec = (w.refresh_interval !== undefined) ? parseInt(w.refresh_interval, 10) : 120;
+    if (isNaN(refreshSec) || refreshSec < 15) refreshSec = 120;
+
+    var lists      = w.lists || [];
+    var showLegend = w.legend !== false && lists.length > 1;
+    var active     = true;
+
+    // rgba helper for legend highlight and background opacity
+    function rgbaTask(color, alpha) {
+      var c = resolveColor(color);
+      var hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c);
+      if (hex) {
+        var h = hex[1];
+        if (h.length === 3) { h = h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2); }
+        var r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+        return 'rgba('+r+','+g+','+b+','+alpha+')';
+      }
+      var rgb = /^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+\s*)?\)$/i.exec(c);
+      if (rgb) return 'rgba('+Math.round(parseFloat(rgb[1]))+','+Math.round(parseFloat(rgb[2]))+','+Math.round(parseFloat(rgb[3]))+','+alpha+')';
+      return c;
+    }
+
+    // Apply background with optional opacity baked in, then reset element-level opacity
+    // so that only the background color is affected, not the widget contents.
+    var bgColor = (w.opacity !== undefined)
+      ? rgbaTask(w.background || 'surface', w.opacity)
+      : resolveColor(w.background || 'surface');
+    el.style.background   = bgColor;
+    el.style.borderRadius = radius + 'px';
+    el.style.overflow     = 'hidden';
+    el.style.opacity      = '';
+
+    var selectedListKey = null;
+    var cachedItems     = [];
+
+    // -- Legend bar --
+    var legendEl = null;
+    if (showLegend) {
+      legendEl = document.createElement('div');
+      legendEl.style.display        = 'flex';
+      legendEl.style.flexWrap       = 'wrap';
+      legendEl.style.justifyContent = 'flex-end';
+      legendEl.style.alignItems     = 'center';
+      legendEl.style.padding        = s(4) + 'px ' + s(pad) + 'px ' + s(4) + 'px ' + s(pad) + 'px';
+      legendEl.style.gap            = s(8) + 'px';
+      el.appendChild(legendEl);
+    }
+
+    // -- Scrollable list area --
+    var listWrap = document.createElement('div');
+    listWrap.style.position    = 'absolute';
+    listWrap.style.left        = '0';
+    listWrap.style.right       = '0';
+    listWrap.style.bottom      = '0';
+    listWrap.style.overflowY   = 'auto';
+    listWrap.style.webkitOverflowScrolling = 'touch';
+    listWrap.style.paddingLeft   = s(pad) + 'px';
+    listWrap.style.paddingRight  = s(pad) + 'px';
+    listWrap.style.paddingTop    = s(pad) + 'px';
+    listWrap.style.paddingBottom = s(pad) + 'px';
+    listWrap.style.boxSizing     = 'border-box';
+    el.appendChild(listWrap);
+
+    var fade = document.createElement('div');
+    fade.style.position    = 'absolute';
+    fade.style.left        = '0';
+    fade.style.right       = '0';
+    fade.style.bottom      = '0';
+    fade.style.height      = s(56) + 'px';
+    fade.style.pointerEvents = 'none';
+    fade.style.display     = 'none';
+    fade.style.background  = 'linear-gradient(180deg, rgba(0,0,0,0), ' + resolveColor(w.background || 'surface') + ' 85%)';
+    el.appendChild(fade);
+
+    // -- Add button (shown if any list has allow_add: true) --
+    var addableLists = [];
+    for (var ai = 0; ai < lists.length; ai++) {
+      if (lists[ai].allow_add === true) addableLists.push(lists[ai]);
+    }
+    if (addableLists.length) {
+      var addBtn = document.createElement('div');
+      addBtn.style.position   = 'absolute';
+      addBtn.style.bottom     = s(pad) + 'px';
+      addBtn.style.right      = s(pad) + 'px';
+      addBtn.style.zIndex     = '2';
+      addBtn.style.cursor     = 'pointer';
+      addBtn.style.lineHeight = '1';
+      var addIcon = document.createElement('span');
+      addIcon.className       = 'mdi mdi-plus-circle';
+      addIcon.style.fontSize  = s(56) + 'px';
+      addIcon.style.color     = resolveColor(w.accent || 'primary');
+      addBtn.appendChild(addIcon);
+      addBtn.addEventListener('click', function() {
+        openAddTaskModal(addableLists);
+        resetReturnTimer();
+      });
+      el.appendChild(addBtn);
+    }
+
+    function updateOverflowFade() {
+      var hasOverflow = (listWrap.scrollHeight > (listWrap.clientHeight + 1));
+      if (!hasOverflow) { fade.style.display = 'none'; return; }
+      fade.style.display = (listWrap.scrollTop + listWrap.clientHeight >= listWrap.scrollHeight - 2) ? 'none' : 'block';
+    }
+    listWrap.addEventListener('scroll', updateOverflowFade);
+
+    function updateListTop() {
+      listWrap.style.top = legendEl ? legendEl.offsetHeight + 'px' : '0';
+    }
+    updateListTop();
+
+    // -- Empty / loading placeholder --
+    function setEmpty(text) {
+      listWrap.innerHTML = '';
+      var msg = document.createElement('div');
+      msg.style.padding  = '0';
+      msg.style.color    = resolveColor(w.detail_color || 'text_muted');
+      msg.style.fontSize = s(14) + 'px';
+      setContent(msg, text);
+      listWrap.appendChild(msg);
+      updateOverflowFade();
+    }
+
+    // -- Render legend buttons (matches agenda legend styling) --
+    function renderLegend() {
+      if (!legendEl) return;
+      legendEl.innerHTML = '';
+      for (var i = 0; i < lists.length; i++) {
+        (function(cfg) {
+          var color      = resolveColor(cfg.color || 'primary');
+          var name       = cfg.name || cfg.entity.replace(/^todo\./, '').replace(/_/g, ' ');
+          var isSelected = selectedListKey === cfg.entity;
+
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.display     = 'inline-flex';
+          btn.style.alignItems  = 'center';
+          btn.style.gap         = s(6) + 'px';
+          btn.style.padding     = s(3) + 'px ' + s(7) + 'px';
+          btn.style.borderRadius = s(8) + 'px';
+          btn.style.border      = 'none';
+          btn.style.cursor      = 'pointer';
+          btn.style.fontSize    = s(12) + 'px';
+          btn.style.lineHeight  = '1';
+          btn.style.whiteSpace  = 'nowrap';
+          btn.style.color       = resolveColor(w.legend_color || w.detail_color || 'text_muted');
+          btn.style.background  = isSelected ? rgbaTask(color, 0.16) : 'transparent';
+          btn.style.opacity     = (selectedListKey && !isSelected) ? '0.55' : '1';
+
+          var swatch = document.createElement('span');
+          swatch.style.display      = 'inline-block';
+          swatch.style.width        = s(9) + 'px';
+          swatch.style.height       = s(9) + 'px';
+          swatch.style.borderRadius = s(2) + 'px';
+          swatch.style.background   = color;
+          swatch.style.flexShrink   = '0';
+          btn.appendChild(swatch);
+
+          var lbl = document.createElement('span');
+          lbl.textContent = name;
+          btn.appendChild(lbl);
+
+          btn.addEventListener('click', function() {
+            selectedListKey = isSelected ? null : cfg.entity;
+            renderLegend();
+            renderItems(getFiltered());
+            resetReturnTimer();
+          });
+          legendEl.appendChild(btn);
+        })(lists[i]);
+      }
+      updateListTop();
+    }
+
+    function getFiltered() {
+      if (!selectedListKey) return cachedItems;
+      var out = [];
+      for (var i = 0; i < cachedItems.length; i++) {
+        if (cachedItems[i]._entityId === selectedListKey) out.push(cachedItems[i]);
+      }
+      return out;
+    }
+
+    // -- Date helpers --
+    // Normalise to a local-midnight Date, handling both "YYYY-MM-DD" and full ISO strings
+    function parseDueDate(dueDateStr) {
+      if (!dueDateStr) return null;
+      var dateOnly = dueDateStr.split('T')[0];   // strip time portion if present
+      var parts = dateOnly.split('-');
+      if (parts.length < 3) return null;
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function isOverdue(dueDateStr) {
+      var due = parseDueDate(dueDateStr);
+      if (!due) return false;
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return due < today;
+    }
+
+    function formatDue(dueDateStr) {
+      var due = parseDueDate(dueDateStr);
+      if (!due) return dueDateStr || '';
+      var opts = { day: 'numeric', month: 'short' };
+      if (due.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+      return due.toLocaleDateString(undefined, opts);
+    }
+
+    // -- Render task items --
+    function renderItems(items) {
+      listWrap.innerHTML = '';
+      var titleSize  = s(16);
+      var detailSize = s(13);
+      var accentWidth  = s(w.accent_width || 4);
+      var overdueColor = resolveColor(w.overdue_color || 'danger');
+
+      var visible = [];
+      for (var i = 0; i < items.length; i++) {
+        var itemCfg = null;
+        for (var ci = 0; ci < lists.length; ci++) {
+          if (lists[ci].entity === items[i]._entityId) { itemCfg = lists[ci]; break; }
+        }
+        if (items[i].status === 'completed' && !(itemCfg && itemCfg.show_completed)) continue;
+        visible.push(items[i]);
+      }
+
+      if (!visible.length) {
+        setEmpty(items.length ? 'No pending tasks' : 'No tasks');
+        return;
+      }
+
+      // Sort: overdue (oldest first), today, tomorrow, no due date, future (soonest first), completed
+      var today    = new Date(); today.setHours(0, 0, 0, 0);
+      var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+      var dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
+
+      function sortKey(item) {
+        if (item.status === 'completed') return [5, 0];
+        var due = parseDueDate(item.due);
+        if (!due)                      return [3, 0];
+        var t = due.getTime();
+        if (t < today.getTime())       return [0, t];   // overdue: oldest first
+        if (t < tomorrow.getTime())    return [1, t];   // today
+        if (t < dayAfter.getTime())    return [2, t];   // tomorrow
+        return [4, t];                                  // future: soonest first
+      }
+
+      visible.sort(function(a, b) {
+        var ka = sortKey(a), kb = sortKey(b);
+        return (ka[0] !== kb[0]) ? ka[0] - kb[0] : ka[1] - kb[1];
+      });
+
+      for (var j = 0; j < visible.length; j++) {
+        (function(item) {
+          var cfg = null;
+          for (var k = 0; k < lists.length; k++) {
+            if (lists[k].entity === item._entityId) { cfg = lists[k]; break; }
+          }
+          var accentColor = resolveColor((cfg && cfg.color) || 'primary');
+          var isComplete  = item.status === 'completed';
+          var overdue     = !isComplete && isOverdue(item.due);
+
+          var card = document.createElement('div');
+          card.style.display       = 'flex';
+          card.style.alignItems    = 'stretch';
+          card.style.marginBottom  = s(6) + 'px';
+          card.style.background    = resolveColor(w.event_background || 'surface2');
+          card.style.borderRadius  = s((w.event_radius !== undefined ? w.event_radius : 8)) + 'px';
+          card.style.overflow      = 'hidden';
+          var listEditable = cfg && cfg.editable === true;
+          if (isComplete) card.style.opacity = '0.5';
+          if (listEditable && !isComplete) card.style.cursor = 'pointer';
+
+          var bar = document.createElement('div');
+          bar.style.width      = accentWidth + 'px';
+          bar.style.background = accentColor;
+          bar.style.flexShrink = '0';
+          card.appendChild(bar);
+
+          // Checkbox column (editable only)
+          if (listEditable) {
+            var checkCol = document.createElement('div');
+            checkCol.style.display     = 'flex';
+            checkCol.style.alignItems  = 'center';
+            checkCol.style.padding     = '0 ' + s(8) + 'px';
+            checkCol.style.flexShrink  = '0';
+            var checkIcon = document.createElement('span');
+            checkIcon.className = isComplete ? 'mdi mdi-checkbox-marked-circle' : 'mdi mdi-checkbox-blank-circle-outline';
+            checkIcon.style.fontSize = titleSize + 'px';
+            checkIcon.style.color    = isComplete ? accentColor : resolveColor(w.detail_color || 'text_muted');
+            checkCol.appendChild(checkIcon);
+            card.appendChild(checkCol);
+          }
+
+          var content = document.createElement('div');
+          content.style.flex     = '1';
+          content.style.padding  = s(10) + 'px ' + s(12) + 'px ' + s(10) + 'px ' + (listEditable ? s(4) + 'px' : s(12) + 'px');
+          content.style.minWidth = '0';
+          card.appendChild(content);
+
+          var nameEl = document.createElement('div');
+          nameEl.style.fontSize     = titleSize + 'px';
+          nameEl.style.lineHeight   = '1.2';
+          nameEl.style.color        = resolveColor(w.title_color || 'text');
+          nameEl.style.overflow     = 'hidden';
+          nameEl.style.textOverflow = 'ellipsis';
+          nameEl.style.whiteSpace   = 'nowrap';
+          if (isComplete) nameEl.style.textDecoration = 'line-through';
+          setContent(nameEl, item.summary || '(No title)');
+          content.appendChild(nameEl);
+
+          if (item.due) {
+            var dueEl = document.createElement('div');
+            dueEl.style.fontSize  = detailSize + 'px';
+            dueEl.style.marginTop = s(4) + 'px';
+            dueEl.style.color     = overdue ? overdueColor : resolveColor(w.detail_color || 'text_muted');
+            setContent(dueEl, overdue ? '[mdi:alert-circle-outline]\u00a0' + formatDue(item.due) : formatDue(item.due));
+            content.appendChild(dueEl);
+          }
+
+          if (listEditable && !isComplete) {
+            var clickHandler = function() {
+              openTaskConfirm(item, function() {
+                // Optimistic UI update - reflect completion immediately
+                if (checkIcon) {
+                  checkIcon.className   = 'mdi mdi-checkbox-marked-circle';
+                  checkIcon.style.color = accentColor;
+                }
+                nameEl.style.textDecoration = 'line-through';
+                card.style.opacity  = '0.5';
+                card.style.cursor   = 'default';
+                card.removeEventListener('click', clickHandler);
+
+                wsSend({
+                  id:           msgId++,
+                  type:         'call_service',
+                  domain:       'todo',
+                  service:      'update_item',
+                  target:       { entity_id: item._entityId },
+                  service_data: { item: item.uid, status: 'completed' }
+                });
+                debouncedRefresh();
+              });
+              resetReturnTimer();
+            };
+            card.addEventListener('click', clickHandler);
+          }
+
+          listWrap.appendChild(card);
+        })(visible[j]);
+      }
+      updateOverflowFade();
+    }
+
+    // -- Add task modal --
+    function openAddTaskModal(targetLists) {
+      var selectedList = targetLists[0];
+
+      var overlay = document.createElement('div');
+      overlay.style.position       = 'fixed';
+      overlay.style.top            = '0';
+      overlay.style.left           = '0';
+      overlay.style.right          = '0';
+      overlay.style.bottom         = '0';
+      overlay.style.background     = 'rgba(0,0,0,0.65)';
+      overlay.style.zIndex         = '9999';
+      overlay.style.display        = 'flex';
+      overlay.style.alignItems     = 'center';
+      overlay.style.justifyContent = 'center';
+
+      var box = document.createElement('div');
+      box.style.background   = resolveColor(w.background || 'surface');
+      box.style.borderRadius = s(12) + 'px';
+      box.style.padding      = s(24) + 'px';
+      box.style.maxWidth     = s(380) + 'px';
+      box.style.width        = '85%';
+      overlay.appendChild(box);
+
+      var heading = document.createElement('div');
+      heading.style.fontSize     = s(16) + 'px';
+      heading.style.color        = resolveColor(w.color || 'text');
+      heading.style.marginBottom = s(16) + 'px';
+      setContent(heading, '[mdi:plus-circle]\u00a0Add task');
+      box.appendChild(heading);
+
+      // List picker - only shown when more than one addable list
+      if (targetLists.length > 1) {
+        var pickerRow = document.createElement('div');
+        pickerRow.style.display        = 'flex';
+        pickerRow.style.flexWrap       = 'wrap';
+        pickerRow.style.gap            = s(6) + 'px';
+        pickerRow.style.marginBottom   = s(14) + 'px';
+        box.appendChild(pickerRow);
+
+        for (var pi = 0; pi < targetLists.length; pi++) {
+          (function(cfg) {
+            var color = resolveColor(cfg.color || 'primary');
+            var name  = cfg.name || cfg.entity.replace(/^todo\./, '').replace(/_/g, ' ');
+            var pill  = document.createElement('div');
+            pill.style.display      = 'flex';
+            pill.style.alignItems   = 'center';
+            pill.style.gap          = s(5) + 'px';
+            pill.style.padding      = s(4) + 'px ' + s(10) + 'px';
+            pill.style.borderRadius = s(20) + 'px';
+            pill.style.cursor       = 'pointer';
+            pill.style.fontSize     = s(13) + 'px';
+            pill.style.border       = '2px solid ' + color;
+            pill.style.color        = resolveColor(w.color || 'text');
+            pill.style.background   = (selectedList === cfg) ? color : 'transparent';
+            pill._listCfg = cfg;
+
+            var dot = document.createElement('span');
+            dot.style.display      = 'inline-block';
+            dot.style.width        = s(7) + 'px';
+            dot.style.height       = s(7) + 'px';
+            dot.style.borderRadius = '50%';
+            dot.style.background   = (selectedList === cfg) ? resolveColor(w.background || 'surface') : color;
+            dot.style.flexShrink   = '0';
+            pill.appendChild(dot);
+
+            var pillLabel = document.createElement('span');
+            pillLabel.textContent = name;
+            pill.appendChild(pillLabel);
+
+            pill.addEventListener('click', function() {
+              selectedList = cfg;
+              var pills = pickerRow.querySelectorAll('div');
+              for (var pj = 0; pj < pills.length; pj++) {
+                var pc = pills[pj]._listCfg;
+                var pc2 = resolveColor(pc && pc.color || 'primary');
+                pills[pj].style.background = (pc === cfg) ? pc2 : 'transparent';
+                pills[pj].querySelector('span').style.background = (pc === cfg) ? resolveColor(w.background || 'surface') : pc2;
+              }
+            });
+            pickerRow.appendChild(pill);
+          })(targetLists[pi]);
+        }
+      }
+
+      // Shared label style helper
+      function makeLabel(text) {
+        var lbl = document.createElement('div');
+        lbl.style.fontSize     = s(12) + 'px';
+        lbl.style.color        = resolveColor(w.color_dim || 'text_muted');
+        lbl.style.marginBottom = s(4) + 'px';
+        lbl.textContent        = text;
+        return lbl;
+      }
+
+      // Task name input
+      box.appendChild(makeLabel('Task name'));
+      var input = document.createElement('input');
+      input.type        = 'text';
+      input.placeholder = 'Enter task name';
+      input.style.width        = '100%';
+      input.style.boxSizing    = 'border-box';
+      input.style.padding      = s(10) + 'px ' + s(12) + 'px';
+      input.style.borderRadius = s(6) + 'px';
+      input.style.border       = '1px solid ' + resolveColor('surface2');
+      input.style.background   = resolveColor('surface2');
+      input.style.color        = resolveColor(w.color || 'text');
+      input.style.fontSize     = s(15) + 'px';
+      input.style.outline      = 'none';
+      input.style.marginBottom = s(12) + 'px';
+      box.appendChild(input);
+
+      // Due date input
+      box.appendChild(makeLabel('Due date (optional)'));
+      var dateInput = document.createElement('input');
+      dateInput.type        = 'date';
+      dateInput.placeholder = 'YYYY-MM-DD';
+      dateInput.style.width        = '100%';
+      dateInput.style.boxSizing    = 'border-box';
+      dateInput.style.padding      = s(10) + 'px ' + s(12) + 'px';
+      dateInput.style.borderRadius = s(6) + 'px';
+      dateInput.style.border       = '1px solid ' + resolveColor('surface2');
+      dateInput.style.background   = resolveColor('surface2');
+      dateInput.style.color        = resolveColor(w.color || 'text');
+      dateInput.style.fontSize     = s(15) + 'px';
+      dateInput.style.outline      = 'none';
+      dateInput.style.marginBottom = s(16) + 'px';
+      box.appendChild(dateInput);
+
+      var btnRow = document.createElement('div');
+      btnRow.style.display        = 'flex';
+      btnRow.style.gap            = s(12) + 'px';
+      btnRow.style.justifyContent = 'flex-end';
+      box.appendChild(btnRow);
+
+      var cancelBtn = document.createElement('div');
+      cancelBtn.style.padding      = s(8) + 'px ' + s(20) + 'px';
+      cancelBtn.style.borderRadius = s(6) + 'px';
+      cancelBtn.style.background   = resolveColor('surface2');
+      cancelBtn.style.color        = resolveColor('text');
+      cancelBtn.style.fontSize     = s(14) + 'px';
+      cancelBtn.style.cursor       = 'pointer';
+      setContent(cancelBtn, 'Cancel');
+      cancelBtn.addEventListener('click', function() { document.body.removeChild(overlay); });
+      btnRow.appendChild(cancelBtn);
+
+      var saveBtn = document.createElement('div');
+      saveBtn.style.padding      = s(8) + 'px ' + s(20) + 'px';
+      saveBtn.style.borderRadius = s(6) + 'px';
+      saveBtn.style.background   = resolveColor('primary');
+      saveBtn.style.color        = resolveColor('background');
+      saveBtn.style.fontSize     = s(14) + 'px';
+      saveBtn.style.cursor       = 'pointer';
+      setContent(saveBtn, '[mdi:check]\u00a0Save');
+      btnRow.appendChild(saveBtn);
+
+      function doSave() {
+        var name = input.value.replace(/^\s+|\s+$/g, '');
+        if (!name) { input.style.border = '1px solid ' + resolveColor(w.overdue_color || 'danger'); return; }
+        document.body.removeChild(overlay);
+
+        var due = dateInput.value || null;
+
+        // Optimistic: add temp item to cache and re-render immediately
+        var tempItem = { summary: name, status: 'needs_action', uid: 'temp_' + Date.now(), _entityId: selectedList.entity, due: due };
+        cachedItems.push(tempItem);
+        renderLegend();
+        renderItems(getFiltered());
+
+        var svcData = { item: name };
+        if (due) svcData.due_date = due;
+        wsSend({
+          id:           msgId++,
+          type:         'call_service',
+          domain:       'todo',
+          service:      'add_item',
+          target:       { entity_id: selectedList.entity },
+          service_data: svcData
+        });
+        debouncedRefresh();
+      }
+
+      saveBtn.addEventListener('click', doSave);
+      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSave(); });
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) document.body.removeChild(overlay);
+      });
+
+      document.body.appendChild(overlay);
+      setTimeout(function() { input.focus(); }, 50);
+    }
+
+    // -- Confirmation modal --
+    function openTaskConfirm(item, onConfirm) {
+      var overlay = document.createElement('div');
+      overlay.style.position       = 'fixed';
+      overlay.style.top            = '0';
+      overlay.style.left           = '0';
+      overlay.style.right          = '0';
+      overlay.style.bottom         = '0';
+      overlay.style.background     = 'rgba(0,0,0,0.65)';
+      overlay.style.zIndex         = '9999';
+      overlay.style.display        = 'flex';
+      overlay.style.alignItems     = 'center';
+      overlay.style.justifyContent = 'center';
+
+      var box = document.createElement('div');
+      box.style.background   = resolveColor(w.background || 'surface');
+      box.style.borderRadius = s(12) + 'px';
+      box.style.padding      = s(24) + 'px';
+      box.style.maxWidth     = s(360) + 'px';
+      box.style.width        = '80%';
+      box.style.textAlign    = 'center';
+      overlay.appendChild(box);
+
+      var prompt = document.createElement('div');
+      prompt.style.fontSize     = s(16) + 'px';
+      prompt.style.color        = resolveColor(w.color || 'text');
+      prompt.style.marginBottom = s(8) + 'px';
+      setContent(prompt, 'Mark as complete?');
+      box.appendChild(prompt);
+
+      var taskName = document.createElement('div');
+      taskName.style.fontSize     = s(14) + 'px';
+      taskName.style.color        = resolveColor(w.color_dim || 'text_muted');
+      taskName.style.marginBottom = s(20) + 'px';
+      taskName.style.overflow     = 'hidden';
+      taskName.style.textOverflow = 'ellipsis';
+      taskName.style.whiteSpace   = 'nowrap';
+      taskName.textContent        = item.summary || '';
+      box.appendChild(taskName);
+
+      var btnRow = document.createElement('div');
+      btnRow.style.display        = 'flex';
+      btnRow.style.gap            = s(12) + 'px';
+      btnRow.style.justifyContent = 'center';
+      box.appendChild(btnRow);
+
+      var cancelBtn = document.createElement('div');
+      cancelBtn.style.padding      = s(8) + 'px ' + s(20) + 'px';
+      cancelBtn.style.borderRadius = s(6) + 'px';
+      cancelBtn.style.background   = resolveColor('surface2');
+      cancelBtn.style.color        = resolveColor('text');
+      cancelBtn.style.fontSize     = s(14) + 'px';
+      cancelBtn.style.cursor       = 'pointer';
+      setContent(cancelBtn, 'Cancel');
+      cancelBtn.addEventListener('click', function() { document.body.removeChild(overlay); });
+      btnRow.appendChild(cancelBtn);
+
+      var confirmBtn = document.createElement('div');
+      confirmBtn.style.padding      = s(8) + 'px ' + s(20) + 'px';
+      confirmBtn.style.borderRadius = s(6) + 'px';
+      confirmBtn.style.background   = resolveColor('primary');
+      confirmBtn.style.color        = resolveColor('background');
+      confirmBtn.style.fontSize     = s(14) + 'px';
+      confirmBtn.style.cursor       = 'pointer';
+      setContent(confirmBtn, '[mdi:check]\u00a0Done');
+      confirmBtn.addEventListener('click', function() {
+        document.body.removeChild(overlay);
+        onConfirm();
+      });
+      btnRow.appendChild(confirmBtn);
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) document.body.removeChild(overlay);
+      });
+
+      document.body.appendChild(overlay);
+    }
+
+    // -- Fetch items for a single list via WS todo.get_items --
+    function fetchListItems(entityId, cb) {
+      if (!ws || ws.readyState !== 1) { cb(null); return; }
+      var id = msgId++;
+      pendingTaskRequests[id] = function(result) {
+        if (!result) { cb([]); return; }
+        // call_service with return_response:true wraps service data under result.response
+        var response = (result.response !== undefined) ? result.response : result;
+        var data     = response[entityId] || response;
+        var items    = (data && Array.isArray(data.items)) ? data.items : [];
+        cb(items);
+      };
+      wsSend({
+        id:              id,
+        type:            'call_service',
+        domain:          'todo',
+        service:         'get_items',
+        target:          { entity_id: entityId },
+        service_data:    { status: ['needs_action', 'completed'] },
+        return_response: true
+      });
+    }
+
+    // -- Refresh: fetch all lists, merge, render --
+    function refreshTasks() {
+      if (!active) return;
+      if (!lists.length) { setEmpty('No lists configured'); return; }
+      if (!ws || ws.readyState !== 1) {
+        setTimeout(function() { if (active) refreshTasks(); }, 2000);
+        return;
+      }
+      var pending = lists.length;
+      var merged  = [];
+      for (var i = 0; i < lists.length; i++) {
+        (function(cfg) {
+          fetchListItems(cfg.entity, function(items) {
+            if (items) {
+              for (var j = 0; j < items.length; j++) {
+                items[j]._entityId = cfg.entity;
+                merged.push(items[j]);
+              }
+            }
+            pending--;
+            if (pending === 0) {
+              cachedItems = merged;
+              renderLegend();
+              renderItems(getFiltered());
+            }
+          });
+        })(lists[i]);
+      }
+    }
+
+    // Subscribe to each todo entity: refresh when item count changes
+    for (var li = 0; li < lists.length; li++) {
+      (function(entityId) {
+        registerEntityCallback(entityId, function() {
+          if (active) refreshTasks();
+        });
+      })(lists[li].entity);
+    }
+
+    var pendingRefresh = null;
+    function debouncedRefresh() {
+      if (pendingRefresh) clearTimeout(pendingRefresh);
+      pendingRefresh = setTimeout(function() { pendingRefresh = null; if (active) refreshTasks(); }, 10000);
+    }
+
+    var timerRef = { id: null, stop: function() { active = false; if (pendingRefresh) { clearTimeout(pendingRefresh); pendingRefresh = null; } } };
+    activePageTimers.push(timerRef);
+
+    setEmpty('Loading...');
+    refreshTasks();
+    var timer = setInterval(function() { if (active) refreshTasks(); }, refreshSec * 1000);
+    timerRef.id = timer;
+  }
+
   // -- Camera widget --
   //
   // preview modes:
@@ -4954,6 +5700,12 @@
           var agendaCb = pendingAgendaRequests[msg.id];
           delete pendingAgendaRequests[msg.id];
           agendaCb(msg.success ? msg.result : null);
+          break;
+        }
+        if (pendingTaskRequests[msg.id]) {
+          var taskCb = pendingTaskRequests[msg.id];
+          delete pendingTaskRequests[msg.id];
+          taskCb(msg.success ? msg.result : null);
           break;
         }
         if (msg.success && msg.result && Array.isArray(msg.result)) {

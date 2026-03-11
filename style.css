@@ -457,6 +457,13 @@ html, body {
   width: 90%;
   max-width: 480px;
   color: #e6e6e6;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
 }
 
 #setup-logo {
@@ -465,6 +472,21 @@ html, body {
   color: #8ADF45;
   margin-bottom: 12px;
   letter-spacing: 2px;
+}
+
+#setup-device-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7580;
+  letter-spacing: 0;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+#setup-about {
+  padding-top: 16px;
+  border-top: 1px solid #2d3a4a;
+  text-align: center;
 }
 
 #setup-box p {
@@ -528,6 +550,49 @@ html, body {
   min-height: 20px;
   margin-top: 10px;
   margin-bottom: 0;
+}
+
+@media (min-width: 760px) {
+  #setup-box {
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    max-width: 820px;
+    gap: 32px;
+  }
+  #setup-form {
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    min-width: 0;
+  }
+  #setup-about {
+    width: 200px;
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 200px;
+    flex: 0 0 200px;
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid #2d3a4a;
+    padding-left: 28px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+  }
 }
 
 /* ---- Landing page (no device specified) -------------------- */
@@ -1089,6 +1154,13 @@ html, body {
   width: 90%;
   max-width: 480px;
   color: #e6e6e6;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
 }
 
 #setup-logo {
@@ -1097,6 +1169,21 @@ html, body {
   color: #8ADF45;
   margin-bottom: 12px;
   letter-spacing: 2px;
+}
+
+#setup-device-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7580;
+  letter-spacing: 0;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+#setup-about {
+  padding-top: 16px;
+  border-top: 1px solid #2d3a4a;
+  text-align: center;
 }
 
 #setup-box p {
@@ -1160,6 +1247,49 @@ html, body {
   min-height: 20px;
   margin-top: 10px;
   margin-bottom: 0;
+}
+
+@media (min-width: 760px) {
+  #setup-box {
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    max-width: 820px;
+    gap: 32px;
+  }
+  #setup-form {
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    min-width: 0;
+  }
+  #setup-about {
+    width: 200px;
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 200px;
+    flex: 0 0 200px;
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid #2d3a4a;
+    padding-left: 28px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+  }
 }
 
 /* ---- Landing page (no device specified) -------------------- */

@@ -69,6 +69,8 @@ Use `?device=name` to load `devices/name.json`:
 http://your-ha-ip:8123/local/haven/index.html?device=ipad-air
 ```
 
+The parameter is the filename **without** the `.json` extension. Using `?device=ipad-air.json` will fail silently because HAven appends `.json` itself, resulting in a double extension.
+
 Omit the parameter entirely to load `devices/default.json`. If that file is missing, HAven shows a help/landing page.
 
 ---

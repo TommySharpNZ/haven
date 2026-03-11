@@ -73,3 +73,4 @@ HAven also provides a small set of [internal entities](config-reference.md#inter
 | `camera` | Displays a camera feed with configurable preview modes (MJPEG, snapshot, poster, direct URL). Tapping opens a fullscreen HLS stream with audio. | [widget-camera.md](widget-camera.md) |
 | `history_chart` | A vertical bar chart driven by HA long-term statistics. Supports daily, hourly, monthly, and yearly views with an optional fullscreen modal. | [widget-history-chart.md](widget-history-chart.md) |
 | `agenda` | A scrollable event list from one or more HA calendar entities, with per-calendar colors, icons, and layout options. | [widget-agenda.md](widget-agenda.md) |
+| `tasks` | A scrollable task list from one or more HA todo entities. Supports due dates, overdue highlighting, per-list colors, marking items complete, and adding new tasks. | [widget-tasks.md](widget-tasks.md) |

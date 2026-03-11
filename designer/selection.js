@@ -545,6 +545,47 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
       onChange('legend', c ? true : undefined);
     });
   }
+
+  if (w.type === 'tasks') {
+    addSectionHeader(container, 'Lists');
+    addJsonArrayButton(container, 'Lists', w, 'lists', onChange);
+
+    addSectionHeader(container, 'Data');
+    addNumber(container, 'refresh_interval', w.refresh_interval, onChange);
+
+    addSectionHeader(container, 'Colors');
+    addPairRow(container,
+      'background',     makeTextInput(w.background,     function(v) { onChange('background', v); }),
+      'card background', makeTextInput(w.event_background, function(v) { onChange('event_background', v); })
+    );
+    addPairRow(container,
+      'title color',  makeTextInput(w.title_color,  function(v) { onChange('title_color', v); }),
+      'detail color', makeTextInput(w.detail_color, function(v) { onChange('detail_color', v); })
+    );
+    addPairRow(container,
+      'legend color',  makeTextInput(w.legend_color,  function(v) { onChange('legend_color', v); }),
+      'overdue color', makeTextInput(w.overdue_color, function(v) { onChange('overdue_color', v); })
+    );
+
+    addSectionHeader(container, 'Shape');
+    addPairRow(container,
+      'widget radius', makeNumberInput(w.radius,       function(v) { onChange('radius', v); }),
+      'card radius',   makeNumberInput(w.event_radius, function(v) { onChange('event_radius', v); })
+    );
+    addPairRow(container,
+      'padding',       makeNumberInput(w.padding,     function(v) { onChange('padding', v); }),
+      'accent width',  makeNumberInput(w.accent_width, function(v) { onChange('accent_width', v); })
+    );
+    addPairRow(container,
+      'scale',   makeNumberInput(w.tasks_scale, function(v) { onChange('tasks_scale', v); }),
+      'opacity', makeNumberInput(w.opacity,     function(v) { onChange('opacity', v); })
+    );
+
+    addSectionHeader(container, 'Options');
+    addCheckbox(container, 'show legend', w.legend !== false, function(c) {
+      onChange('legend', c ? undefined : false);
+    });
+  }
 }
 
 // ---- Theme palette -------------------------------------------------------
@@ -880,6 +921,7 @@ function openJsonArrayModal(heading, w, key, onChange) {
       { value: 60, color: 'primary' }
     ],
     calendars: [{ entity: 'calendar.home', color: 'primary', label: 'Home' }],
+    lists: [{ entity: 'todo.my_list', name: 'My List', color: 'primary', editable: false, allow_add: false, show_completed: false }],
     options: [
       { label: 'Option 1', service: 'scene.turn_on', entity_id: 'scene.option_1' },
       { label: 'Option 2', service: 'scene.turn_on', entity_id: 'scene.option_2' }
