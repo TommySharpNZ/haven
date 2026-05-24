@@ -19,10 +19,7 @@
   var msgId = 1;
   var entityCallbacks = {};        // entityId -> [callback, ...] for current page
   var page0Callbacks  = {};        // entityId -> [callback, ...] persistent (page 0 widgets)
-  var pendingStreamRequests = {};  // msgId -> callback for camera/stream responses
-  var pendingAgendaRequests = {};  // msgId -> callback for calendar/get_events responses
-  var pendingTaskRequests   = {};  // msgId -> callback for todo/get_items responses
-  var pendingWeatherRequests = {}; // msgId -> callback for weather/get_forecasts responses
+  var pendingRequests = {};  // msgId -> callback for all async WS responses (camera, agenda, tasks, weather)
   var activePageTimers      = [];  // setInterval IDs to clear on page change
   var entityStates = {};      // entityId -> stateObject (cached)
   var INTERNAL_CONN_ENTITY = 'internal.connectionstatus';
@@ -419,25 +416,28 @@
     for (var t = 0; t < activePageTimers.length; t++) {
       clearInterval(activePageTimers[t].id);
       if (activePageTimers[t].stop) activePageTimers[t].stop();
-      // Cancel any pending signed URL requests this timer may have in flight
+      // Cancel any pending WS requests this timer may have in flight
       if (activePageTimers[t].pendingIds) {
         for (var p = 0; p < activePageTimers[t].pendingIds.length; p++) {
-          delete pendingStreamRequests[activePageTimers[t].pendingIds[p]];
-          delete pendingAgendaRequests[activePageTimers[t].pendingIds[p]];
-          delete pendingTaskRequests[activePageTimers[t].pendingIds[p]];
-          delete pendingWeatherRequests[activePageTimers[t].pendingIds[p]];
+          delete pendingRequests[activePageTimers[t].pendingIds[p]];
         }
       }
     }
     activePageTimers = [];
     canvas.innerHTML = '';
 
-    // Page background image
     var pageConfig = null;
     for (var i = 0; i < config.pages.length; i++) {
       if (config.pages[i].id === pageId) { pageConfig = config.pages[i]; break; }
     }
-    if (pageConfig && pageConfig.background_image) {
+
+    if (!pageConfig) {
+      showFatalError('Page ' + pageId + ' not found in config.');
+      return;
+    }
+
+    // Page background image
+    if (pageConfig.background_image) {
       var imgUrl = pageConfig.background_image;
       // Relative paths resolved against haven root
       if (imgUrl.indexOf('http') !== 0) {
@@ -462,19 +462,6 @@
       }
     } else {
       canvas.style.backgroundImage = 'none';
-    }
-
-    var pageConfig = null;
-    for (var i = 0; i < config.pages.length; i++) {
-      if (config.pages[i].id === pageId) {
-        pageConfig = config.pages[i];
-        break;
-      }
-    }
-
-    if (!pageConfig) {
-      showFatalError('Page ' + pageId + ' not found in config.');
-      return;
     }
 
     // Render each widget
@@ -902,9 +889,7 @@
     var els = document.querySelectorAll('.widget-clock');
     if (!els.length) return;
     var now = new Date();
-    var h   = now.getHours();
-    var m   = String(now.getMinutes()).length < 2 ? '0' + now.getMinutes() : String(now.getMinutes());
-    var timeStr = h + ':' + m;
+    var timeStr = now.getHours() + ':' + pad2(now.getMinutes());
     for (var i = 0; i < els.length; i++) {
       els[i].textContent = timeStr;
     }
@@ -954,7 +939,6 @@
     if (name === undefined || name === null) return '';
     var n = String(name).toLowerCase();
     if (n === 'pulse' || n === 'pulse_fast' || n === 'blink' || n === 'breathe') return n;
-    if (n === 'none') return '';
     return '';
   }
 
@@ -4526,7 +4510,7 @@
     function fetchListItems(entityId, cb) {
       if (!ws || ws.readyState !== 1) { cb(null); return; }
       var id = msgId++;
-      pendingTaskRequests[id] = function(result) {
+      pendingRequests[id] = function(result) {
         if (!result) { cb([]); return; }
         // call_service with return_response:true wraps service data under result.response
         var response = (result.response !== undefined) ? result.response : result;
@@ -5185,7 +5169,7 @@
 
     var streamMsgId = msgId++;
     console.log('HAven camera [' + (w.id || entity) + ']: requesting HLS stream, entity=' + entity + ', msgId=' + streamMsgId);
-    pendingStreamRequests[streamMsgId] = function(result) {
+    pendingRequests[streamMsgId] = function(result) {
       if (!result || !result.url) {
         console.warn('HAven camera [' + (w.id || entity) + ']: camera/stream result has no URL. result=', result);
         loader.textContent = ''; var e = document.createElement('span'); e.className = 'mdi mdi-alert-circle'; loader.appendChild(e);
@@ -5343,7 +5327,7 @@
   // Returns the msgId so callers can track and cancel if needed
   function requestSignedUrl(path, expires, cb) {
     var id = msgId++;
-    pendingStreamRequests[id] = function(result) {
+    pendingRequests[id] = function(result) {
       cb(result && result.path ? haUrl + result.path : null);
     };
     wsSend({ id: id, type: 'auth/sign_path', path: path, expires: expires || 20 });
@@ -5543,7 +5527,7 @@
 
     // One-off WS request - response routed via pendingStreamRequests by message ID
     var id = msgId++;
-    pendingStreamRequests[id] = function(result) {
+    pendingRequests[id] = function(result) {
       if (!result) return;
       var stats = result[w.entity];
       if (!stats || !stats.length) return;
@@ -5651,7 +5635,7 @@
   }
 
   // -- Weather Forecast --
-  var WF_COND_ICON = {
+  var WEATHER_CONDITION_ICONS = {
     'sunny':           'mdi:weather-sunny',
     'clear-night':     'mdi:weather-night',
     'cloudy':          'mdi:weather-cloudy',
@@ -5680,11 +5664,11 @@
     'condition':     null
   };
 
-  function wfConditionIcon(cond) {
-    return WF_COND_ICON[cond] || ('mdi:weather-' + (cond || 'cloudy'));
+  function getWeatherConditionIcon(cond) {
+    return WEATHER_CONDITION_ICONS[cond] || ('mdi:weather-' + (cond || 'cloudy'));
   }
 
-  function wfFormatLabel(dt, fmt) {
+  function formatWeatherLabel(dt, fmt) {
     var d = new Date(dt);
     if (isNaN(d.getTime())) return '';
     var daysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -5696,21 +5680,21 @@
     return daysFull[d.getDay()]; // 'day' default
   }
 
-  function wfFormatTemp(val) {
+  function formatWeatherTemp(val) {
     var n = parseFloat(val);
     if (isNaN(n)) return '--';
     return (n % 1 === 0 ? Math.round(n) : n.toFixed(1)) + '\u00b0';
   }
 
-  function wfSafeNum(v) {
+  function parseWeatherNumber(v) {
     var n = parseFloat(v);
     return isNaN(n) ? null : n;
   }
 
-  var WF_TEMP_GROUP = { 'temperature': true, 'templow': true };
+  var WEATHER_TEMP_METRICS = { 'temperature': true, 'templow': true };
 
-  function wfFmtVal(val, metric) {
-    if (WF_TEMP_GROUP[metric])      return wfFormatTemp(val);
+  function formatWeatherMetric(val, metric) {
+    if (WEATHER_TEMP_METRICS[metric])      return formatWeatherTemp(val);
     if (metric === 'wind_speed')    return Math.round(val) + 'km/h';
     if (metric === 'wind_bearing')  return Math.round(val) + '\u00b0';
     if (metric === 'humidity')      return Math.round(val) + '%';
@@ -5757,7 +5741,7 @@
     }
     var id = msgId++;
     timerRef.pendingIds.push(id);
-    pendingWeatherRequests[id] = function(result) {
+    pendingRequests[id] = function(result) {
       var idx = timerRef.pendingIds.indexOf(id);
       if (idx !== -1) timerRef.pendingIds.splice(idx, 1);
       if (!result) return;
@@ -5818,7 +5802,7 @@
         lbl.style.cssText = 'position:absolute;top:0;left:' + (i * slotW) + 'px;width:' + slotW + 'px;' +
           'height:' + LABEL_H + 'px;line-height:' + LABEL_H + 'px;text-align:center;' +
           'font-size:' + sc(11) + 'px;color:' + labelColor + ';overflow:hidden;white-space:nowrap;';
-        lbl.textContent = wfFormatLabel(forecast[i].datetime, labelFmt);
+        lbl.textContent = formatWeatherLabel(forecast[i].datetime, labelFmt);
         inner.appendChild(lbl);
       }
     }
@@ -5831,7 +5815,7 @@
         iconDiv.style.cssText = 'position:absolute;top:' + iconTop + 'px;left:' + (i * slotW) + 'px;' +
           'width:' + slotW + 'px;height:' + ICON_H + 'px;line-height:' + ICON_H + 'px;' +
           'text-align:center;font-size:' + Math.round(ICON_H * 0.55) + 'px;color:' + iconColor + ';';
-        setContent(iconDiv, '[' + wfConditionIcon(forecast[i].condition || '') + ']');
+        setContent(iconDiv, '[' + getWeatherConditionIcon(forecast[i].condition || '') + ']');
         inner.appendChild(iconDiv);
       }
     }
@@ -5855,7 +5839,7 @@
       for (var s = 0; s < series.length; s++) {
         var sv = [];
         for (var i = 0; i < slots; i++) {
-          sv.push(wfSafeNum(forecast[i][series[s].metric]));
+          sv.push(parseWeatherNumber(forecast[i][series[s].metric]));
         }
         seriesVals.push(sv);
       }
@@ -5863,7 +5847,7 @@
       // Shared scale for temperature-family metrics
       var tempAllVals = [];
       for (var s = 0; s < series.length; s++) {
-        if (WF_TEMP_GROUP[series[s].metric]) {
+        if (WEATHER_TEMP_METRICS[series[s].metric]) {
           for (var i = 0; i < seriesVals[s].length; i++) {
             if (seriesVals[s][i] !== null) tempAllVals.push(seriesVals[s][i]);
           }
@@ -5872,7 +5856,7 @@
       var tempMin = tempAllVals.length ? Math.min.apply(null, tempAllVals) : 0;
       var tempMax = tempAllVals.length ? Math.max.apply(null, tempAllVals) : 1;
       for (var s = 0; s < series.length; s++) {
-        if (WF_TEMP_GROUP[series[s].metric]) {
+        if (WEATHER_TEMP_METRICS[series[s].metric]) {
           if (series[s].min !== undefined) tempMin = Math.min(tempMin, parseFloat(series[s].min));
           if (series[s].max !== undefined) tempMax = Math.max(tempMax, parseFloat(series[s].max));
         }
@@ -5882,7 +5866,7 @@
       // Precompute per-series scale bounds for non-temp series
       var seriesScale = [];
       for (var s = 0; s < series.length; s++) {
-        if (WF_TEMP_GROUP[series[s].metric]) { seriesScale.push(null); continue; }
+        if (WEATHER_TEMP_METRICS[series[s].metric]) { seriesScale.push(null); continue; }
         var valid = [];
         for (var i = 0; i < seriesVals[s].length; i++) {
           if (seriesVals[s][i] !== null) valid.push(seriesVals[s][i]);
@@ -5897,7 +5881,7 @@
       // Compute Y coordinate for a value in a given series, clamped to chart bounds
       function wfY(val, sIdx) {
         var y;
-        if (WF_TEMP_GROUP[series[sIdx].metric]) {
+        if (WEATHER_TEMP_METRICS[series[sIdx].metric]) {
           y = PAD_TOP + (1 - (val - tempMin) / tempRange) * innerH;
         } else {
           var sc2 = seriesScale[sIdx];
@@ -5960,7 +5944,7 @@
                 '" height="' + bh + '" fill="' + sColor + '" rx="2"/>');
               parts.push('<text x="' + (i * slotW + slotW / 2) + '" y="' + (by - 3) +
                 '" text-anchor="middle" font-size="' + sc(10) + '" fill="' + sColor + '">' +
-                wfFmtVal(sVals[i], sr.metric) + '</text>');
+                formatWeatherMetric(sVals[i], sr.metric) + '</text>');
             }
 
           } else {
@@ -5995,7 +5979,7 @@
               var labelY = flipUp ? (py - sc(11)) : (py + sc(10) + sc(9));
               parts.push('<text x="' + px + '" y="' + labelY +
                 '" text-anchor="middle" font-size="' + sc(10) + '" font-weight="600" fill="' + sColor + '">' +
-                wfFmtVal(sVals[i], sr.metric) + '</text>');
+                formatWeatherMetric(sVals[i], sr.metric) + '</text>');
               parts.push('<circle cx="' + px + '" cy="' + py + '" r="4" fill="' + sColor + '"/>');
             }
           }
@@ -6078,12 +6062,12 @@
           var rawVal = forecast[i][metric];
           var valStr = '--';
           if (metric === 'condition') {
-            setContent(cell, '[' + wfConditionIcon(forecast[i].condition || '') + ']');
+            setContent(cell, '[' + getWeatherConditionIcon(forecast[i].condition || '') + ']');
             inner.appendChild(cell);
             continue;
           }
-          var n = wfSafeNum(rawVal);
-          if (n !== null) valStr = wfFmtVal(n, metric);
+          var n = parseWeatherNumber(rawVal);
+          if (n !== null) valStr = formatWeatherMetric(n, metric);
           var content = icon ? ('[' + icon + ']&nbsp;' + valStr) : valStr;
           setContent(cell, content);
           inner.appendChild(cell);
@@ -6590,7 +6574,7 @@
     };
   }
 
-    // Safe WebSocket send - never throws even if socket is closing
+  // Safe WebSocket send - never throws even if socket is closing
   function wsSend(payload) {
     try {
       if (ws && ws.readyState === 1) {
@@ -6625,29 +6609,11 @@
         break;
 
       case 'result':
-        // Handle camera/stream responses
-        if (pendingStreamRequests[msg.id]) {
-          var streamCb = pendingStreamRequests[msg.id];
-          delete pendingStreamRequests[msg.id];
-          streamCb(msg.success ? msg.result : null);
-          break;
-        }
-        if (pendingAgendaRequests[msg.id]) {
-          var agendaCb = pendingAgendaRequests[msg.id];
-          delete pendingAgendaRequests[msg.id];
-          agendaCb(msg.success ? msg.result : null);
-          break;
-        }
-        if (pendingTaskRequests[msg.id]) {
-          var taskCb = pendingTaskRequests[msg.id];
-          delete pendingTaskRequests[msg.id];
-          taskCb(msg.success ? msg.result : null);
-          break;
-        }
-        if (pendingWeatherRequests[msg.id]) {
-          var weatherCb = pendingWeatherRequests[msg.id];
-          delete pendingWeatherRequests[msg.id];
-          weatherCb(msg.success ? msg.result : null);
+        // Route WS result to whichever widget registered the callback for this message ID
+        if (pendingRequests[msg.id]) {
+          var cb = pendingRequests[msg.id];
+          delete pendingRequests[msg.id];
+          cb(msg.success ? msg.result : null);
           break;
         }
         if (msg.success && msg.result && Array.isArray(msg.result)) {
@@ -6744,11 +6710,6 @@
     }
   }
 
-  function callService(serviceDomain, entityId) {
-    var parts = serviceDomain.split('.');
-    wsSend({ id: msgId++, type: 'call_service', domain: parts[0], service: parts[1], target: { entity_id: entityId } });
-  }
-
   // Handle any action type - service call, page navigation, or automation trigger
   function handleAction(action, dynamicValue, tokenMap) {
     if (!action) return;
@@ -6815,11 +6776,6 @@
     }
 
     return node;
-  }
-
-  // Backward-compatible wrapper for slider token replacement.
-  function injectActionValue(node, value) {
-    return injectActionTokens(node, { '$value': value });
   }
 
   // Resolve {{ expr }} templates in action.data at tap time.

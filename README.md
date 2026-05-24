@@ -26,9 +26,11 @@ Most dashboards flex and reflow to fit whatever screen they land on. HAven takes
 
 ## A note on AI-assisted development
 
-The code in this project was written almost entirely with the help of AI (primarily Claude). I am not a software developer. I had a clear vision for what I wanted to build, and I used AI as the tool to get there. The result may not win any awards for elegant code architecture, but it does exactly what I designed it to do, on hardware that most dashboards have given up on.
+The code in this project was written almost entirely with the help of AI (primarily Claude). I am not a hardcore software developer, I just dabble. I had a clear vision for what I wanted to build, and I used AI as the tool to get there. The result may not win any awards for elegant code architecture, but it is doing exactly what I designed it to do, on hardware that most dashboards have given up on.
 
-If AI-assisted code bothers you, that is a completely fair position to hold. There are plenty of other projects built by talented developers writing every line themselves, and you should use whatever fits your values. HAven exists because I could not have built it any other way, and it works well to deliver my vision.
+If AI-generated code bothers you, that is a completely fair position to hold. There are plenty of other projects built by talented developers writing every line themselves, and you should use whatever fits your values. HAven exists because I could not have built it any other way on my own, and it works well to deliver my vision.
+
+On the subject of "spaghetti code": yes the entire runtime is a single ~7000 line JavaScript file. That is a deliberate architectural choice, not really an oversight. HAven has no build process, no bundler, and no dependencies. It has to run on browsers from 2014 on cheap tablets and smart TVs, which rules out modern module syntax. A single file is the right tool for that job. Within that file the code hopefully follows consistent naming conventions, clear section headers, and a surgical update pattern that has been actively reviewed and tidied. If you see something that is genuinely hard to follow or could be cleaner, pull requests and constructive issues are welcome.
 
 ---
 
