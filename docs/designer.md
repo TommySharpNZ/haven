@@ -26,11 +26,7 @@ Open it at: `http://your-ha-ip:8123/local/haven/designer.html`
 
 ## Browser Requirements
 
-The designer requires **Chrome or Edge 86+** and must be opened over **HTTPS**. The File System Access API, which allows saving directly back to the config file on disk, is not available in Firefox or over plain HTTP.
-
-[Nabu Casa](https://www.nabucasa.com) remote access satisfies the HTTPS requirement out of the box and is the easiest way to use the designer. A self-signed local SSL certificate also works if you prefer to stay local.
-
-Firefox can open and edit configs but uses a Download button instead of direct save.
+The designer works in any modern desktop browser (Chrome, Edge, Firefox, Safari) over HTTP or HTTPS. No special browser or SSL certificate is required.
 
 ---
 
@@ -38,7 +34,7 @@ Firefox can open and edit configs but uses a Download button instead of direct s
 
 From the welcome screen, choose one of two options:
 
-- **Open File:** pick an existing `devices/*.json` file from disk. Chrome and Edge open the folder so they can save changes back to the same file without prompting again.
+- **Open File:** pick an existing `devices/*.json` file from disk using the standard browser file picker. Works in all browsers including over plain HTTP.
 - **New Device:** enter a name and pick a canvas size from presets or enter a custom width and height.
 
 You can also open a specific config by passing `?device=name` in the URL, the same as the runtime app.
@@ -54,7 +50,7 @@ You can also open a specific config by passing `?device=name` in the URL, the sa
 | Close | Close the current device and return to the welcome screen |
 | Device | Edit device properties: name, canvas size, page timer, screensaver |
 | Pages | Manage pages: add, rename, reorder, set background images |
-| Save | Save directly to disk (Chrome/Edge only) |
+| Save | Download the config as a JSON file |
 | Undo / Redo | 50 levels of history |
 | Copy / Cut / Paste | Clipboard actions for selected widgets |
 | Preview | Toggle a live preview iframe |

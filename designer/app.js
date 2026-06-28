@@ -261,7 +261,6 @@ var pagesModalDoneBtn  = document.getElementById('pagesModalDoneBtn');
 
 var selectedModalPageId = null; // id of the page currently selected in the modal
 
-var devicesDirHandle = null;
 var imagesDirHandle  = null;
 var currentDevice = '';
 var previewActive = false;
@@ -566,40 +565,39 @@ function loadDevice(device) {
   });
 }
 
-async function pickDeviceFile() {
-  if (!window.showOpenFilePicker) {
-    setStatus('File picker not supported in this browser', true);
-    return;
-  }
-  try {
-    var handles = await window.showOpenFilePicker({
-      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-      multiple: false
-    });
-    if (!handles || !handles.length) return;
-    var handle = handles[0];
-    var file = await handle.getFile();
-    var text = await file.text();
-    var data = JSON.parse(text);
-
-    var name = file.name.replace(/\.json$/i, '');
-    currentDevice = name;
-    try { localStorage.setItem('haven_designer_last_device', name); } catch (e) {}
-
-    config = data;
-    currentPageId = config.device.default_page || 1;
-    hidden = {};
-    locked = {};
-    loadLocked();
-    resetHistory();
-    setupStage();
-    buildPageSelect();
-    renderPage();
-    hideWelcome();
-    setStatus('Loaded ' + file.name, true);
-  } catch (err) {
-    setStatus('Pick failed: ' + err.message, true);
-  }
+function pickDeviceFile() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var data;
+      try { data = JSON.parse(e.target.result); } catch (err) {
+        setStatus('Invalid JSON: ' + err.message, true);
+        return;
+      }
+      var name = file.name.replace(/\.json$/i, '');
+      currentDevice = name;
+      try { localStorage.setItem('haven_designer_last_device', name); } catch (ex) {}
+      config = data;
+      currentPageId = (config.device && config.device.default_page) || 1;
+      hidden = {};
+      locked = {};
+      loadLocked();
+      resetHistory();
+      setupStage();
+      buildPageSelect();
+      renderPage();
+      hideWelcome();
+      setStatus('Loaded ' + file.name, true);
+    };
+    reader.onerror = function () { setStatus('Could not read file', true); };
+    reader.readAsText(file);
+  });
+  input.click();
 }
 
 
@@ -1842,7 +1840,6 @@ async function closeDevice() {
   hidden = {};
   locked = {};
   guides = [];
-  devicesDirHandle = null;
   imagesDirHandle  = null;
   resetHistory();
   // Destroy the Konva stage if one exists
@@ -2364,7 +2361,7 @@ function openDevicePropsModal() {
 
   // File info
   dpFilename.textContent = currentDevice ? currentDevice + '.json' : '(not saved yet)';
-  dpFolder.textContent   = devicesDirHandle ? devicesDirHandle.name : '(not saved yet — click Save to choose location)';
+  dpFolder.textContent   = '(saved via browser download)';
 
   // Device name
   dpName.value = d.name || '';
@@ -2502,7 +2499,7 @@ function saveDeviceProps() {
   if (haUrl)   { config.device.ha_url   = haUrl;   } else { delete config.device.ha_url;   }
 
   // Also update currentDevice slug if name changed and no file was picked yet
-  if (!devicesDirHandle && currentDevice) {
+  if (currentDevice) {
     currentDevice = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') || currentDevice;
   }
 
@@ -2862,53 +2859,9 @@ function updateHistoryButtons() {
   pasteBtn.disabled = !(widgetClipboard && widgetClipboard.items && widgetClipboard.items.length);
 }
 
-async function saveConfig() {
+function saveConfig() {
   if (!config) return;
-  if (!window.showDirectoryPicker) {
-    setStatus('Save not supported in this browser', true);
-    downloadConfig();
-    return;
-  }
-
-  try {
-    if (!devicesDirHandle) {
-      devicesDirHandle = await window.showDirectoryPicker();
-    }
-
-    var deviceFile = currentDevice + '.json';
-    var now = new Date();
-    var stamp = now.getFullYear().toString()
-      + pad2(now.getMonth() + 1)
-      + pad2(now.getDate())
-      + '-' + pad2(now.getHours())
-      + pad2(now.getMinutes())
-      + pad2(now.getSeconds());
-
-    // Backup existing file if present
-    try {
-      var existingHandle = await devicesDirHandle.getFileHandle(deviceFile);
-      var existingFile = await existingHandle.getFile();
-      var existingText = await existingFile.text();
-
-      var backupsDir = await devicesDirHandle.getDirectoryHandle('backups', { create: true });
-      var backupName = currentDevice + '-' + stamp + '.json';
-      var backupHandle = await backupsDir.getFileHandle(backupName, { create: true });
-      var backupWritable = await backupHandle.createWritable();
-      await backupWritable.write(existingText);
-      await backupWritable.close();
-    } catch (e) {
-      // If file doesn't exist yet, skip backup
-    }
-
-    var handle = await devicesDirHandle.getFileHandle(deviceFile, { create: true });
-    var writable = await handle.createWritable();
-    await writable.write(JSON.stringify(config, null, 2) + '\n');
-    await writable.close();
-    isDirty = false;
-    setStatus('Saved ' + deviceFile + ' (backup created)', true);
-  } catch (err) {
-    setStatus('Save failed: ' + err.message, true);
-  }
+  downloadConfig();
 }
 
 function downloadConfig() {
