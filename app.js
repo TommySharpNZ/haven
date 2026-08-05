@@ -2025,6 +2025,9 @@
     var layout = String(w.layout || 'buttons').toLowerCase();
     if (layout !== 'dropdown' && layout !== 'picker') layout = 'buttons';
     var valueAttr = w.value_attribute;
+    // Momentary: skip adopting the tapped option as displayed state - always
+    // rests on the widget's own icon/placeholder instead of the last pick.
+    var momentary = !!w.momentary;
 
     el.style.background = resolveColor(w.background || 'transparent');
     el.style.borderRadius = (w.radius !== undefined ? w.radius : 8) + 'px';
@@ -2144,8 +2147,9 @@
       }
       if (pickerButton) {
         var opt = findOptionByValue(currentValue);
-        if (opt && opt.icon) {
-          setContent(pickerIconEl, opt.icon);
+        var iconToShow = opt ? opt.icon : (w.icon || '');
+        if (iconToShow) {
+          setContent(pickerIconEl, iconToShow);
           pickerIconEl.style.display = '';
         } else {
           pickerIconEl.style.display = 'none';
@@ -2166,7 +2170,7 @@
         var rawToken = (optObj && optObj.raw_value !== undefined) ? optObj.raw_value : selected;
         handleAction(w.action, undefined, { '$option': rawToken });
       }
-      currentValue = selected;
+      currentValue = momentary ? null : selected;
       updateControls();
       resetReturnTimer();
     }
@@ -2396,7 +2400,7 @@
     var initial = w.entity ? entityStates[w.entity] : null;
     currentValue = readSceneValue(initial);
     if (currentValue === null || currentValue === undefined) {
-      currentValue = options.length ? String(options[0].value) : null;
+      currentValue = (!momentary && options.length) ? String(options[0].value) : null;
     }
     updateControls();
   }

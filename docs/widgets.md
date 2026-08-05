@@ -65,7 +65,7 @@ HAven also provides a small set of [internal entities](config-reference.md#inter
 | `button` | A tappable button that reflects entity on/off state and calls a HA service on press. Icon and label auto-scale to button size. | [widget-button.md](widget-button.md) |
 | `switch` | A sliding toggle switch that reflects and controls a binary entity state. Supports any two-value entity, not just `switch.*`. | [widget-switch.md](widget-switch.md) |
 | `slider` | A draggable slider for controlling numeric values such as brightness, volume, or cover position. | [widget-slider.md](widget-slider.md) |
-| `scene` | An option selector for entities with a fixed set of values. Renders as buttons, a dropdown, or a picker modal. | [widget-scene.md](widget-scene.md) |
+| `scene` | An option selector for entities with a fixed set of values, or a stateless quick-action menu via momentary mode. Renders as buttons, a dropdown, or a picker modal. | [widget-scene.md](widget-scene.md) |
 | `bar` | A horizontal progress bar driven by a numeric entity value. Supports threshold-based color changes. | [widget-bar.md](widget-bar.md) |
 | `arc` | An SVG circular gauge driven by a numeric entity value. Supports threshold-based colors and a center label. | [widget-arc.md](widget-arc.md) |
 | `clock` | Displays the current time in HH:MM format, updated every second. No entity binding needed. | [widget-clock.md](widget-clock.md) |

@@ -2,6 +2,8 @@
 
 The scene widget is an option selector that reads the current value from a HA entity and lets the user pick from a defined list of options. It renders in one of three layouts: pill buttons, a native dropdown, or a tap-to-open picker modal. Selecting an option calls a HA service with the chosen value.
 
+It can also run without an entity as a stateless quick-action menu - see [Momentary Mode](#momentary-mode).
+
 ---
 
 ## Contents
@@ -14,6 +16,7 @@ The scene widget is an option selector that reads the current value from a HA en
 - [Attribute Source](#attribute-source)
 - [Action and the \$option Token](#action-and-the-option-token)
 - [Locking](#locking)
+- [Momentary Mode](#momentary-mode)
 - [Appearance](#appearance)
 - [Conditional Overrides](#conditional-overrides)
 - [Examples](#examples)
@@ -72,6 +75,8 @@ An input select selector rendered as pill buttons:
 | `option_panel_background` | Background color of the picker modal card. Default: `surface`. Picker layout only. |
 | `option_panel_radius` | Corner radius of the picker modal card in pixels. Default: `12`. Picker layout only. |
 | `placeholder` | Text shown on the picker button when no option is selected. Default: `Select`. Picker layout only. |
+| `momentary` | When `true`, the widget does not retain the tapped option as its displayed state - immediately after firing `action` it returns to the rest state instead of showing the picked option. See [Momentary Mode](#momentary-mode). Default: `false`. |
+| `icon` | MDI icon token shown on the picker button in the rest state (no option active) - either because `momentary` reset it, or because no `entity` is bound and nothing has been picked yet. Uses `[mdi:icon-name]` syntax. Picker layout only. |
 | `overrides` | Ordered list of conditional override rules. See [Conditional Overrides](#conditional-overrides). |
 
 ---
@@ -220,6 +225,45 @@ Set `locked: true` to make all options non-interactive. In buttons layout the op
   ]
 }
 ```
+
+---
+
+## Momentary Mode
+
+By default the scene widget behaves like a mode selector: whichever option was last chosen (or matches the bound `entity`'s state) stays visually active. That's correct for something like an HVAC mode picker, but wrong for widgets used as one-shot action menus - for example, a "pick an item to add" picker where the button should always read the same thing rather than drifting to whatever was tapped last.
+
+Set `momentary: true` to opt out of that persistence. The widget still calls `action` with `$option` exactly as normal, but immediately afterward it resets to the rest state:
+
+- `buttons` layout: nothing stays highlighted after a tap.
+- `picker` layout: the button face always shows the widget's own `icon`/`placeholder` rather than the last-picked option's icon/label.
+- `dropdown` layout: falls back to its first `<option>` on next render.
+
+This is opt-in and has no effect on entity-bound widgets relying on the default sticky "shows current state" behavior - only set it on widgets that don't represent persistent state, such as a picker with no `entity` at all:
+
+```json
+{
+  "id": "add_fresh_item",
+  "type": "scene",
+  "layout": "picker",
+  "x": 16, "y": 80, "w": 248, "h": 110,
+  "momentary": true,
+  "icon": "[mdi:food-apple]",
+  "placeholder": "Fresh",
+  "options": [
+    { "value": "Milk",  "label": "Milk",  "icon": "[mdi:cup]" },
+    { "value": "Eggs",  "label": "Eggs",  "icon": "[mdi:egg-outline]" },
+    { "value": "Bread", "label": "Bread", "icon": "[mdi:bread-slice]" }
+  ],
+  "action": {
+    "type": "service",
+    "service": "todo.add_item",
+    "entity_id": "todo.shopping_list",
+    "data": { "item": "$option" }
+  }
+}
+```
+
+No `entity` is needed here - the button always shows the apple icon and "Fresh" label. Tapping it opens the picker; tapping an item adds it to the shopping list and the button immediately reverts to its resting state instead of showing "Milk".
 
 ---
 
@@ -399,6 +443,36 @@ Each HVAC mode gets its own highlight color. The widget-level `selected_backgrou
     "service": "climate.set_hvac_mode",
     "entity_id": "climate.living_room",
     "data": { "hvac_mode": "$option" }
+  }
+}
+```
+
+### Momentary quick-add menu (no entity)
+
+A stateless "pick an item to add" menu - always shows its own icon and category name, never a leftover selection. Used for category shortcuts on a grocery/pantry page:
+
+```json
+{
+  "id": "cat_fresh",
+  "type": "scene",
+  "layout": "picker",
+  "x": 16, "y": 80, "w": 248, "h": 110,
+  "momentary": true,
+  "icon": "[mdi:food-apple]",
+  "placeholder": "Fresh",
+  "background": "surface2",
+  "radius": 10,
+  "option_panel_background": "surface",
+  "options": [
+    { "value": "Milk",  "label": "Milk",  "icon": "[mdi:food-apple]" },
+    { "value": "Eggs",  "label": "Eggs",  "icon": "[mdi:food-apple]" },
+    { "value": "Bread", "label": "Bread", "icon": "[mdi:food-apple]" }
+  ],
+  "action": {
+    "type": "service",
+    "service": "todo.add_item",
+    "entity_id": "todo.grocery_list",
+    "data": { "item": "$option" }
   }
 }
 ```
