@@ -2532,10 +2532,11 @@
     applyButtonLockState(buttonLocked);
 
     var buttonStateCache  = w.entity  ? (entityStates[w.entity]  || null) : null;
+    var buttonState2Cache = w.entity2 ? (entityStates[w.entity2] || null) : null;
     var buttonHasPageSrc  = hasOverrideSource(w, 'page');
 
-    function updateButtonOverrides(state) {
-      var ovr = resolveOverrides(w, state) || {};
+    function updateButtonOverrides(state, state2) {
+      var ovr = resolveOverrides(w, state, state2) || {};
       applyButtonLockState((ovr.locked !== undefined) ? !!ovr.locked : !!w.locked);
       el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
       iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
@@ -2556,15 +2557,22 @@
     if (w.entity) {
       registerEntityCallback(w.entity, function (state) {
         buttonStateCache = state;
-        updateButtonOverrides(buttonStateCache);
+        updateButtonOverrides(buttonStateCache, buttonState2Cache);
+      });
+    }
+
+    if (w.entity2) {
+      registerEntityCallback(w.entity2, function (state) {
+        buttonState2Cache = state;
+        updateButtonOverrides(buttonStateCache, buttonState2Cache);
       });
     }
 
     if (buttonHasPageSrc) {
       registerEntityCallback(INTERNAL_PAGE_ENTITY, function () {
-        updateButtonOverrides(buttonStateCache);
+        updateButtonOverrides(buttonStateCache, buttonState2Cache);
       });
-      updateButtonOverrides(buttonStateCache);
+      updateButtonOverrides(buttonStateCache, buttonState2Cache);
     }
 
     if (w.action) {

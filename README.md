@@ -123,6 +123,7 @@ A graphical designer is available at `designer.html` on the same path. It requir
 - [ ] Multi-action buttons: an `actions` array (alongside the existing single `action`) so one button tap can call multiple HA services in sequence. Each entry supports an optional `delay` (ms) for cases where a media player or other device needs a moment before accepting follow-up commands. Fully backwards compatible.
 - [ ] Actions on image widgets: add `action` support so a tap can trigger navigation, a service call, or an automation instead of only opening the fullscreen overlay.
 - [ ] Conditional actions: a `"type": "conditional"` action that picks which service to call based on the widget entity's current state or attribute. Uses the same condition syntax as overrides. Enables true toggle behaviour (mute/unmute, repeat mode cycling, etc.) from a single button without HA scripts or stacked widgets.
+- [ ] Validate device JSON and show a small visual warning and log detail to the browser console if any issues exist like a setting configured against a widget that does not actually support that setting.
 
 **Implemented**
 - [x] All 13 widget types listed above
