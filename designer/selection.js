@@ -304,6 +304,8 @@ export function updateProps(container, selection, onChange, onDelete, onDuplicat
       'border_color', makeTextInput(w.border_color,   function(v) { onChange('border_color', v); })
     );
 
+    addSectionHeader(container, 'Action');
+    addJsonObjectButton(container, 'Action', w, 'action', onChange);
     addOverridesButton(container, w, onChange);
   }
 

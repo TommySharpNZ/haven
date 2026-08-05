@@ -2853,7 +2853,7 @@
     var radiusPx = (w.radius !== undefined ? w.radius : 0) + 'px';
     el.style.borderRadius = radiusPx;
     el.style.background   = w.background ? resolveColor(w.background) : 'transparent';
-    el.style.cursor       = w.fullscreen_on_tap ? 'pointer' : 'default';
+    el.style.cursor       = (w.fullscreen_on_tap || w.action) ? 'pointer' : 'default';
     if (!w.fullscreen_on_tap && !w.action) { el.style.pointerEvents = 'none'; }
 
     var img = document.createElement('img');
@@ -2940,7 +2940,12 @@
       if (entityStates[w.entity]) updateImageFromState(entityStates[w.entity]);
     }
 
-    if (w.fullscreen_on_tap) {
+    if (w.action) {
+      el.addEventListener('click', function() {
+        handleAction(w.action);
+        resetReturnTimer();
+      });
+    } else if (w.fullscreen_on_tap) {
       el.addEventListener('click', function() {
         openFullscreenImage(currentImageUrl || w.url || '', null);
       });
