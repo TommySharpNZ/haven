@@ -1283,12 +1283,16 @@
         var ovr = resolveOverrides(w, stateCache, state2Cache) || {};
         applyRectangleFill(el, w, ovr);
         applyWidgetAnimation(host, w, ovr);
-        if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
-        if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
-        if (ovr.border_width !== undefined) {
-          el.style.borderWidth = ovr.border_width + 'px';
+        el.style.opacity = (ovr.opacity !== undefined) ? ovr.opacity : (w.opacity !== undefined ? w.opacity : 1);
+        var borderWidth = (ovr.border_width !== undefined) ? ovr.border_width : w.border_width;
+        if (borderWidth) {
+          el.style.borderWidth = borderWidth + 'px';
           el.style.borderStyle = 'solid';
+          el.style.borderColor = resolveColor((ovr.border_color !== undefined ? ovr.border_color : w.border_color) || 'surface2');
           el.style.boxSizing   = 'border-box';
+        } else {
+          el.style.borderWidth = '0';
+          el.style.borderStyle = 'none';
         }
       }
 
@@ -2541,12 +2545,16 @@
       el.style.background = resolveColor(ovr.background !== undefined ? ovr.background : (w.background || 'surface2'));
       iconEl.style.color  = resolveColor(ovr.icon_color  !== undefined ? ovr.icon_color  : (w.icon_color  || 'text'));
       labelEl.style.color = resolveColor(ovr.label_color !== undefined ? ovr.label_color : (w.label_color || 'text_dim'));
-      if (ovr.opacity      !== undefined) el.style.opacity     = ovr.opacity;
-      if (ovr.border_color !== undefined) el.style.borderColor = resolveColor(ovr.border_color);
-      if (ovr.border_width !== undefined) {
-        el.style.borderWidth = ovr.border_width + 'px';
+      el.style.opacity = (ovr.opacity !== undefined) ? ovr.opacity : (w.opacity !== undefined ? w.opacity : 1);
+      var borderWidth = (ovr.border_width !== undefined) ? ovr.border_width : w.border_width;
+      if (borderWidth) {
+        el.style.borderWidth = borderWidth + 'px';
         el.style.borderStyle = 'solid';
+        el.style.borderColor = resolveColor((ovr.border_color !== undefined ? ovr.border_color : w.border_color) || 'surface2');
         el.style.boxSizing   = 'border-box';
+      } else {
+        el.style.borderWidth = '0';
+        el.style.borderStyle = 'none';
       }
       var icon = (ovr.icon !== undefined) ? ovr.icon : (baseIcon || '');
       setButtonIcon(icon);
